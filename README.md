@@ -1,2 +1,3 @@
-# rclone-rc-web-gui
-Web GUI for rclone rc
+# Web GUI for rclone-rc
+
+An HTML based GUI for [rclone rc](https://rclone.org/commands/rclone_rc/).

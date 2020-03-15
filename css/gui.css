@@ -1,0 +1,95 @@
+html {
+    background: #e5e5e5;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    max-width: 1280px;
+    min-height: 100vh;
+    margin: 0 auto;
+    font-family: Verdana,Geneva,Tahoma,sans-serif;
+    font-size: 16px;
+    color: #000;
+    background-color: #fff;
+    box-shadow: 0 0 15px -5px #000;
+}
+.body-block {
+    padding: 15px 20px;
+}
+.body-block > :first-child {
+    margin-top: 0;
+}
+.body-block > :last-child {
+    margin-bottom: 0;
+}
+.header, .footer {
+    background: #ebebeb;
+}
+.header {
+    margin-bottom: 10px;
+}
+.footer {
+    display: flex;
+    justify-content: space-between;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333;
+}
+h1, h2 {
+    margin-bottom: 0;
+}
+
+table {
+    width: 100%;
+    border-spacing: 0px;
+    border-collapse: collapse;
+    overflow-x: auto;
+}
+table th,
+table td {
+    padding: 4px 8px;
+    text-align: left;
+}
+table td:nth-last-child(2) {
+    width: 100%;
+}
+td > progress {
+    width: 100%;
+}
+
+#transfers {
+    margin-top: 15px;
+    max-height: 120px;
+    overflow-y: auto;
+    /* padding: 4px 8px; */
+}
+
+td > img {
+    vertical-align: middle;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+pre {
+    padding: 8px 12px;
+    background: #ebebeb;
+    border-radius: 0.25em;
+}
+
+#files {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px -5px -5px -5px;
+}
+#files > * {
+    margin: 5px;
+}
+.filesPanel {
+    border: 1px solid #ccc;
+    flex: 1 0;
+}
+.filesList {
+    display: flex;
+    flex-direction: column;
+}

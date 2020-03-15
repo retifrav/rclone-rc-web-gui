@@ -4,30 +4,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Nothing here</title>
+    <title>rclone rc</title>
 
-    <style>
-        body {
-            max-width: 1200px;
-            margin: 0 auto;
-            font-family: Verdana, Geneva, Tahoma, sans-serif;
-            padding: 50px 30px 15px;
-            text-align: center;
-            color: #1B3F5C;
-        }
-        img {
-            max-width: 100%;
-        }
-
-        @media only screen and (max-width: 400px) {
-            body {
-                padding: 30px 20px 15px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/gui.css" />
+    <link rel="stylesheet" href="/css/gui-mobile.css" />
 </head>
 <body>
-    <h1 style="margin:0;">Nothing to see here</h1>
-    <p style="margin:0;">Move along, citizen</p>
+    <div class="body-block header">
+        <h1>rclone rc GUI</h1>
+    </div>
+
+    <div class="body-block">
+        <h2>Transfers (<span id="transfersCount">2</span>)</h2>
+        <div id="transfers">
+            <table>
+                <!-- <thead>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Progress</th>
+                    <th>Cancel</th>
+                </thead> -->
+                <tbody>
+                    <tr>
+                        <th>1</th>
+                        <td>Homeland.s08e05.mp4</td>
+                        <td><progress id="Homeland.s08e05.mp4" value="32" max="100"></progress></td>
+                        <td><img class="icon" src="/images/window-close.svg" /></td>
+                    </tr>
+                    <tr>
+                        <th>2</th>
+                        <td>Outsider.s01e10.mp4</td>
+                        <td><progress id="Outsider.s01e10.mp4" value="87" max="100"></progress></td>
+                        <td><img src="/images/window-close.svg" /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="body-block" style="flex-grow: 1;">
+        <h2>Files</h2>
+        <div id="files">
+            <div class="filesPanel">
+                <select name="some" id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
+                    <option value="">- choose a remote -</option>
+                    <option value="ololo">ololo</option>
+                    <option value="some">some</option>
+                </select>
+                <div id="leftPanelFiles" class="filesList">
+                </div>
+            </div>
+            <div class="filesPanel">
+                <select name="some" id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
+                    <option value="">- choose a remote -</option>
+                    <option value="ololo">ololo</option>
+                    <option value="some">some</option>
+                </select>
+                <div id="rightPanelFiles" class="filesList">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="body-block footer">
+        <div>
+            <b>rclone</b> <span id="rcloneVersion"><i>unknown</i></span>
+            <b>on</b> <span id="rcloneOS"><i>unknown</i></span></li>
+        </div>
+        <div>
+            <b>gui</b> v<span id="guiVersion"><i>unknown</i></span>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/js/main.js"></script>
 </body>
 </html>
