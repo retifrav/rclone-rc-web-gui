@@ -2,8 +2,8 @@ var guiVersion = "0.1.0"
 
 var rcloneHost = "http://127.0.0.1"
 var rclonePort = "5572"
-var rcloneUser = "pi"
-var rclonePass = "iamSHERlocked"
+var rcloneUser = "YOUR-USERNAME"
+var rclonePass = "YOUR-PASSWORD"
 
 initialize();
 
@@ -27,16 +27,22 @@ function initialize()
 
 function sendRequestToRclone(query, params, fn)
 {
+    let url = rcloneHost.concat(":", rclonePort, query);
     let xhr = new XMLHttpRequest();
     xhr.responseType = "application/json";
-    xhr.open("POST", rcloneHost.concat(":", rclonePort, query));
+    xhr.open("POST", url);
     xhr.setRequestHeader("Authorization", "Basic " + btoa(rcloneUser.concat(":", rclonePass)));
+
+    console.group("Command:", query);
+    console.debug("URL:", url);
     if (params === "") { xhr.send(); }
     else
     {
+        console.debug("Parameters: ", params);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(JSON.stringify(params));
     }
+    console.groupEnd();
 
     xhr.onload = function()
     {
@@ -71,20 +77,86 @@ function updateRemotesSelects(selectID, optionsList)
 
 function remoteChanged(remotesList, filesPanelID)
 {
-    let params = {
-        "remote": "",
-        "fs": remotesList.value.concat(":/")
-    };
-    sendRequestToRclone("/operations/list", params, function (rez)
+    openPath(remotesList.value.concat(":/"), filesPanelID);
+}
+
+function htmlToElement(html)
+{
+    let template = document.createElement("template");
+    html = html.trim();
+    template.innerHTML = html;
+    return template.content.firstChild;
+}
+
+function getIconType(mimeType)
+{
+    switch (mimeType)
     {
-        console.table(rez["list"]);
-        filesPanel = document.getElementById(filesPanelID);
+        case "inode/directory":
+            return "folder.svg";
+        case "video/x-matroska":
+        case "video/mp4":
+        case "video/webm":
+            return "file-video.svg";
+        case "image/jpeg":
+        case "image/png":
+            return "file-image.svg";
+        case "text/srt; charset=utf-8":
+            return "file-alt.svg";
+        default:
+            return "file.svg";
+    }
+}
+
+function openPath(path, filesPanelID)
+{
+    if (path.trim() === "") { return; }
+
+    let filesPanel = document.getElementById(filesPanelID);
+    // clear the files list
+    while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
+
+    let firstSlash = path.indexOf("/") + 1;
+    let lastSlash = path.lastIndexOf("/") + 1;
+    let basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
+    //let currentPath = path.substring(firstSlash, path.length);
+    let nextPath = lastSlash !== 0 ? path.substring(lastSlash, path.length) : "";
+
+    console.group("Paths");
+    console.debug("Last slash", lastSlash);
+    console.debug("Path:", path);
+    console.debug("Base path:", basePath);
+    //console.debug("Current path:", currentPath);
+    console.debug("Next path:", nextPath);
+    console.groupEnd();
+
+    let div = "".concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.substring(0, lastSlash - 1), "\", \"", filesPanelID, "\");'>")
+        .concat("<img class='icon' src='/images/file.svg' />")
+        .concat("<p>..</p>")
+        .concat("</div>");
+    filesPanel.appendChild(htmlToElement(div));
+    let params = {
+        "fs": basePath,
+        "remote": nextPath
+    };
+    sendRequestToRclone("/operations/list", params, function(rez)
+    {
+        //console.table(rez["list"]);
         rez["list"].forEach(function(item)
         {
-            let fileBlock = document.createElement("div");
-            let content = document.createTextNode(item["Path"]);
-            fileBlock.appendChild(content);
-            filesPanel.appendChild(fileBlock);
+            div = "";
+            if (item["IsDir"] === true)
+            {
+                div = div.concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.concat(item["Path"]), "\", \"", filesPanelID, "\");'>")
+            }
+            else
+            {
+                div = div.concat("<div class='fileLine'>")
+            }
+            div = div.concat("<img class='icon' src='/images/", getIconType(item["MimeType"]), "' />")
+                .concat("<p>", item["Name"], "</p>")
+                .concat("</div>");
+            filesPanel.appendChild(htmlToElement(div));
         });
     });
 }

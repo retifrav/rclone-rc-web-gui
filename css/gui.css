@@ -1,5 +1,11 @@
 html {
+    box-sizing: border-box;
     background: #e5e5e5;
+}
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
 }
 body {
     display: flex;
@@ -70,6 +76,10 @@ td > img {
     width: 1.2em;
     height: 1.2em;
 }
+img.icon {
+    width: 1em;
+    height: 1em;
+}
 
 pre {
     padding: 8px 12px;
@@ -89,7 +99,27 @@ pre {
     border: 1px solid #ccc;
     flex: 1 0;
 }
+.filesPanel > select {
+    padding: 3px;
+}
 .filesList {
     display: flex;
     flex-direction: column;
+    padding: 5px 0;
+}
+.filesList > * {
+    margin: 2px 0;
+}
+
+.fileLine {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+.fileLine > p {
+    margin: 0 0 0 10px;
+}
+.folderLine:hover {
+    background: #ebebeb;
+    cursor: pointer;
 }

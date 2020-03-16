@@ -29,7 +29,7 @@
                         <th>1</th>
                         <td>Homeland.s08e05.mp4</td>
                         <td><progress id="Homeland.s08e05.mp4" value="32" max="100"></progress></td>
-                        <td><img class="icon" src="/images/window-close.svg" /></td>
+                        <td><img src="/images/window-close.svg" /></td>
                     </tr>
                     <tr>
                         <th>2</th>
@@ -46,21 +46,29 @@
         <h2>Files</h2>
         <div id="files">
             <div class="filesPanel">
-                <select name="some" id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
+                <select id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
                     <option value="">- choose a remote -</option>
                     <option value="ololo">ololo</option>
                     <option value="some">some</option>
                 </select>
                 <div id="leftPanelFiles" class="filesList">
+                    <div class="fileLine">
+                        <img class='icon' src="/images/file.svg" />
+                        <p>..</p>
+                    </div>
                 </div>
             </div>
             <div class="filesPanel">
-                <select name="some" id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
+                <select id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
                     <option value="">- choose a remote -</option>
                     <option value="ololo">ololo</option>
                     <option value="some">some</option>
                 </select>
                 <div id="rightPanelFiles" class="filesList">
+                    <div class="fileLine">
+                        <img class='icon' src="/images/file.svg" />
+                        <p>..</p>
+                    </div>
                 </div>
             </div>
         </div>
