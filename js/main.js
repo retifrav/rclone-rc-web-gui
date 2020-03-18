@@ -10,7 +10,7 @@ initialize();
 function initialize()
 {
     // get versions
-    sendRequestToRclone("/core/version", "", function (rez)
+    sendRequestToRclone("/core/version", "", function(rez)
     {
         document.getElementById("rcloneOS").textContent = rez["os"].concat(" (", rez["arch"], ")");
         document.getElementById("rcloneVersion").textContent = rez["version"];
@@ -18,10 +18,16 @@ function initialize()
     });
 
     // get remotes
-    sendRequestToRclone("/config/listremotes", "", function (rez)
+    sendRequestToRclone("/config/listremotes", "", function(rez)
     {
         updateRemotesSelects("leftPanelRemote", rez);
         updateRemotesSelects("rightPanelRemote", rez);
+    });
+
+    // get completed transfers
+    sendRequestToRclone("/core/transferred", "", function(rez)
+    {
+        updateCompletedTransfers(rez["transferred"]);
     });
 }
 
@@ -51,6 +57,7 @@ function sendRequestToRclone(query, params, fn)
         }
         else
         {
+            //console.debug(xhr.response);
             fn(JSON.parse(xhr.response));
         }
     };
@@ -67,10 +74,10 @@ function updateRemotesSelects(selectID, optionsList)
     let selectParentNode = selectObj.parentNode;
     let newSelectObj = selectObj.cloneNode(false);
     newSelectObj.options.add(new Option("- choose a remote -", ""));
-    optionsList["remotes"].forEach(function (item, key)
+    for (let o in optionsList["remotes"])
     {
-        newSelectObj.options.add(new Option(item, item));
-    });
+        newSelectObj.options.add(new Option(optionsList["remotes"][o], optionsList["remotes"][o]));
+    }
     selectParentNode.replaceChild(newSelectObj, selectObj);
 }
 
@@ -115,7 +122,6 @@ function openPath(path, filesPanelID)
     if (path.trim() === "") { return; }
 
     let filesPanel = document.getElementById(filesPanelID);
-    // clear the files list
     while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
 
     filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
@@ -149,21 +155,58 @@ function openPath(path, filesPanelID)
         filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
         //console.table(rez["list"]);
         filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = rez["list"].length;
-        rez["list"].forEach(function(item)
+        for (let r in rez["list"])
         {
             div = "";
-            if (item["IsDir"] === true)
+            if (rez["list"][r]["IsDir"] === true)
             {
-                div = div.concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.concat(item["Path"]), "\", \"", filesPanelID, "\");'>")
+                div = div.concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.concat(rez["list"][r]["Path"]), "\", \"", filesPanelID, "\");'>")
             }
             else
             {
                 div = div.concat("<div class='fileLine'>")
             }
-            div = div.concat("<img class='icon' src='/images/", getIconType(item["MimeType"]), "' />")
-                .concat("<p>", item["Name"], "</p>")
+            div = div.concat("<img class='icon' src='/images/", getIconType(rez["list"][r]["MimeType"]), "' />")
+                .concat("<p>", rez["list"][r]["Name"], "</p>")
                 .concat("</div>");
             filesPanel.appendChild(htmlToElement(div));
-        });
+        }
     });
+}
+
+function updateCompletedTransfers(completedTransfers)
+{
+    let completedTransfersBody = document.getElementById("completedTransfersBody");
+    while (completedTransfersBody.firstChild)
+    {
+        completedTransfersBody.removeChild(completedTransfersBody.firstChild);
+    }
+
+    if (!completedTransfers.length)
+    {
+        let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
+        completedTransfersBody.appendChild(htmlToElement(tr));
+        document.getElementById("completedTransfersCount").textContent = "0";
+        return;
+    }
+
+    document.getElementById("completedTransfersCount").textContent = completedTransfers.length;
+    for (let t in completedTransfers)
+    {
+        let tr = `<tr>
+            <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
+            <td>${completedTransfers[t]["name"]}</td>
+            <td>${getHumanReadableSize(completedTransfers[t]["size"])}</td>
+            </tr>`;
+        completedTransfersBody.appendChild(htmlToElement(tr));
+
+    }
+}
+
+function getHumanReadableSize(sizeInBytes)
+{
+    let sizeInBytesMB = sizeInBytes / 1024 / 1024;
+    let sizeInBytesGB = sizeInBytesMB / 1024;
+    if (sizeInBytesGB < 1) { return `${parseFloat(sizeInBytesMB).toFixed(2)} MB`; }
+    else { return `${parseFloat(sizeInBytesGB).toFixed(2)} GB`; }
 }
