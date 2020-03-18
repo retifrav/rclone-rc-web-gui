@@ -29,7 +29,6 @@ function sendRequestToRclone(query, params, fn)
 {
     let url = rcloneHost.concat(":", rclonePort, query);
     let xhr = new XMLHttpRequest();
-    xhr.responseType = "application/json";
     xhr.open("POST", url);
     xhr.setRequestHeader("Authorization", "Basic " + btoa(rcloneUser.concat(":", rclonePass)));
 
@@ -77,7 +76,10 @@ function updateRemotesSelects(selectID, optionsList)
 
 function remoteChanged(remotesList, filesPanelID)
 {
-    openPath(remotesList.value.concat(":/"), filesPanelID);
+    let remote = remotesList.value;
+    if (remote === "") { return; }
+
+    openPath(remote.concat(":/"), filesPanelID);
 }
 
 function htmlToElement(html)
@@ -116,7 +118,9 @@ function openPath(path, filesPanelID)
     // clear the files list
     while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
 
-    let firstSlash = path.indexOf("/") + 1;
+    filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
+
+    //let firstSlash = path.indexOf("/") + 1;
     let lastSlash = path.lastIndexOf("/") + 1;
     let basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
     //let currentPath = path.substring(firstSlash, path.length);
@@ -135,13 +139,16 @@ function openPath(path, filesPanelID)
         .concat("<p>..</p>")
         .concat("</div>");
     filesPanel.appendChild(htmlToElement(div));
+    filesPanel.appendChild(htmlToElement("<div class='loadingAnimation'></div>"));
     let params = {
         "fs": basePath,
         "remote": nextPath
     };
     sendRequestToRclone("/operations/list", params, function(rez)
     {
+        filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
         //console.table(rez["list"]);
+        filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = rez["list"].length;
         rez["list"].forEach(function(item)
         {
             div = "";

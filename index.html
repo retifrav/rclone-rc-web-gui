@@ -15,7 +15,7 @@
     </div>
 
     <div class="body-block">
-        <h2>Transfers (<span id="transfersCount">2</span>)</h2>
+        <h2>Transfers (<span id="transfersCount">0</span>)</h2>
         <div id="transfers">
             <table>
                 <!-- <thead>
@@ -46,11 +46,14 @@
         <h2>Files</h2>
         <div id="files">
             <div class="filesPanel">
-                <select id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
-                    <option value="">- choose a remote -</option>
-                    <option value="ololo">ololo</option>
-                    <option value="some">some</option>
-                </select>
+                <div class="filesPanelHeader">
+                    <select id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
+                        <option value="">- choose a remote -</option>
+                        <option value="ololo">ololo</option>
+                        <option value="some">some</option>
+                    </select>
+                    <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                </div>
                 <div id="leftPanelFiles" class="filesList">
                     <div class="fileLine">
                         <img class='icon' src="/images/file.svg" />
@@ -59,11 +62,14 @@
                 </div>
             </div>
             <div class="filesPanel">
-                <select id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
-                    <option value="">- choose a remote -</option>
-                    <option value="ololo">ololo</option>
-                    <option value="some">some</option>
-                </select>
+                <div class="filesPanelHeader">
+                    <select id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
+                        <option value="">- choose a remote -</option>
+                        <option value="ololo">ololo</option>
+                        <option value="some">some</option>
+                    </select>
+                    <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                </div>
                 <div id="rightPanelFiles" class="filesList">
                     <div class="fileLine">
                         <img class='icon' src="/images/file.svg" />

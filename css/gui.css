@@ -123,3 +123,36 @@ pre {
     background: #ebebeb;
     cursor: pointer;
 }
+
+.filesPanelHeader {
+    display: flex;
+    justify-content: space-between;
+}
+.filesPanelHeader > div {
+    padding-top: 2px;
+    padding-right: 6px;
+    font-size: 80%;
+    color: #555;
+}
+.filesCount {
+    font-weight: bold;
+}
+
+.loadingAnimation {
+    width: 1.5em;
+    height: 1.5em;
+    margin-left: 15px;
+    border: 0.25em solid #f3f3f3;
+    border-top: 0.25em solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
