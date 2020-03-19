@@ -24,12 +24,10 @@ function initialize()
         updateRemotesSelects("rightPanelRemote", rez);
     });
 
-    // get completed transfers
-    sendRequestToRclone("/core/transferred", "", function(rez)
-    {
-        updateCompletedTransfers(rez["transferred"]);
-    });
+    refreshView();
 }
+
+window.setInterval(function () { refreshView(); }, 3000);
 
 function sendRequestToRclone(query, params, fn)
 {
@@ -89,34 +87,6 @@ function remoteChanged(remotesList, filesPanelID)
     openPath(remote.concat(":/"), filesPanelID);
 }
 
-function htmlToElement(html)
-{
-    let template = document.createElement("template");
-    html = html.trim();
-    template.innerHTML = html;
-    return template.content.firstChild;
-}
-
-function getIconType(mimeType)
-{
-    switch (mimeType)
-    {
-        case "inode/directory":
-            return "folder.svg";
-        case "video/x-matroska":
-        case "video/mp4":
-        case "video/webm":
-            return "file-video.svg";
-        case "image/jpeg":
-        case "image/png":
-            return "file-image.svg";
-        case "text/srt; charset=utf-8":
-            return "file-alt.svg";
-        default:
-            return "file.svg";
-    }
-}
-
 function openPath(path, filesPanelID)
 {
     if (path.trim() === "") { return; }
@@ -174,6 +144,38 @@ function openPath(path, filesPanelID)
     });
 }
 
+function updateCurrentTransfers(currentTransfers)
+{
+    //console.table(currentTransfers);
+    let currentTransfersBody = document.getElementById("currentTransfersBody");
+    while (currentTransfersBody.firstChild)
+    {
+        currentTransfersBody.removeChild(currentTransfersBody.firstChild);
+    }
+
+    if (currentTransfers === undefined || !currentTransfers.length)
+    {
+        let tr = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
+        currentTransfersBody.appendChild(htmlToElement(tr));
+        document.getElementById("currentTransfersCount").textContent = "0";
+        return;
+    }
+
+    document.getElementById("currentTransfersCount").textContent = currentTransfers.length;
+    for (let t = 0; t < currentTransfers.length; t++)
+    {
+        let tr = `<tr>
+            <td>${t + 1}</td>
+            <td>${currentTransfers[t]["name"]}</td>
+            <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
+            <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
+            <td><progress value="32" max="100"></progress></td>
+            <td><img src="/images/window-close.svg" /></td>
+            </tr>`;
+        currentTransfersBody.appendChild(htmlToElement(tr));
+    }
+}
+
 function updateCompletedTransfers(completedTransfers)
 {
     let completedTransfersBody = document.getElementById("completedTransfersBody");
@@ -182,7 +184,7 @@ function updateCompletedTransfers(completedTransfers)
         completedTransfersBody.removeChild(completedTransfersBody.firstChild);
     }
 
-    if (!completedTransfers.length)
+    if (completedTransfers === undefined || !completedTransfers.length)
     {
         let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
         completedTransfersBody.appendChild(htmlToElement(tr));
@@ -196,17 +198,24 @@ function updateCompletedTransfers(completedTransfers)
         let tr = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
             <td>${completedTransfers[t]["name"]}</td>
-            <td>${getHumanReadableSize(completedTransfers[t]["size"])}</td>
+            <td>${getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
             </tr>`;
         completedTransfersBody.appendChild(htmlToElement(tr));
 
     }
 }
 
-function getHumanReadableSize(sizeInBytes)
+function refreshView()
 {
-    let sizeInBytesMB = sizeInBytes / 1024 / 1024;
-    let sizeInBytesGB = sizeInBytesMB / 1024;
-    if (sizeInBytesGB < 1) { return `${parseFloat(sizeInBytesMB).toFixed(2)} MB`; }
-    else { return `${parseFloat(sizeInBytesGB).toFixed(2)} GB`; }
+    // get current transfers
+    sendRequestToRclone("/core/stats", "", function(rez)
+    {
+        updateCurrentTransfers(rez["transferring"]);
+    });
+
+    // get completed transfers
+    sendRequestToRclone("/core/transferred", "", function(rez)
+    {
+        updateCompletedTransfers(rez["transferred"]);
+    });
 }
