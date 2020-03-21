@@ -15,20 +15,21 @@ function getIconType(mimeType)
         case "video/x-matroska":
         case "video/mp4":
         case "video/webm":
-            return "file-video.svg";
+            return "film.svg";
         case "audio/aac":
         case "audio/mpeg":
         case "audio/ac3":
-            return "file-music.svg";
+            return "music-note-beamed.svg";
         case "image/jpeg":
         case "image/png":
-            return "file-image.svg";
+        case "image/svg+xml":
+            return "image.svg";
         case "text/srt; charset=utf-8":
         case "text/plain":
         case "text/plain; charset=utf-8":
-            return "file-alt.svg";
+            return "file-text.svg";
         case "application/pdf":
-            return "file-pdf.svg";
+            return "file-richtext.svg";
         case "application/json":
         case "application/javascript":
         case "text/css":
@@ -36,6 +37,10 @@ function getIconType(mimeType)
         case "text/html":
         case "text/html; charset=utf-8":
             return "file-code.svg";
+        case "application/zip":
+        case "application/x-7z-compressed":
+        case "application/gzip":
+            return "file-zip.svg";
         default:
             return "file.svg";
     }
@@ -43,14 +48,27 @@ function getIconType(mimeType)
 
 function getHumanReadableValue(sizeInBytes, metric)
 {
-    let sizeInBytesMB = sizeInBytes / 1024 / 1024;
-    let sizeInBytesGB = sizeInBytesMB / 1024;
-    if (sizeInBytesGB < 1) { return `${parseFloat(sizeInBytesMB).toFixed(2)} MB${metric}`; }
-    else { return `${parseFloat(sizeInBytesGB).toFixed(2)} GB${metric}`; }
+    let rez = 0;
+    let metricRank = "MB";
+    let sizeInMB = sizeInBytes / 1024 / 1024;
+    let sizeInGB = sizeInMB / 1024;
+    if (sizeInGB < 1)
+    {
+        rez = parseFloat(sizeInMB).toFixed(2);
+    }
+    else
+    {
+        metricRank = "GB";
+        rez = parseFloat(sizeInGB).toFixed(2);
+    }
+    if (isNaN(rez)) { rez = 0; }
+    return `${rez} ${metricRank}${metric}`;
 }
 
 function sortJobs(a, b)
 {
+    if (a.group === undefined || b.group === undefined) { return 0; }
+
     var jobA = Number(
         a.group.substring(
             a.group.lastIndexOf("/") + 1,
@@ -78,4 +96,13 @@ function getDestinationPath(currentFilePanel)
 {
     if (currentFilePanel == "leftPanelFiles") { return panelsPaths["rightPanelFiles"]; }
     else { return panelsPaths["leftPanelFiles"]; }
+}
+
+function panelsPathsHaveValue()
+{
+    if (panelsPaths["leftPanelFiles"] === "" || panelsPaths["rightPanelFiles"] === "")
+    {
+        return false;
+    }
+    else { return true; }
 }

@@ -1,4 +1,4 @@
-# Web GUI for rclone-rc
+# Web GUI for rclone rcd
 
 - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [Examples](#examples)
@@ -49,11 +49,26 @@ $ python -m http.server 8000
 
 Now open http://127.0.0.1:8000 in web-browser.
 
-## Possible issues
+### Server
 
-### Missing/wrong username/password
+Deploy the project folder to your server and launch the `rclone` daemon (*you might want to create a `systemd` service for this*):
 
-If you get
+```
+cd /path/to/web/GUI
+$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
+```
+
+I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to folder operations, as daemon allows to span as many operations as you want (*annoying feature, which I handle with my queue implementation*).
+
+If your server is exposed to the internet, I would also recommend adding NGINX as a reverse proxy.
+
+## Possible issues when serving GUI with a web-server
+
+When you serve GUI with some web-server and not `rclone` daemon, so it's a different port and origin, you can get the following errors.
+
+### Wrong username/password
+
+If you get:
 
 > Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://127.0.0.1:5572/config/listremotes. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing).
 
@@ -74,3 +89,7 @@ or
 > Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1:8000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The 'Access-Control-Allow-Origin' header has a value 'http://127.0.0.1:5572/' that is not equal to the supplied origin.
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:8000` option.
+
+## 3rd-party
+
+- [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)

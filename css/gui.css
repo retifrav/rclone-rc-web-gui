@@ -83,7 +83,10 @@ td > progress {
 }
 
 #currentTransfers {
-    max-height: 120px;
+    max-height: 300px;
+}
+#completedTransfers {
+    max-height: 700px;
 }
 #currentTransfers, #completedTransfers {
     margin-top: 15px;

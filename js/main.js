@@ -52,6 +52,7 @@ function sendRequestToRclone(query, params, fn)
         if (xhr.status != 200)
         {
             console.error("Error, status ", xhr.status);
+            fn(null);
         }
         else
         {
@@ -89,6 +90,8 @@ function remoteChanged(remotesList, filesPanelID)
 
 function openPath(path, filesPanelID)
 {
+    //console.debug(path);
+
     if (path.trim() === "") { return; }
 
     let filesPanel = document.getElementById(filesPanelID);
@@ -110,11 +113,11 @@ function openPath(path, filesPanelID)
     //console.debug("Next path:", nextPath);
     //console.groupEnd();
 
-    panelsPaths[filesPanelID] = path.concat("/");
+    panelsPaths[filesPanelID] = path;
 
     let div = ""
         .concat(`<div class='fileLine folderLine'
-            onclick='openPath(\"${basePath.substring(0, lastSlash - 1)}\", \"${filesPanelID}\");'>`)
+            onclick="openPath('${basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'")}', '${filesPanelID}');">`)
         .concat("<img class='icon' src='/images/file.svg' />")
         .concat("<p>..</p>")
         .concat("</div>");
@@ -133,21 +136,25 @@ function openPath(path, filesPanelID)
         filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
         for (let r in listOfFilesAndFolders)
         {
+            let fileName = listOfFilesAndFolders[r]["Name"];
+            let fileNamePath = panelsPaths[filesPanelID].concat("/", fileName);
+
+            let folderNamePath = basePath.concat(listOfFilesAndFolders[r]["Path"]);
+
             div = "<div class='file-list-item'><input type='checkbox' name='fileListItem' />";
             if (listOfFilesAndFolders[r]["IsDir"] === true)
             {
                 div = div.concat(`<div class='fileLine folderLine'
-                    data-type='folder' data-path='${basePath.concat(listOfFilesAndFolders[r]["Path"])}'
-                    onclick='openPath(\"${basePath.concat(listOfFilesAndFolders[r]["Path"])}\", \"${filesPanelID}\");'>`
+                    data-type='folder' data-path="${folderNamePath}"
+                    onclick="openPath('${folderNamePath.replace(/'/g, "\\'")}', '${filesPanelID}');">`
                 )
             }
             else
             {
-                div = div.concat(`<div class='fileLine' data-type='file'
-                    data-path='${panelsPaths[filesPanelID].concat("/", listOfFilesAndFolders[r]["Name"])}'>`)
+                div = div.concat(`<div class='fileLine' data-type='file' data-path="${fileNamePath}">`)
             }
             div = div.concat("<img class='icon' src='/images/", getIconType(listOfFilesAndFolders[r]["MimeType"]), "' />")
-                .concat("<p>", listOfFilesAndFolders[r]["Name"], "</p>")
+                .concat("<p>", fileName, "</p>")
                 .concat("</div></div>");
             filesPanel.appendChild(htmlToElement(div));
         }
@@ -220,13 +227,21 @@ function updateCompletedTransfers(completedTransfers)
     document.getElementById("completedTransfers").style.display = "block";
 }
 
+function refreshFilesListing()
+{
+    if (panelsPaths["leftPanelFiles"] !== "")
+    {
+        openPath(panelsPaths["leftPanelFiles"], "leftPanelFiles");
+    }
+    if (panelsPaths["rightPanelFiles"] !== "")
+    {
+        openPath(panelsPaths["rightPanelFiles"], "rightPanelFiles");
+    }
+}
+
 function refreshView()
 {
-    // get current transfers
-    sendRequestToRclone("/core/stats", "", function(rez)
-    {
-        updateCurrentTransfers(rez["transferring"]);
-    });
+    getCurrentTransfers();
 
     // get completed transfers
     sendRequestToRclone("/core/transferred", "", function(rez)
@@ -234,15 +249,15 @@ function refreshView()
         updateCompletedTransfers(rez["transferred"]);
     });
 
-    // refresh files listing
-    // if (panelsPaths["leftPanelFiles"] !== "")
-    // {
-    //     openPath(panelsPaths["leftPanelFiles"], "leftPanelFiles");
-    // }
-    // if (panelsPaths["rightPanelFiles"] !== "")
-    // {
-    //     openPath(panelsPaths["rightPanelFiles"], "rightPanelFiles");
-    // }
+    //refreshFilesListing();
+}
+
+function getCurrentTransfers()
+{
+    sendRequestToRclone("/core/stats", "", function(rez)
+    {
+        updateCurrentTransfers(rez["transferring"]);
+    });
 }
 
 function cancelTransfer(cancelBtn, groupID)
@@ -261,13 +276,19 @@ function cancelTransfer(cancelBtn, groupID)
     });
 }
 
-function copyClicked(filesPanelID)
+function copyClicked(btn, filesPanelID)
 {
+    if (panelsPathsHaveValue() !== true)
+    {
+        alert("Cannot perform an operation when one of the panels does not have a remote chosen.");
+    }
+
+    btn.disabled = true;
+    setTimeout(function () { btn.disabled = false; }, 3000);
+
     let checkedBoxes = document.getElementById(filesPanelID)
         .querySelectorAll("input[name=fileListItem]:checked");
-    //console.debug(checkedBoxes);
-    markedItems = [];
-    //console.debug(checkedBoxes.length);
+    //console.debug(checkedBoxes, checkedBoxes.length);
     for (let i = 0; i < checkedBoxes.length; i++)
     {
         //console.debug(checkedBoxes[i].parentNode.getElementsByClassName("fileLine")[0].dataset.path);
@@ -279,13 +300,33 @@ function copyClicked(filesPanelID)
 
         let dataType = checkedBoxes[i].nextElementSibling.dataset.type;
 
+        let panelToUpdate = filesPanelID == "leftPanelFiles" ? "rightPanelFiles" : filesPanelID;
+
         if (dataType === "folder")
         {
-            console.log(`/sync/copy srcFs="${dataPath}" dstFs="${getDestinationPath(filesPanelID).concat(targetPath)}"`);
+            let params = {
+                "srcFs": dataPath,
+                "dstFs": getDestinationPath(filesPanelID).concat("/", targetPath)
+            };
+            sendRequestToRclone("/sync/copy", params, function(rez)
+            {
+                openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            });
         }
         else
         {
-            console.log(`/operations/copyfile srcFs="${sourcePath}" srcRemote="${targetPath}" dstFs="${getDestinationPath(filesPanelID)}" dstRemote="${targetPath}"`);
+            let params = {
+                "srcFs": sourcePath,
+                "srcRemote": targetPath,
+                "dstFs": getDestinationPath(filesPanelID).concat("/"),
+                "dstRemote": targetPath
+            };
+            sendRequestToRclone("/operations/copyfile", params, function(rez)
+            {
+                openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            });
         }
     }
+
+    getCurrentTransfers();
 }
