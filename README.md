@@ -3,9 +3,11 @@
 - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [Examples](#examples)
   - [Localhost](#localhost)
-- [Possible issues](#possible-issues)
-  - [Missing/wrong username/password](#missingwrong-usernamepassword)
+  - [Server](#server)
+- [Possible issues when serving GUI with a web-server](#possible-issues-when-serving-gui-with-a-web-server)
+  - [Wrong username/password](#wrong-usernamepassword)
   - [CORS header does not match](#cors-header-does-not-match)
+- [3rd-party](#3rd-party)
 
 An web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/).
 
