@@ -1,9 +1,9 @@
-var guiVersion = "0.1.0"
+var panelsPaths = {
+    "leftPanelFiles": "",
+    "rightPanelFiles": ""
+}
 
-var rcloneHost = "http://127.0.0.1"
-var rclonePort = "5572"
-var rcloneUser = "YOUR-USERNAME"
-var rclonePass = "YOUR-PASSWORD"
+transfersQueue = []
 
 initialize();
 
@@ -36,16 +36,16 @@ function sendRequestToRclone(query, params, fn)
     xhr.open("POST", url);
     xhr.setRequestHeader("Authorization", "Basic " + btoa(rcloneUser.concat(":", rclonePass)));
 
-    console.group("Command:", query);
-    console.debug("URL:", url);
+    // console.group("Command:", query);
+    // console.debug("URL:", url);
     if (params === "") { xhr.send(); }
     else
     {
-        console.debug("Parameters: ", params);
+        // console.debug("Parameters: ", params);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(JSON.stringify(params));
     }
-    console.groupEnd();
+    // console.groupEnd();
 
     xhr.onload = function()
     {
@@ -102,15 +102,19 @@ function openPath(path, filesPanelID)
     //let currentPath = path.substring(firstSlash, path.length);
     let nextPath = lastSlash !== 0 ? path.substring(lastSlash, path.length) : "";
 
-    console.group("Paths");
-    console.debug("Last slash", lastSlash);
-    console.debug("Path:", path);
-    console.debug("Base path:", basePath);
+    //console.group("Paths");
+    // console.debug("Last slash", lastSlash);
+    //console.debug("Path:", path);
+    //console.debug("Base path:", basePath);
     //console.debug("Current path:", currentPath);
-    console.debug("Next path:", nextPath);
-    console.groupEnd();
+    //console.debug("Next path:", nextPath);
+    //console.groupEnd();
 
-    let div = "".concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.substring(0, lastSlash - 1), "\", \"", filesPanelID, "\");'>")
+    panelsPaths[filesPanelID] = path.concat("/");
+
+    let div = ""
+        .concat(`<div class='fileLine folderLine'
+            onclick='openPath(\"${basePath.substring(0, lastSlash - 1)}\", \"${filesPanelID}\");'>`)
         .concat("<img class='icon' src='/images/file.svg' />")
         .concat("<p>..</p>")
         .concat("</div>");
@@ -122,23 +126,29 @@ function openPath(path, filesPanelID)
     };
     sendRequestToRclone("/operations/list", params, function(rez)
     {
+        listOfFilesAndFolders = rez["list"];
+        listOfFilesAndFolders.sort(sortFilesAndFolders);
+        //console.table(listOfFilesAndFolders);
         filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
-        //console.table(rez["list"]);
-        filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = rez["list"].length;
-        for (let r in rez["list"])
+        filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
+        for (let r in listOfFilesAndFolders)
         {
-            div = "";
-            if (rez["list"][r]["IsDir"] === true)
+            div = "<div class='file-list-item'><input type='checkbox' name='fileListItem' />";
+            if (listOfFilesAndFolders[r]["IsDir"] === true)
             {
-                div = div.concat("<div class='fileLine folderLine' onclick='openPath(\"", basePath.concat(rez["list"][r]["Path"]), "\", \"", filesPanelID, "\");'>")
+                div = div.concat(`<div class='fileLine folderLine'
+                    data-type='folder' data-path='${basePath.concat(listOfFilesAndFolders[r]["Path"])}'
+                    onclick='openPath(\"${basePath.concat(listOfFilesAndFolders[r]["Path"])}\", \"${filesPanelID}\");'>`
+                )
             }
             else
             {
-                div = div.concat("<div class='fileLine'>")
+                div = div.concat(`<div class='fileLine' data-type='file'
+                    data-path='${panelsPaths[filesPanelID].concat("/", listOfFilesAndFolders[r]["Name"])}'>`)
             }
-            div = div.concat("<img class='icon' src='/images/", getIconType(rez["list"][r]["MimeType"]), "' />")
-                .concat("<p>", rez["list"][r]["Name"], "</p>")
-                .concat("</div>");
+            div = div.concat("<img class='icon' src='/images/", getIconType(listOfFilesAndFolders[r]["MimeType"]), "' />")
+                .concat("<p>", listOfFilesAndFolders[r]["Name"], "</p>")
+                .concat("</div></div>");
             filesPanel.appendChild(htmlToElement(div));
         }
     });
@@ -155,13 +165,15 @@ function updateCurrentTransfers(currentTransfers)
 
     if (currentTransfers === undefined || !currentTransfers.length)
     {
-        let tr = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
-        currentTransfersBody.appendChild(htmlToElement(tr));
+        // let tr = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
+        // currentTransfersBody.appendChild(htmlToElement(tr));
+        document.getElementById("currentTransfers").style.display = "none";
         document.getElementById("currentTransfersCount").textContent = "0";
         return;
     }
 
     document.getElementById("currentTransfersCount").textContent = currentTransfers.length;
+    currentTransfers.sort(sortJobs);
     for (let t = 0; t < currentTransfers.length; t++)
     {
         let tr = `<tr>
@@ -169,11 +181,12 @@ function updateCurrentTransfers(currentTransfers)
             <td>${currentTransfers[t]["name"]}</td>
             <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
             <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
-            <td><progress value="32" max="100"></progress></td>
-            <td><img src="/images/window-close.svg" /></td>
+            <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
+            <td><img src="/images/window-close.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');" /></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
     }
+    document.getElementById("currentTransfers").style.display = "block";
 }
 
 function updateCompletedTransfers(completedTransfers)
@@ -186,13 +199,15 @@ function updateCompletedTransfers(completedTransfers)
 
     if (completedTransfers === undefined || !completedTransfers.length)
     {
-        let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
-        completedTransfersBody.appendChild(htmlToElement(tr));
+        // let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
+        // completedTransfersBody.appendChild(htmlToElement(tr));
+        document.getElementById("completedTransfers").style.display = "none";
         document.getElementById("completedTransfersCount").textContent = "0";
         return;
     }
 
     document.getElementById("completedTransfersCount").textContent = completedTransfers.length;
+    completedTransfers.sort(sortJobs);
     for (let t in completedTransfers)
     {
         let tr = `<tr>
@@ -201,8 +216,8 @@ function updateCompletedTransfers(completedTransfers)
             <td>${getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
             </tr>`;
         completedTransfersBody.appendChild(htmlToElement(tr));
-
     }
+    document.getElementById("completedTransfers").style.display = "block";
 }
 
 function refreshView()
@@ -218,4 +233,59 @@ function refreshView()
     {
         updateCompletedTransfers(rez["transferred"]);
     });
+
+    // refresh files listing
+    // if (panelsPaths["leftPanelFiles"] !== "")
+    // {
+    //     openPath(panelsPaths["leftPanelFiles"], "leftPanelFiles");
+    // }
+    // if (panelsPaths["rightPanelFiles"] !== "")
+    // {
+    //     openPath(panelsPaths["rightPanelFiles"], "rightPanelFiles");
+    // }
+}
+
+function cancelTransfer(cancelBtn, groupID)
+{
+    cancelBtn.style.display = "none";
+
+    let jobID = groupID.substring(
+        groupID.lastIndexOf("/") + 1,
+        groupID.length
+    );
+    let params = { "jobid": jobID };
+    sendRequestToRclone("/job/stop", params, function(rez)
+    {
+        console.debug(rez);
+        refreshView();
+    });
+}
+
+function copyClicked(filesPanelID)
+{
+    let checkedBoxes = document.getElementById(filesPanelID)
+        .querySelectorAll("input[name=fileListItem]:checked");
+    //console.debug(checkedBoxes);
+    markedItems = [];
+    //console.debug(checkedBoxes.length);
+    for (let i = 0; i < checkedBoxes.length; i++)
+    {
+        //console.debug(checkedBoxes[i].parentNode.getElementsByClassName("fileLine")[0].dataset.path);
+
+        let dataPath = checkedBoxes[i].nextElementSibling.dataset.path;
+        let lastSlash = dataPath.lastIndexOf("/") + 1;
+        let sourcePath = dataPath.substring(0, lastSlash);
+        let targetPath = dataPath.substring(lastSlash, dataPath.length);
+
+        let dataType = checkedBoxes[i].nextElementSibling.dataset.type;
+
+        if (dataType === "folder")
+        {
+            console.log(`/sync/copy srcFs="${dataPath}" dstFs="${getDestinationPath(filesPanelID).concat(targetPath)}"`);
+        }
+        else
+        {
+            console.log(`/operations/copyfile srcFs="${sourcePath}" srcRemote="${targetPath}" dstFs="${getDestinationPath(filesPanelID)}" dstRemote="${targetPath}"`);
+        }
+    }
 }

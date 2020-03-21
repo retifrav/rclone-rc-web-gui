@@ -1,6 +1,8 @@
 # Web GUI for rclone-rc
 
-- [Localhost example](#localhost-example)
+- [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
+- [Examples](#examples)
+  - [Localhost](#localhost)
 - [Possible issues](#possible-issues)
   - [Missing/wrong username/password](#missingwrong-usernamepassword)
   - [CORS header does not match](#cors-header-does-not-match)
@@ -9,7 +11,22 @@ An web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/).
 
 This is not a "wrapper" for running **rclone** via CLI. This is a GUI for sending HTTP requests to rclone running in remote control mode via [rc API](https://rclone.org/rc/).
 
-## Localhost example
+## Comparison with rclone-webui-react
+
+This project is inspired by another web-based GUI for rclone - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for rclone, so big thanks to its creator.
+
+Sadly, it has several inconveniences:
+
+- no queue, so all the transfer go in parallel
+- no way to cancel a transfer
+- the GUI feels a bit overloaded and has several non-functioning controls
+- transfers list has no sorting, so its elements "jump" from position to position on every view update
+
+In this project I am trying to improve all that and implement some additional functionality. At the same time, the nice-looking of the GUI has the lowest priority for me, so expect it to be very basic.
+
+## Examples
+
+### Localhost
 
 Launch `rclone` remote control daemon and point it to the folder where web GUI files are:
 

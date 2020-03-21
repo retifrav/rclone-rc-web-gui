@@ -19,6 +19,14 @@ body {
     background-color: #fff;
     box-shadow: 0 0 15px -5px #000;
 }
+
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.3em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.8em; }
+h6 { font-size: 0.7em; }
+
 .body-block {
     padding: 15px 20px;
 }
@@ -89,8 +97,8 @@ td > img {
     height: 1.2em;
 }
 img.icon {
-    width: 1em;
-    height: 1em;
+    width: 1.5em;
+    height: 1.5em;
 }
 
 pre {
@@ -103,13 +111,22 @@ pre {
     display: flex;
     justify-content: space-between;
     margin: 15px -5px -5px -5px;
+    overflow-x: auto;
 }
 #files > * {
     margin: 5px;
 }
+.filesPanelWrapper {
+    min-width: 300px;
+    flex: 1 0;
+    display: flex;
+    flex-direction: column;
+}
 .filesPanel {
+    margin-top: 5px;
     border: 1px solid #ccc;
     flex: 1 0;
+    overflow-y: auto;
 }
 .filesPanel > select {
     padding: 3px;
@@ -117,16 +134,25 @@ pre {
 .filesList {
     display: flex;
     flex-direction: column;
+    max-height: 700px;
     padding: 5px 0;
 }
 .filesList > * {
     margin: 2px 0;
 }
 
+.file-list-item {
+    display: flex;
+    padding: 0 5px;
+}
+.file-list-item input {
+    margin: 0 5px;
+}
 .fileLine {
+    flex: 1 0;
     display: flex;
     align-items: center;
-    padding: 10px 15px;
+    padding: 10px;
 }
 .fileLine > p {
     margin: 0 0 0 10px;
@@ -168,3 +194,10 @@ pre {
     }
 }
 
+.controls {
+    display: flex;
+}
+
+#currentTransfersBody img {
+    cursor: pointer;
+}

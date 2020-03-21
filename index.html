@@ -43,35 +43,45 @@
     <div class="body-block">
         <h2>Files</h2>
         <div id="files">
-            <div class="filesPanel">
-                <div class="filesPanelHeader">
-                    <select id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
-                        <option value="">- choose a remote -</option>
-                        <option value="ololo">ololo</option>
-                        <option value="some">some</option>
-                    </select>
-                    <div>Items:&nbsp;<span class="filesCount">-</span></div>
+            <div class="filesPanelWrapper">
+                <div class="controls">
+                    <button type="button" onclick="copyClicked('leftPanelFiles');">Copy</button>
+                    <button type="button" onclick="moveClicked('leftPanelFiles');">Move</button>
+                    <button type="button" onclick="deleteClicked('leftPanelFiles');">Delete</button>
                 </div>
-                <div id="leftPanelFiles" class="filesList">
-                    <div class="fileLine">
-                        <img class='icon' src="/images/file.svg" />
-                        <p>..</p>
+                <div class="filesPanel">
+                    <div class="filesPanelHeader">
+                        <select id="leftPanelRemote" onchange="remoteChanged(this, 'leftPanelFiles');">
+                            <option value="">- choose a remote -</option>
+                        </select>
+                        <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                    </div>
+                    <div id="leftPanelFiles" class="filesList">
+                        <div class="fileLine">
+                            <img class='icon' src="/images/file.svg" />
+                            <p>..</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="filesPanel">
-                <div class="filesPanelHeader">
-                    <select id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
-                        <option value="">- choose a remote -</option>
-                        <option value="ololo">ololo</option>
-                        <option value="some">some</option>
-                    </select>
-                    <div>Items:&nbsp;<span class="filesCount">-</span></div>
+            <div class="filesPanelWrapper">
+                <div class="controls">
+                    <button type="button" onclick="copyClicked('rightPanelFiles');">Copy</button>
+                    <button type="button" onclick="moveClicked('rightPanelFiles');">Move</button>
+                    <button type="button" onclick="deleteClicked('rightPanelFiles');">Delete</button>
                 </div>
-                <div id="rightPanelFiles" class="filesList">
-                    <div class="fileLine">
-                        <img class='icon' src="/images/file.svg" />
-                        <p>..</p>
+                <div class="filesPanel">
+                    <div class="filesPanelHeader">
+                        <select id="rightPanelRemote" onchange="remoteChanged(this, 'rightPanelFiles');">
+                            <option value="">- choose a remote -</option>
+                        </select>
+                        <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                    </div>
+                    <div id="rightPanelFiles" class="filesList">
+                        <div class="fileLine">
+                            <img class='icon' src="/images/file.svg" />
+                            <p>..</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,6 +118,7 @@
         </div>
     </div>
 
+    <script type="text/javascript" src="/js/settings.js"></script>
     <script type="text/javascript" src="/js/functions.js"></script>
     <script type="text/javascript" src="/js/main.js"></script>
 </body>
