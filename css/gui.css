@@ -81,6 +81,12 @@ td > progress {
 #completedTransfers > table td:last-child {
     white-space: nowrap;
 }
+#completedTransfers > table td:nth-child(2) {
+    text-align: center;
+}
+#completedTransfersBody {
+    color: #555;
+}
 
 #currentTransfers {
     max-height: 300px;

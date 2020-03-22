@@ -7,11 +7,12 @@
 - [Possible issues when serving GUI with a web-server](#possible-issues-when-serving-gui-with-a-web-server)
   - [Wrong username/password](#wrong-usernamepassword)
   - [CORS header does not match](#cors-header-does-not-match)
-- [3rd-party](#3rd-party)
+- [Support](#support)
+- [3rd-party attributions](#3rd-party-attributions)
 
 An web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/).
 
-This is not a "wrapper" for running **rclone** via CLI. This is a GUI for sending HTTP requests to rclone running in remote control mode via [rc API](https://rclone.org/rc/).
+This is not a wrapper for running **rclone** via CLI. This is a GUI for sending HTTP requests to `rclone rcd` via [rc API](https://rclone.org/rc/).
 
 ## Comparison with rclone-webui-react
 
@@ -24,7 +25,7 @@ Sadly, it has several inconveniences:
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
 
-In this project I am trying to improve all that and implement some additional functionality. At the same time, the nice-looking of the GUI has the lowest priority for me, so expect it to be very basic.
+So here I am trying to improve all that and to implement some additional functionality. At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
 
 ## Examples
 
@@ -92,6 +93,15 @@ or
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:8000` option.
 
-## 3rd-party
+## Support
 
-- [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
+I've created this project mostly for myself. So it's better to say right away that there is basically no support and that I am not responsible for any possible data loss you might get from using this project. In fact, I don't recommend you to rely on this project for anything important, and certainly don't use it on servers with valuable data.
+
+Also note, that since I use Mozilla Firefox as my main web-browser, I've spent very little to none effort on maintaining cross-browser-ability.
+
+If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues), but I am unlikely to have much time to fix those as I am super busy at my full-time work.
+
+## 3rd-party attributions
+
+- icons are provided by the [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
+- favicon is taken from the [rclone logo](https://rclone.org/img/logo_on_dark__horizontal_color.svg)

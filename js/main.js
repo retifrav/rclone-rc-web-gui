@@ -5,6 +5,9 @@ var panelsPaths = {
 
 transfersQueue = []
 
+var spanOK = "<span style='color:green;'>OK</span>";
+var spanFAIL = "<span style='color:red;'>error</span>";
+
 initialize();
 
 function initialize()
@@ -27,7 +30,7 @@ function initialize()
     refreshView();
 }
 
-window.setInterval(function () { refreshView(); }, 3000);
+window.setInterval(function () { refreshView(); }, refreshingFrequency);
 
 function sendRequestToRclone(query, params, fn)
 {
@@ -51,7 +54,18 @@ function sendRequestToRclone(query, params, fn)
     {
         if (xhr.status != 200)
         {
-            console.error("Error, status ", xhr.status);
+            console.group("Request has failed");
+            console.error("Error, HTTP status code:", xhr.status);
+            if (xhr.status === 500)
+            {
+                let rezError = JSON.parse(xhr.response)["error"];
+                if (rezError !== undefined && rezError !== null)
+                {
+                    console.error(rezError);
+                    alert("rclone could not perform this operation. Check console for more details");
+                }
+            }
+            console.groupEnd();
             fn(null);
         }
         else
@@ -85,7 +99,7 @@ function remoteChanged(remotesList, filesPanelID)
     let remote = remotesList.value;
     if (remote === "") { return; }
 
-    openPath(remote.concat(":/"), filesPanelID);
+    openPath(remote.concat(":/", remotesStartingFolders[remote]), filesPanelID);
 }
 
 function openPath(path, filesPanelID)
@@ -129,10 +143,17 @@ function openPath(path, filesPanelID)
     };
     sendRequestToRclone("/operations/list", params, function(rez)
     {
+        filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
+
+        if (rez === null)
+        {
+            console.error("Request returned a null value, looks like there is something wrong with the request");
+            return;
+        }
+
         listOfFilesAndFolders = rez["list"];
         listOfFilesAndFolders.sort(sortFilesAndFolders);
         //console.table(listOfFilesAndFolders);
-        filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
         filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
         for (let r in listOfFilesAndFolders)
         {
@@ -189,7 +210,7 @@ function updateCurrentTransfers(currentTransfers)
             <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
             <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
             <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
-            <td><img src="/images/window-close.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');" /></td>
+            <td><img src="/images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');" /></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
     }
@@ -214,11 +235,12 @@ function updateCompletedTransfers(completedTransfers)
     }
 
     document.getElementById("completedTransfersCount").textContent = completedTransfers.length;
-    completedTransfers.sort(sortJobs);
+    completedTransfers.sort(sortJobs).reverse();
     for (let t in completedTransfers)
     {
         let tr = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
+            <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
             <td>${completedTransfers[t]["name"]}</td>
             <td>${getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
             </tr>`;
@@ -246,6 +268,7 @@ function refreshView()
     // get completed transfers
     sendRequestToRclone("/core/transferred", "", function(rez)
     {
+        //console.table(rez["transferred"]);
         updateCompletedTransfers(rez["transferred"]);
     });
 
@@ -271,26 +294,51 @@ function cancelTransfer(cancelBtn, groupID)
     let params = { "jobid": jobID };
     sendRequestToRclone("/job/stop", params, function(rez)
     {
-        console.debug(rez);
+        //console.debug(rez);
         refreshView();
     });
 }
 
 function copyClicked(btn, filesPanelID)
 {
-    if (panelsPathsHaveValue() !== true)
+    operationClicked(btn, "copy", filesPanelID);
+}
+
+function moveClicked(btn, filesPanelID)
+{
+    operationClicked(btn, "move", filesPanelID);
+}
+
+function deleteClicked(btn, filesPanelID)
+{
+    operationClicked(btn, "delete", filesPanelID);
+}
+
+function operationClicked(btn, operationType, filesPanelID)
+{
+    if (operationType === "copy" || operationType === "move")
     {
-        alert("Cannot perform an operation when one of the panels does not have a remote chosen.");
+        if (panelsPathsHaveValue() !== true)
+        {
+            alert("Cannot perform an operation when one of the panels does not have a remote chosen.");
+            return;
+        }
     }
 
     btn.disabled = true;
-    setTimeout(function () { btn.disabled = false; }, 3000);
+    setTimeout(function () { btn.disabled = false; }, 5000);
 
+    performFileOperation(operationType, filesPanelID);
+}
+
+function performFileOperation(operationType, filesPanelID)
+{
     let checkedBoxes = document.getElementById(filesPanelID)
         .querySelectorAll("input[name=fileListItem]:checked");
     //console.debug(checkedBoxes, checkedBoxes.length);
     for (let i = 0; i < checkedBoxes.length; i++)
     {
+        //console.debug("doing file operation");
         //console.debug(checkedBoxes[i].parentNode.getElementsByClassName("fileLine")[0].dataset.path);
 
         let dataPath = checkedBoxes[i].nextElementSibling.dataset.path;
@@ -300,33 +348,94 @@ function copyClicked(btn, filesPanelID)
 
         let dataType = checkedBoxes[i].nextElementSibling.dataset.type;
 
-        let panelToUpdate = filesPanelID == "leftPanelFiles" ? "rightPanelFiles" : filesPanelID;
-
-        if (dataType === "folder")
+        switch (operationType)
         {
-            let params = {
-                "srcFs": dataPath,
-                "dstFs": getDestinationPath(filesPanelID).concat("/", targetPath)
-            };
-            sendRequestToRclone("/sync/copy", params, function(rez)
-            {
-                openPath(panelsPaths[panelToUpdate], panelToUpdate);
-            });
-        }
-        else
-        {
-            let params = {
-                "srcFs": sourcePath,
-                "srcRemote": targetPath,
-                "dstFs": getDestinationPath(filesPanelID).concat("/"),
-                "dstRemote": targetPath
-            };
-            sendRequestToRclone("/operations/copyfile", params, function(rez)
-            {
-                openPath(panelsPaths[panelToUpdate], panelToUpdate);
-            });
+            case "copy":
+            case "move":
+                copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, filesPanelID);
+                break;
+            case "delete":
+                deleteOperation(operationType, dataType, sourcePath, targetPath, filesPanelID);
+                break;
+            default:
+                console.error(`Unknown operation type: ${operationType}`);
         }
     }
+}
 
-    getCurrentTransfers();
+function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, filesPanelID)
+{
+    let panelToUpdate = filesPanelID === "leftPanelFiles" ? "rightPanelFiles" : "leftPanelFiles";
+
+    if (dataType === "folder")
+    {
+        let params = {
+            "srcFs": dataPath,
+            "dstFs": getDestinationPath(filesPanelID).concat("/", targetPath)
+        };
+        if (operationType === "move")
+        {
+            params["deleteEmptySrcDirs"] = "true";
+        }
+        let folderOperation = getFolderOperation(operationType);
+        if (folderOperation === "")
+        {
+            console.error(`Unknown operation type: ${operationType}`);
+        }
+        sendRequestToRclone(folderOperation, params, function(rez)
+        {
+            if (operationType === "move")
+            {
+                refreshFilesListing();
+            }
+            else
+            {
+                openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            }
+        });
+    }
+    else
+    {
+        let params = {
+            "srcFs": sourcePath,
+            "srcRemote": targetPath,
+            "dstFs": getDestinationPath(filesPanelID).concat("/"),
+            "dstRemote": targetPath
+        };
+        let fileOperation = getFileOperation(operationType);
+        if (fileOperation === "")
+        {
+            console.error(`Unknown operation type: ${operationType}`);
+        }
+        sendRequestToRclone(fileOperation, params, function(rez)
+        {
+            if (operationType === "move")
+            {
+                refreshFilesListing();
+            }
+            else
+            {
+                openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            }
+        });
+    }
+}
+
+function deleteOperation(operationType, dataType, sourcePath, targetPath, filesPanelID)
+{
+    let params = {
+        "fs": sourcePath,
+        "remote": targetPath
+    };
+
+    let folderOperation = dataType === "folder" ? getFolderOperation(operationType) : getFileOperation(operationType);
+    if (folderOperation === "")
+    {
+        console.error(`Unknown operation type: ${operationType}`);
+    }
+    // console.debug("Delete:", folderOperation, params);
+    sendRequestToRclone(folderOperation, params, function(rez)
+    {
+        openPath(panelsPaths[filesPanelID], filesPanelID);
+    });
 }

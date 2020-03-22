@@ -106,3 +106,33 @@ function panelsPathsHaveValue()
     }
     else { return true; }
 }
+
+function getFolderOperation(operationType)
+{
+    switch (operationType)
+    {
+        case "copy":
+            return "/sync/copy";
+        case "move":
+            return "/sync/move";
+        case "delete":
+            return "/operations/purge";
+        default:
+            return "";
+    }
+}
+
+function getFileOperation(operationType)
+{
+    switch (operationType)
+    {
+        case "copy":
+            return "/operations/copyfile";
+        case "move":
+            return "/operations/movefile";
+        case "delete":
+            return "/operations/deletefile";
+        default:
+            return "";
+    }
+}
