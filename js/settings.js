@@ -5,8 +5,12 @@ var rclonePort = "5572";
 var rcloneUser = "YOUR-USERNAME";
 var rclonePass = "YOUR-PASSWORD";
 
-var remotesStartingFolders = {
-    "someExampleRemote": "path/to/some/path/there"
+var remotes = {
+    "someExampleRemote": {
+        "startingFolder": "path/to/some/path/there",
+        "canQueryDisk": true,
+        "pathToQueryDisk": ""
+    }
 }
 
 refreshingFrequency = 2000;

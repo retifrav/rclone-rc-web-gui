@@ -65,6 +65,7 @@ function getHumanReadableValue(sizeInBytes, metric)
     return `${rez} ${metricRank}${metric}`;
 }
 
+// TODO sort jobs with the same group (folder transfer)
 function sortJobs(a, b)
 {
     if (a.group === undefined || b.group === undefined) { return 0; }

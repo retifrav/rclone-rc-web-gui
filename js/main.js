@@ -89,7 +89,27 @@ function updateRemotesSelects(selectID, optionsList)
     newSelectObj.options.add(new Option("- choose a remote -", ""));
     for (let o in optionsList["remotes"])
     {
-        newSelectObj.options.add(new Option(optionsList["remotes"][o], optionsList["remotes"][o]));
+        let remote = optionsList["remotes"][o];
+        let remoteText = remote;
+
+        let availableDiskSpace = undefined;
+        // try to get available disk space
+        if (remotes[remote] !== undefined && remotes[remote]["canQueryDisk"] === true)
+        {
+            let params = {
+                "fs": remote.concat(":/", remotes[remote]["pathToQueryDisk"])
+            };
+            sendRequestToRclone("/operations/about", params, function(rez)
+            {
+                availableDiskSpace = getHumanReadableValue(rez["free"], "");
+                remoteText = remoteText.concat(` (${availableDiskSpace} left)`);
+                newSelectObj.options.add(new Option(remoteText, remote));
+            });
+        }
+        else
+        {
+            newSelectObj.options.add(new Option(remoteText, remote));
+        }
     }
     selectParentNode.replaceChild(newSelectObj, selectObj);
 }
@@ -99,7 +119,14 @@ function remoteChanged(remotesList, filesPanelID)
     let remote = remotesList.value;
     if (remote === "") { return; }
 
-    openPath(remote.concat(":/", remotesStartingFolders[remote]), filesPanelID);
+    //console.debug(remotes[remote]);
+    openPath(
+        remote.concat(
+            ":/",
+            remotes[remote] === undefined ? "" : remotes[remote]["startingFolder"]
+        ),
+        filesPanelID
+    );
 }
 
 function openPath(path, filesPanelID)
@@ -238,6 +265,10 @@ function updateCompletedTransfers(completedTransfers)
     completedTransfers.sort(sortJobs).reverse();
     for (let t in completedTransfers)
     {
+        // don't count checks as actual transfers
+        if (completedTransfers[t]["checked"] === true) //|| completedTransfers[t]["bytes"] === 0)
+        { continue; }
+
         let tr = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
             <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
