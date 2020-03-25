@@ -14,7 +14,7 @@
 
 A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/).
 
-- this **is not** a wrapper for running **rclone** via CLI
+- this **is not** a wrapper for running `rclone` via CLI
 - this **is** a web GUI for sending HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) to `rclone rcd` via [rc API](https://rclone.org/rc/)
 
 ### Comparison with rclone-webui-react
@@ -100,7 +100,7 @@ check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:8000` opt
 
 I've created this project mostly for myself. So it's better to state right away that there is basically no support and that I am not responsible for any possible data loss you might get from using this project. In fact, I don't recommend you to rely on it for anything important, and certainly don't use it on servers with valuable data.
 
-Also note, that since I use Mozilla Firefox as my main web-browser, that's where I did all the testing and I've spent very little to none effort on maintaining cross-browser-ability.
+Also note, that since I use Mozilla Firefox as my main web-browser, that's where I did all the testing, and I've spent very little to none effort on maintaining cross-browser-ability.
 
 If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues), but I have to apologize in advance for the possible delays, as I have very little free time outside my working hours.
 

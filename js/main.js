@@ -30,7 +30,8 @@ function initialize()
     refreshView();
 }
 
-window.setInterval(function () { refreshView(); }, refreshingFrequency);
+window.setInterval(function () { refreshView(); }, timerRefreshView);
+window.setInterval(function () { processQueue(); }, timerProcessQueue);
 
 function sendRequestToRclone(query, params, fn)
 {
@@ -44,6 +45,10 @@ function sendRequestToRclone(query, params, fn)
     if (params === "") { xhr.send(); }
     else
     {
+        if (asyncOperations.includes(query))
+        {
+            params["_async"] = true;
+        }
         // console.debug("Parameters: ", params);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.send(JSON.stringify(params));
@@ -62,7 +67,7 @@ function sendRequestToRclone(query, params, fn)
                 if (rezError !== undefined && rezError !== null)
                 {
                     console.error(rezError);
-                    alert("rclone could not perform this operation. Check console for more details");
+                    //alert("rclone reported an error. Check console for more details");
                 }
             }
             console.groupEnd();
@@ -218,26 +223,45 @@ function updateCurrentTransfers(currentTransfers)
         currentTransfersBody.removeChild(currentTransfersBody.firstChild);
     }
 
+    let addQueueElementsOnly = false;
+
     if (currentTransfers === undefined || !currentTransfers.length)
     {
-        // let tr = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
-        // currentTransfersBody.appendChild(htmlToElement(tr));
-        document.getElementById("currentTransfers").style.display = "none";
         document.getElementById("currentTransfersCount").textContent = "0";
-        return;
+
+        if (!transfersQueue.length)
+        {
+            document.getElementById("currentTransfers").style.display = "none";
+            return;
+        }
+        else { addQueueElementsOnly = true; }
     }
 
-    document.getElementById("currentTransfersCount").textContent = currentTransfers.length;
-    currentTransfers.sort(sortJobs);
-    for (let t = 0; t < currentTransfers.length; t++)
+    if (!addQueueElementsOnly) // add items from current transfers list
     {
-        let tr = `<tr>
-            <td>${t + 1}</td>
-            <td>${currentTransfers[t]["name"]}</td>
-            <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
-            <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
-            <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
-            <td><img src="/images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');" /></td>
+        document.getElementById("currentTransfersCount").textContent = currentTransfers.length;
+        currentTransfers.sort(sortJobs);
+        for (let t = 0; t < currentTransfers.length; t++)
+        {
+            let tr = `<tr>
+                <td>${t + 1}</td>
+                <td>${currentTransfers[t]["name"]}</td>
+                <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
+                <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
+                <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
+                <td><img src="/images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');" /></td>
+                </tr>`;
+            currentTransfersBody.appendChild(htmlToElement(tr));
+        }
+    }
+    // add items from the queue
+    for (let q = 0; q < transfersQueue.length; q++)
+    {
+        let tr = `<tr style="font-style:italic;">
+            <td>...</td>
+            <td style="text-align:center;"><code>${transfersQueue[q].operationType}</code></td>
+            <td colspan="3">${transfersQueue[q].dataPath}</td>
+            <td><img src="/images/x-square.svg" onclick="transfersQueue.splice(${q}, 1);" /></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
     }
@@ -359,10 +383,10 @@ function operationClicked(btn, operationType, filesPanelID)
     btn.disabled = true;
     setTimeout(function () { btn.disabled = false; }, 5000);
 
-    performFileOperation(operationType, filesPanelID);
+    addToQueue(operationType, filesPanelID);
 }
 
-function performFileOperation(operationType, filesPanelID)
+function addToQueue(operationType, filesPanelID)
 {
     let checkedBoxes = document.getElementById(filesPanelID)
         .querySelectorAll("input[name=fileListItem]:checked");
@@ -379,22 +403,67 @@ function performFileOperation(operationType, filesPanelID)
 
         let dataType = checkedBoxes[i].nextElementSibling.dataset.type;
 
-        switch (operationType)
-        {
-            case "copy":
-            case "move":
-                copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, filesPanelID);
-                break;
-            case "delete":
-                deleteOperation(operationType, dataType, sourcePath, targetPath, filesPanelID);
-                break;
-            default:
-                console.error(`Unknown operation type: ${operationType}`);
-        }
+        transfersQueue.push(
+            {
+                "dtAdded": new Date(),
+                "operationType": operationType,
+                "dataType": dataType,
+                "dataPath": dataPath,
+                "sourcePath": sourcePath,
+                "targetPath": targetPath,
+                "dstFS": dataType === "folder"
+                    ? getDestinationPath(filesPanelID).concat("/", targetPath)
+                    : getDestinationPath(filesPanelID).concat("/"),
+                "filesPanelID": filesPanelID
+            }
+        );
+        checkedBoxes[i].checked = false;
     }
 }
 
-function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, filesPanelID)
+function processQueue()
+{
+    // console.debug(
+    //     document.getElementById("currentTransfersCount").textContent,
+    //     transfersQueue.length
+    // );
+    //console.table(transfersQueue);
+    if ( // the queue is empty or of there already are active transfers
+        document.getElementById("currentTransfersCount").textContent !== "0"
+        || !transfersQueue.length
+    ) { return; }
+
+    let firstItemFromQueue = transfersQueue.splice(0, 1)[0];
+
+    switch (firstItemFromQueue.operationType)
+    {
+        case "copy":
+        case "move":
+            copyOrMoveOperation(
+                firstItemFromQueue.operationType,
+                firstItemFromQueue.dataType,
+                firstItemFromQueue.dataPath,
+                firstItemFromQueue.sourcePath,
+                firstItemFromQueue.targetPath,
+                firstItemFromQueue.dstFS,
+                firstItemFromQueue.filesPanelID
+                );
+            break;
+        case "delete":
+            deleteOperation(
+                firstItemFromQueue.operationType,
+                firstItemFromQueue.dataType,
+                firstItemFromQueue.sourcePath,
+                firstItemFromQueue.targetPath,
+                firstItemFromQueue.filesPanelID
+                );
+            break;
+        default:
+            console.error(`Unknown operation type: ${operationType}`);
+    }
+}
+
+function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, dstFS, filesPanelID)
 {
     let panelToUpdate = filesPanelID === "leftPanelFiles" ? "rightPanelFiles" : "leftPanelFiles";
 
@@ -402,7 +471,7 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
     {
         let params = {
             "srcFs": dataPath,
-            "dstFs": getDestinationPath(filesPanelID).concat("/", targetPath)
+            "dstFs": dstFS
         };
         if (operationType === "move")
         {
@@ -415,14 +484,15 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
         }
         sendRequestToRclone(folderOperation, params, function(rez)
         {
-            if (operationType === "move")
-            {
-                refreshFilesListing();
-            }
-            else
-            {
-                openPath(panelsPaths[panelToUpdate], panelToUpdate);
-            }
+            //console.debug("Folder operation result:", rez);
+            // if (operationType === "move")
+            // {
+            //     refreshFilesListing();
+            // }
+            // else
+            // {
+            //     openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            // }
         });
     }
     else
@@ -430,7 +500,7 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
         let params = {
             "srcFs": sourcePath,
             "srcRemote": targetPath,
-            "dstFs": getDestinationPath(filesPanelID).concat("/"),
+            "dstFs": dstFS,
             "dstRemote": targetPath
         };
         let fileOperation = getFileOperation(operationType);
@@ -440,14 +510,15 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
         }
         sendRequestToRclone(fileOperation, params, function(rez)
         {
-            if (operationType === "move")
-            {
-                refreshFilesListing();
-            }
-            else
-            {
-                openPath(panelsPaths[panelToUpdate], panelToUpdate);
-            }
+            //console.debug("File operation result:", rez);
+            // if (operationType === "move")
+            // {
+            //     refreshFilesListing();
+            // }
+            // else
+            // {
+            //     openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            // }
         });
     }
 }
@@ -459,7 +530,9 @@ function deleteOperation(operationType, dataType, sourcePath, targetPath, filesP
         "remote": targetPath
     };
 
-    let folderOperation = dataType === "folder" ? getFolderOperation(operationType) : getFileOperation(operationType);
+    let folderOperation = dataType === "folder"
+        ? getFolderOperation(operationType)
+        : getFileOperation(operationType);
     if (folderOperation === "")
     {
         console.error(`Unknown operation type: ${operationType}`);
@@ -467,6 +540,7 @@ function deleteOperation(operationType, dataType, sourcePath, targetPath, filesP
     // console.debug("Delete:", folderOperation, params);
     sendRequestToRclone(folderOperation, params, function(rez)
     {
-        openPath(panelsPaths[filesPanelID], filesPanelID);
+        //console.debug("Delete result:", rez);
+        //openPath(panelsPaths[filesPanelID], filesPanelID);
     });
 }
