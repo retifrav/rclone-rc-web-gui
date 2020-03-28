@@ -1,78 +1,66 @@
 # Web GUI for rclone rcd
 
-- [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
-- [Examples](#examples)
-  - [Localhost](#localhost)
-  - [Server](#server)
-- [Possible issues when serving GUI with a web-server](#possible-issues-when-serving-gui-with-a-web-server)
-  - [Wrong username/password](#wrong-usernamepassword)
-  - [CORS header does not match](#cors-header-does-not-match)
+- [About](#about)
+  - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
+- [How to use it](#how-to-use-it)
+  - [Launch](#launch)
+    - [Possible issues](#possible-issues)
+      - [Wrong username/password](#wrong-usernamepassword)
+      - [CORS header does not match](#cors-header-does-not-match)
+  - [Configuration](#configuration)
+- [Queue](#queue)
 - [Support](#support)
 - [3rd-party attributions](#3rd-party-attributions)
 
 ## About
 
-A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/).
-
-- this **is not** a wrapper for running `rclone` via CLI
-- this **is** a web GUI for sending HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) to `rclone rcd` via [rc API](https://rclone.org/rc/)
+A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) to `rclone rcd` using [rc API](https://rclone.org/rc/)
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for rclone - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for rclone, so big thanks to its creator.
-
-Sadly, it has several inconveniences:
+This project is inspired by another web-based GUI for `rclone` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for `rclone`, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
 
 - no queue, so all the transfer go in parallel
 - no way to cancel a transfer
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
 
-So here I am trying to improve all that and to implement some additional functionality. At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
+My goal is to improve that. At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
 
-## Examples
+## How to use it
 
-### Localhost
+First of all, set your `rclone rcd` host, port, username and password in `/js/settings.js`. Also make sure that you have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
 
-Launch `rclone` remote control daemon and point it to the folder where web GUI files are:
+### Launch
 
-```
-cd /path/to/web/GUI
-$ rclone rcd --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
-```
-
-Or run just the `rclone` daemon with some allowed origin:
-
-```
-$ rclone rcd --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:8000
-```
-
-and serve the web GUI with some HTTP-server, for example Python:
-
-```
-$ python -m http.server 8000
-```
-
-Now open http://127.0.0.1:8000 in web-browser.
-
-### Server
-
-Deploy the project folder to your server and launch the `rclone` daemon (*you might want to create a `systemd` service for this*):
+Start `rclone` remote control daemon and point it to the folder with web GUI:
 
 ```
 cd /path/to/web/GUI
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
 ```
 
-I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to folder operations, as daemon allows to span as many operations as you want (*annoying feature, which I handle with my queue implementation*).
+or
 
-If your server is exposed to the internet, I would also recommend adding NGINX as a reverse proxy.
+```
+$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/GUI
+```
 
-## Possible issues when serving GUI with a web-server
+I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to folder operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
 
-When you serve GUI with some web-server and not `rclone` daemon, so it's a different port and origin, you can get the following errors.
+If you want to serve web GUI files with a proper web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
 
-### Wrong username/password
+```
+$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:8000
+```
+
+You might also want to create a service for running `rclone` daemon.
+
+#### Possible issues
+
+When you serve GUI with some web-server and not `rclone` daemon (*so it's a different origin*), you can get the following errors.
+
+##### Wrong username/password
 
 If you get:
 
@@ -84,7 +72,7 @@ or
 
 check if you have provided correct username and password.
 
-### CORS header does not match
+##### CORS header does not match
 
 If you get
 
@@ -95,6 +83,41 @@ or
 > Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1:8000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The 'Access-Control-Allow-Origin' header has a value 'http://127.0.0.1:5572/' that is not equal to the supplied origin.
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:8000` option.
+
+### Configuration
+
+There are several settings available for you to configure in `/js/settings.js`.
+
+Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
+
+```
+var remotes = {
+    "disk": {
+        "startingFolder": "media/somedisk/downloads",
+        "canQueryDisk": true,
+        "pathToQueryDisk": "media/somedisk"
+    },
+    "seedbox": {
+        "startingFolder": "files",
+        "canQueryDisk": false
+    }
+}
+```
+
+Here:
+
+- we have 2 remotes: `disk` and `seedbox`
+- both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel
+- `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space
+  - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`)
+
+## Queue
+
+All operations go to the queue and processed one at a time.
+
+Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
+
+That also means that once you close the browser (*or just this tab*), the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` ([_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)).
 
 ## Support
 
