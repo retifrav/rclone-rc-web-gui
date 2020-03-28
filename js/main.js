@@ -245,7 +245,7 @@ function updateCurrentTransfers(currentTransfers)
         {
             let tr = `<tr>
                 <td>${t + 1}</td>
-                <td>${currentTransfers[t]["name"]}</td>
+                <td class="canBeLong">${currentTransfers[t]["name"]}</td>
                 <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
                 <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
                 <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
@@ -260,8 +260,8 @@ function updateCurrentTransfers(currentTransfers)
         let tr = `<tr style="font-style:italic;">
             <td>...</td>
             <td style="text-align:center;"><code>${transfersQueue[q].operationType}</code></td>
-            <td colspan="3">${transfersQueue[q].dataPath}</td>
-            <td><img src="/images/x-square.svg" onclick="transfersQueue.splice(${q}, 1);" /></td>
+            <td colspan="3" class="canBeLong">${transfersQueue[q].dataPath}</td>
+            <td><img src="/images/x-square.svg" onclick="removeFromQueue(this, ${q});" /></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
     }
@@ -296,12 +296,36 @@ function updateCompletedTransfers(completedTransfers)
         let tr = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
             <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
-            <td>${completedTransfers[t]["name"]}</td>
+            <td class="canBeLong">${completedTransfers[t]["name"]}</td>
             <td>${getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
             </tr>`;
         completedTransfersBody.appendChild(htmlToElement(tr));
     }
     document.getElementById("completedTransfers").style.display = "block";
+}
+
+function refreshView()
+{
+    getCurrentTransfers();
+    getCompletedTransfers();
+    //refreshFilesListing();
+}
+
+function getCurrentTransfers()
+{
+    sendRequestToRclone("/core/stats", "", function(rez)
+    {
+        updateCurrentTransfers(rez["transferring"]);
+    });
+}
+
+function getCompletedTransfers()
+{
+    sendRequestToRclone("/core/transferred", "", function(rez)
+    {
+        //console.table(rez["transferred"]);
+        updateCompletedTransfers(rez["transferred"]);
+    });
 }
 
 function refreshFilesListing()
@@ -314,28 +338,6 @@ function refreshFilesListing()
     {
         openPath(panelsPaths["rightPanelFiles"], "rightPanelFiles");
     }
-}
-
-function refreshView()
-{
-    getCurrentTransfers();
-
-    // get completed transfers
-    sendRequestToRclone("/core/transferred", "", function(rez)
-    {
-        //console.table(rez["transferred"]);
-        updateCompletedTransfers(rez["transferred"]);
-    });
-
-    //refreshFilesListing();
-}
-
-function getCurrentTransfers()
-{
-    sendRequestToRclone("/core/stats", "", function(rez)
-    {
-        updateCurrentTransfers(rez["transferring"]);
-    });
 }
 
 function cancelTransfer(cancelBtn, groupID)
@@ -352,6 +354,12 @@ function cancelTransfer(cancelBtn, groupID)
         //console.debug(rez);
         refreshView();
     });
+}
+
+function removeFromQueue(removeBtn, q)
+{
+    removeBtn.style.display = "none";
+    transfersQueue.splice(q, 1);
 }
 
 function copyClicked(btn, filesPanelID)

@@ -65,10 +65,10 @@ table td {
     padding: 4px 8px;
     text-align: left;
 }
-#currentTransfers > table td:nth-last-child(2) {
+td > progress {
     width: 100%;
 }
-td > progress {
+#currentTransfers > table td:nth-last-child(2) {
     width: 100%;
 }
 
@@ -80,6 +80,9 @@ td > progress {
 #completedTransfers > table td:first-child,
 #completedTransfers > table td:last-child {
     white-space: nowrap;
+}
+#currentTransfers > table td.canBeLong {
+    white-space: pre-line;
 }
 #completedTransfers > table td:nth-child(2) {
     text-align: center;
