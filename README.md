@@ -15,20 +15,22 @@
 
 ## About
 
-A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) to `rclone rcd` using [rc API](https://rclone.org/rc/)
+A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) being sent to `rclone rcd` using [rc API](https://rclone.org/rc/).
 
 ![rclone rc GUI](/screenshot.png?raw=true)
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for `rclone`, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
+This project is inspired by another web-based GUI for `rclone` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for `rclone rcd`, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
 
 - no queue, so all the transfer go in parallel
 - no way to cancel a transfer
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
 
-My goal is to improve that. At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
+My goal is to improve these points.
+
+At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
 
 ## How to use it
 
