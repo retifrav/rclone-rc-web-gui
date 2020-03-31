@@ -8,13 +8,16 @@
       - [Wrong username/password](#wrong-usernamepassword)
       - [CORS header does not match](#cors-header-does-not-match)
   - [Configuration](#configuration)
-- [Queue](#queue)
+  - [Queue](#queue)
+  - [Search](#search)
 - [Support](#support)
 - [3rd-party attributions](#3rd-party-attributions)
 
 ## About
 
 A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) to `rclone rcd` using [rc API](https://rclone.org/rc/)
+
+![rclone rc GUI](/screenshot.png?raw=true)
 
 ### Comparison with rclone-webui-react
 
@@ -111,13 +114,17 @@ Here:
 - `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space
   - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`)
 
-## Queue
+### Queue
 
 All operations go to the queue and processed one at a time.
 
 Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
 
 That also means that once you close the browser (*or just this tab*), the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` ([_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)).
+
+### Search
+
+Having a long list of files one would like to be able to quickly find a file of interest. But since the web-browser is perfectly capable of doing so with its standard `CTRL/CMD + F` searching functionality, I see no reason of implementing my own.
 
 ## Support
 
