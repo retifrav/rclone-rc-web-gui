@@ -1,6 +1,7 @@
 # Web GUI for rclone rcd
 
 - [About](#about)
+  - [Use-case](#use-case)
   - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [How to use it](#how-to-use-it)
   - [Launch](#launch)
@@ -18,6 +19,10 @@
 A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) being sent to `rclone rcd` using [rc API](https://rclone.org/rc/).
 
 ![rclone rc GUI](/screenshot.png?raw=true)
+
+### Use-case
+
+I have a remote seedbox and a local media server (*running on Raspberry Pi*). Naturally, I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that (*thanks to its `rcd` mode*), it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
 
 ### Comparison with rclone-webui-react
 

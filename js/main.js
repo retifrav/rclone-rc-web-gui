@@ -333,14 +333,8 @@ function getCompletedTransfers()
 
 function refreshFilesListing()
 {
-    if (panelsPaths["leftPanelFiles"] !== "")
-    {
-        openPath(panelsPaths["leftPanelFiles"], "leftPanelFiles");
-    }
-    if (panelsPaths["rightPanelFiles"] !== "")
-    {
-        openPath(panelsPaths["rightPanelFiles"], "rightPanelFiles");
-    }
+    refreshClicked("leftPanelFiles");
+    refreshClicked("rightPanelFiles");
 }
 
 function cancelTransfer(cancelBtn, groupID)
@@ -378,6 +372,14 @@ function moveClicked(btn, filesPanelID)
 function deleteClicked(btn, filesPanelID)
 {
     operationClicked(btn, "delete", filesPanelID);
+}
+
+function refreshClicked(filesPanelID)
+{
+    if (panelsPaths[filesPanelID] !== "")
+    {
+        openPath(panelsPaths[filesPanelID], filesPanelID);
+    }
 }
 
 function operationClicked(btn, operationType, filesPanelID)

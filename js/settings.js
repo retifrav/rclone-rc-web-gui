@@ -1,4 +1,4 @@
-var guiVersion = "0.1.0";
+var guiVersion = "0.1.1";
 
 var rcloneHost = "http://127.0.0.1";
 var rclonePort = "5572";

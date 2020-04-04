@@ -217,6 +217,9 @@ pre {
 .controls {
     display: flex;
 }
+.lastButton {
+    margin-left: auto;
+}
 
 #currentTransfersBody img {
     cursor: pointer;
