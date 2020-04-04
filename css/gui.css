@@ -71,6 +71,13 @@ td > progress {
 #currentTransfers > table td:nth-last-child(2) {
     width: 100%;
 }
+#currentTransfers > table th:first-child,
+#currentTransfers > table td:first-child {
+    text-align: right;
+}
+#currentTransfers > table td:nth-child(2) {
+    min-width: 50%;
+}
 
 #completedTransfers > table,
 #completedTransfers > table td:nth-last-child(2) {

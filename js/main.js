@@ -258,9 +258,8 @@ function updateCurrentTransfers(currentTransfers)
     for (let q = 0; q < transfersQueue.length; q++)
     {
         let tr = `<tr style="font-style:italic;">
-            <td>...</td>
-            <td style="text-align:center;"><code>${transfersQueue[q].operationType}</code></td>
-            <td colspan="3" class="canBeLong">${transfersQueue[q].dataPath}</td>
+            <td><code>${transfersQueue[q].operationType}</code></td>
+            <td colspan="4" class="canBeLong">${transfersQueue[q].dataPath}</td>
             <td><img src="/images/x-square.svg" onclick="removeFromQueue(this, ${q});" /></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
