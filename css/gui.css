@@ -81,6 +81,7 @@ td > progress {
 #completedTransfers > table td:last-child {
     white-space: nowrap;
 }
+.canBeLong,
 #currentTransfers > table td.canBeLong {
     white-space: pre-line;
 }
@@ -143,11 +144,13 @@ pre {
 .filesPanel > select {
     padding: 3px;
 }
+.panelFilesContainer {
+    max-height: 700px;
+    padding: 5px 0;
+}
 .filesList {
     display: flex;
     flex-direction: column;
-    max-height: 700px;
-    padding: 5px 0;
 }
 .filesList > * {
     margin: 2px 0;
@@ -156,15 +159,20 @@ pre {
 .file-list-item {
     display: flex;
     padding: 0 5px;
+    align-items: center;
 }
-.file-list-item input {
+.file-list-item > input {
     margin: 0 5px;
+    flex-shrink: 0;
 }
 .fileLine {
     flex: 1 0;
     display: flex;
     align-items: center;
     padding: 10px;
+}
+.fileLine > img.icon {
+    flex-shrink: 0;
 }
 .fileLine > p {
     margin: 0 0 0 10px;

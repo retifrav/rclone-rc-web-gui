@@ -143,7 +143,7 @@ function openPath(path, filesPanelID)
     let filesPanel = document.getElementById(filesPanelID);
     while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
 
-    filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
+    filesPanel.parentNode.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
 
     //let firstSlash = path.indexOf("/") + 1;
     let lastSlash = path.lastIndexOf("/") + 1;
@@ -175,7 +175,7 @@ function openPath(path, filesPanelID)
     };
     sendRequestToRclone("/operations/list", params, function(rez)
     {
-        filesPanel.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
+        filesPanel.parentNode.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
 
         if (rez === null)
         {
@@ -186,7 +186,7 @@ function openPath(path, filesPanelID)
         listOfFilesAndFolders = rez["list"];
         listOfFilesAndFolders.sort(sortFilesAndFolders);
         //console.table(listOfFilesAndFolders);
-        filesPanel.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
+        filesPanel.parentNode.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
         for (let r in listOfFilesAndFolders)
         {
             let fileName = listOfFilesAndFolders[r]["Name"];
@@ -285,13 +285,15 @@ function updateCompletedTransfers(completedTransfers)
         return;
     }
 
-    document.getElementById("completedTransfersCount").textContent = completedTransfers.length;
+    let completedTransfersCount = 0;
     completedTransfers.sort(sortJobs).reverse();
     for (let t in completedTransfers)
     {
         // don't count checks as actual transfers
         if (completedTransfers[t]["checked"] === true) //|| completedTransfers[t]["bytes"] === 0)
         { continue; }
+
+        completedTransfersCount++;
 
         let tr = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
@@ -301,6 +303,7 @@ function updateCompletedTransfers(completedTransfers)
             </tr>`;
         completedTransfersBody.appendChild(htmlToElement(tr));
     }
+    document.getElementById("completedTransfersCount").textContent = completedTransfersCount;
     document.getElementById("completedTransfers").style.display = "block";
 }
 
@@ -402,7 +405,7 @@ function addToQueue(operationType, filesPanelID)
     for (let i = 0; i < checkedBoxes.length; i++)
     {
         //console.debug("doing file operation");
-        //console.debug(checkedBoxes[i].parentNode.getElementsByClassName("fileLine")[0].dataset.path);
+        //console.debug(checkedBoxes[i].parentNode.parentNode.getElementsByClassName("fileLine")[0].dataset.path);
 
         let dataPath = checkedBoxes[i].nextElementSibling.dataset.path;
         let lastSlash = dataPath.lastIndexOf("/") + 1;

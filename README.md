@@ -28,7 +28,7 @@ This project is inspired by another web-based GUI for `rclone` - [rclone-webui-r
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
 
-My goal is to improve these points.
+My goal is to improve these points. Although cancelling a transfer turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) that originates in the `rclone` itself.
 
 At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
 

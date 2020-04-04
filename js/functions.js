@@ -42,7 +42,7 @@ function getIconType(mimeType)
         case "application/gzip":
             return "file-zip.svg";
         default:
-            return "file.svg";
+            return "file-earmark.svg";
     }
 }
 
