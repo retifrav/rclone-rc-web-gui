@@ -556,3 +556,62 @@ function deleteOperation(operationType, dataType, sourcePath, targetPath, filesP
         //openPath(panelsPaths[filesPanelID], filesPanelID);
     });
 }
+
+function showCreateFolder(btn)
+{
+    let panelDiv = btn.parentNode.parentNode.parentNode;
+    panelDiv.querySelector(".controls").style.display = "none";
+    panelDiv.querySelector(".create-folder").style.display = "flex";
+}
+
+function hideCreateFolder(btn)
+{
+    let panelDiv = btn.parentNode.parentNode;
+    panelDiv.querySelector(".create-folder").style.display = "none";
+    panelDiv.querySelector(".controls").style.display = "flex";
+}
+
+function createFolderClicked(btn, filesPanelID)
+{
+    let currentPath = panelsPaths[filesPanelID];
+    if (currentPath !== "")
+    {
+        let folderName = btn.parentNode.querySelector("input").value.trim();
+        if (!folderName)
+        {
+            alert("A folder has no name.");
+            return;
+        }
+
+        btn.style.display = "none";
+
+        let lastSlash = currentPath.lastIndexOf("/") + 1;
+        let basePath = lastSlash !== 0 ? currentPath.substring(0, lastSlash) : currentPath.concat("/");
+        let targetPath = currentPath.substring(lastSlash, currentPath.length).concat("/", folderName);
+        console.debug(currentPath, basePath, targetPath);
+
+        let params = {
+            "fs": currentPath,
+            "remote": folderName
+        };
+        sendRequestToRclone("/operations/mkdir", params, function(rez)
+        {
+            btn.style.display = "block";
+            if (rez === null)
+            {
+                console.error("Request returned a null value, looks like there is something wrong with the request");
+                return;
+            }
+            else
+            {
+                hideCreateFolder(btn);
+                refreshClicked(filesPanelID);
+            }
+        });
+    }
+    else
+    {
+        alert("Cannot create a folder in nowhere. Choose a remote first.");
+        return;
+    }
+}

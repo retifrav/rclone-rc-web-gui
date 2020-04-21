@@ -139,7 +139,7 @@ I've created this project mostly for myself. So it's better to state right away 
 
 Also note, that since I use Mozilla Firefox as my main web-browser, that's where I did all the testing, and I've spent very little to none effort on maintaining cross-browser-ability.
 
-If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues), but I have to apologize in advance for the possible delays, as I have very little free time outside my working hours.
+If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues).
 
 ## 3rd-party attributions
 

@@ -221,10 +221,19 @@ pre {
     }
 }
 
-.controls {
+.controls,
+.create-folder {
     display: flex;
 }
-.lastButton {
+.create-folder {
+    display: none;
+}
+.create-folder > input {
+    flex-grow: 1;
+    margin: 1px;
+}
+.lastButtons {
+    display: flex;
     margin-left: auto;
 }
 
