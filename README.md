@@ -13,12 +13,13 @@
   - [Search](#search)
 - [Support](#support)
 - [3rd-party attributions](#3rd-party-attributions)
+- [License](#license)
 
 ## About
 
 A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) being sent to `rclone rcd` using [rc API](https://rclone.org/rc/).
 
-![rclone rc GUI](/screenshot.png?raw=true)
+![rclone rcd GUI](/screenshot.png?raw=true)
 
 ### Use-case
 
@@ -26,9 +27,9 @@ I have a remote seedbox and a local media server (*running on Raspberry Pi*). Na
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI for `rclone rcd`, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
+This project is inspired by another web-based GUI for `rclone rcd` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
 
-- no queue, so all the transfer go in parallel
+- no queue, so all the transfers go in parallel
 - no way to cancel a transfer
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
@@ -131,7 +132,7 @@ That also means that once you close the browser (*or just this tab*), the queue 
 
 ### Search
 
-Having a long list of files one would like to be able to quickly find a file of interest. But since the web-browser is perfectly capable of doing so with its standard `CTRL/CMD + F` searching functionality, I see no reason of implementing my own.
+Having a long list of files, one would like to be able to quickly find a file of interest. But since the web-browser is perfectly capable of doing so with its standard `CTRL/CMD + F` searching functionality, I see no point in implementing my own.
 
 ## Support
 
@@ -145,3 +146,7 @@ If you discover any issues/bugs, report them [here](https://github.com/retifrav/
 
 - icons are provided by the [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
 - favicon is taken from the [rclone logo](https://rclone.org/img/logo_on_dark__horizontal_color.svg)
+
+## License
+
+The project is licensed under [MIT terms](/LICENSE).
