@@ -26,6 +26,8 @@ A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Comma
 
 I have a remote seedbox and a local media server (*running on Raspberry Pi*). Naturally, I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that (*thanks to its `rcd` mode*), it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
 
+More details in my [blog post](https://retifrav.github.io/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
+
 ### Comparison with rclone-webui-react
 
 This project is inspired by another web-based GUI for `rclone rcd` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
