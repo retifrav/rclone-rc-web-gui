@@ -11,9 +11,10 @@
   - [Configuration](#configuration)
   - [Queue](#queue)
   - [Search](#search)
+- [Dependencies](#dependencies)
 - [Support](#support)
-- [3rd-party attributions](#3rd-party-attributions)
 - [License](#license)
+- [3rd-party](#3rd-party)
 
 ## About
 
@@ -134,6 +135,10 @@ That also means that once you close the browser (*or just this tab*), the queue 
 
 Having a long list of files, one would like to be able to quickly find a file of interest. But since the web-browser is perfectly capable of doing so with its standard `CTRL/CMD + F` searching functionality, I see no point in implementing my own.
 
+## Dependencies
+
+There are none. The project doesn't use any external libraries/frameworks. It's just plain HTML/CSS/JS.
+
 ## Support
 
 I've created this project mostly for myself. So it's better to state right away that there is basically no support and that I am not responsible for any possible data loss you might get from using this project. In fact, I don't recommend you to rely on it for anything important, and certainly don't use it on servers with valuable data.
@@ -142,11 +147,11 @@ Also note, that since I use Mozilla Firefox as my main web-browser, that's where
 
 If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues).
 
-## 3rd-party attributions
-
-- icons are provided by the [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
-- favicon is taken from the [rclone logo](https://rclone.org/img/logo_on_dark__horizontal_color.svg)
-
 ## License
 
 The project is licensed under [MIT terms](/LICENSE).
+
+## 3rd-party
+
+- icons are provided by the [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
+- favicon is taken from the [rclone logo](https://rclone.org/img/logo_on_dark__horizontal_color.svg)
