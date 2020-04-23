@@ -153,5 +153,5 @@ The project is licensed under [MIT terms](/LICENSE).
 
 ## 3rd-party
 
-- icons are provided by the [Bootstrap Icons](https://icons.getbootstrap.com/), license: [MIT](https://github.com/twbs/icons/blob/master/LICENSE.md)
-- favicon is taken from the [rclone logo](https://rclone.org/img/logo_on_dark__horizontal_color.svg)
+- icons are from [Bootstrap Icons](https://icons.getbootstrap.com/)
+- favicon is from [rclone website](https://rclone.org/)
