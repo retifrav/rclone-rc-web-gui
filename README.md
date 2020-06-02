@@ -18,7 +18,9 @@
 
 ## About
 
-A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/). Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)) being sent to `rclone rcd` using [rc API](https://rclone.org/rc/).
+A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/), based on a concept of a two-panel file manager like Total Commander or Far Manager.
+
+Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)), which are sent to `rclone rcd` using [rc API](https://rclone.org/rc/).
 
 ![rclone rc GUI](/screenshot.png?raw=true)
 
