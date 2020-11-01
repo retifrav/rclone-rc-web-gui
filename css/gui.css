@@ -240,3 +240,13 @@ pre {
 #currentTransfersBody img {
     cursor: pointer;
 }
+
+.path-folder {
+    display: flex;
+    justify-content: space-between;
+}
+
+.path-folder > input {
+    flex-grow: 1;
+    margin: 1px;
+}

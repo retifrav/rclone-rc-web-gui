@@ -160,7 +160,8 @@ function openPath(path, filesPanelID)
     //console.groupEnd();
 
     panelsPaths[filesPanelID] = path;
-
+    document.querySelector("#" + filesPanelID).parentElement.parentElement.querySelector(".path-folder>input").value = path
+    
     let div = ""
         .concat(`<div class='fileLine folderLine'
             onclick="openPath('${basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'")}', '${filesPanelID}');">`)
@@ -614,4 +615,10 @@ function createFolderClicked(btn, filesPanelID)
         alert("Cannot create a folder in nowhere. Choose a remote first.");
         return;
     }
+}
+
+function goClicked(btn, panelID)
+{
+    let path = btn.parentElement.querySelector("input").value
+    openPath(path, panelID)
 }
