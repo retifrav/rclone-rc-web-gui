@@ -32,14 +32,14 @@ More details in my [blog post](https://retifrav.github.io/blog/2019/12/26/applet
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI, so big thanks to its creator. But I am not entirely happy with it, as it has several inconveniences:
+This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several inconveniences:
 
 - no queue, so all the transfers go in parallel
 - no way to cancel a transfer
 - the GUI feels a bit overloaded and has several non-functioning controls
 - transfers list has no sorting, so its elements "jump" from position to position on every view update
 
-My goal is to improve these points. Although cancelling a transfer turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) that originates in the `rclone` itself.
+So my goal was to improve these points. Although cancelling a transfer turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) that originates in the `rclone` itself.
 
 At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
 
