@@ -1,20 +1,24 @@
 # Web GUI for rclone rc
 
+<!-- MarkdownTOC -->
+
 - [About](#about)
-  - [Use-case](#use-case)
-  - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
+    - [Use-case](#use-case)
+    - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [How to use it](#how-to-use-it)
-  - [Launch](#launch)
-    - [Possible issues](#possible-issues)
-      - [Wrong username/password](#wrong-usernamepassword)
-      - [CORS header does not match](#cors-header-does-not-match)
-  - [Configuration](#configuration)
-  - [Queue](#queue)
-  - [Search](#search)
-- [Dependencies](#dependencies)
+    - [Launch](#launch)
+        - [Possible issues](#possible-issues)
+            - [Wrong username/password](#wrong-usernamepassword)
+            - [CORS header does not match](#cors-header-does-not-match)
+    - [Configuration](#configuration)
+    - [Queue](#queue)
+    - [Search](#search)
 - [Support](#support)
-- [License](#license)
 - [3rd-party](#3rd-party)
+    - [Dependencies](#dependencies)
+    - [Resources](#resources)
+
+<!-- /MarkdownTOC -->
 
 ## About
 
@@ -26,22 +30,22 @@ Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozi
 
 ### Use-case
 
-I have a remote seedbox and a local media server (*running on Raspberry Pi*). Naturally, I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that (*thanks to its `rc` mode*), it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
+I have a remote seedbox and a local media server (*running on Raspberry Pi*), and I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that, thanks to its `rc` mode, it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
 
-More details in my [blog post](https://retifrav.github.io/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
+More details about the use-case are in [this article](https://retifrav.github.io/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several inconveniences:
+This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least it had back in March 2020*) several inconveniences:
 
-- no queue, so all the transfers go in parallel
-- no way to cancel a transfer
-- the GUI feels a bit overloaded and has several non-functioning controls
-- transfers list has no sorting, so its elements "jump" from position to position on every view update
+- no queue, so all the transfers go in parallel;
+- no way to cancel a transfer;
+- the GUI feels a bit overloaded and has several non-functioning controls;
+- transfers list has no sorting, so its elements "jump" one position to another on every view update.
 
 So my goal was to improve these points. Although cancelling a transfer turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) that originates in the `rclone` itself.
 
-At the same time, the nice-looking part has the lowest priority for me, so expect the GUI to be very basic.
+At the same time, the nice-looking part had the lowest priority for me, so expect the GUI to be very basic.
 
 ## How to use it
 
@@ -122,10 +126,10 @@ var remotes = {
 
 Here:
 
-- we have 2 remotes: `disk` and `seedbox`
-- both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel
-- `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space
-  - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`)
+- we have 2 remotes: `disk` and `seedbox`;
+- both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel;
+- `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
+  - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
 
 ### Queue
 
@@ -133,15 +137,11 @@ All operations go to the queue and processed one at a time.
 
 Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
 
-That also means that once you close the browser (*or just this tab*), the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` ([_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)).
+That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` ([_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)).
 
 ### Search
 
-Having a long list of files, one would like to be able to quickly find a file of interest. But since the web-browser is perfectly capable of doing so with its standard `CTRL/CMD + F` searching functionality, I see no point in implementing my own.
-
-## Dependencies
-
-There are none. The project doesn't use any external libraries/frameworks. It's just plain HTML/CSS/JS.
+Having a long list of files, one would like to be able to quickly find a file of interest. But as web-browser's own search (`CTRL/CMD + F`) already works fine, I see no point in implementing my own search.
 
 ## Support
 
@@ -151,11 +151,13 @@ Also note, that since I use Mozilla Firefox as my main web-browser, that's where
 
 If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues).
 
-## License
-
-The project is licensed under [MIT terms](/LICENSE).
-
 ## 3rd-party
+
+### Dependencies
+
+The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS.
+
+### Resources
 
 - icons are from [Bootstrap Icons](https://icons.getbootstrap.com/)
 - favicon is from [rclone website](https://rclone.org/)
