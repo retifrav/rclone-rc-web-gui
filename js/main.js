@@ -91,7 +91,11 @@ function initialize()
 
 function sendRequestToRclone(query, params, fn)
 {
-    let url = rcloneHost.concat(":", rclonePort, query);
+    let url = rcloneHost.concat(
+        rclonePort.length ? ":" : "", // in case of http://some.host/rclone/core/stats behind reverse proxy
+        rclonePort,
+        query
+    );
     let xhr = new XMLHttpRequest();
     xhr.open("POST", url);
     xhr.setRequestHeader("Authorization", "Basic " + btoa(rcloneUser.concat(":", rclonePass)));
