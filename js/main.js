@@ -8,7 +8,66 @@ transfersQueue = []
 var spanOK = "<span style='color:green;'>OK</span>";
 var spanFAIL = "<span style='color:red;'>error</span>";
 
-initialize();
+let settingsOpen = false;
+const settingsBlock = document.getElementById("settings");
+const settingsChbxBolling = document.getElementById("chbx-polling");
+const manualRefresh = document.getElementById("manualRefresh");
+const btnManualRefresh = document.getElementById("btn-manualRefresh");
+
+window.onload = () =>
+{
+    initialize();
+
+    settingsChbxBolling.checked = timerRefreshEnabled;
+
+    document.getElementById("btn-settings").addEventListener(
+        "click",
+        function()
+        {
+            if (settingsOpen === false)
+            {
+                this.classList.add("img-rotated");
+                settingsBlock.style.display = "block";
+            }
+            else
+            {
+                settingsBlock.style.display = "none";
+            }
+            settingsOpen = !settingsOpen;
+        }
+    );
+
+    settingsChbxBolling.addEventListener(
+        "change",
+        function()
+        {
+            if (this.checked === true)
+            {
+                timerRefreshEnabled = true;
+                manualRefresh.style.display = "none";
+            }
+            else
+            {
+                timerRefreshEnabled = false;
+                manualRefresh.style.display = "flex";
+            }
+        }
+    );
+
+    btnManualRefresh.addEventListener("click", refreshView);
+
+    window.setInterval(
+        function()
+        {
+            if (timerRefreshEnabled === true)
+            {
+                refreshView();
+            }
+        },
+        timerRefreshView
+    );
+    window.setInterval(function () { processQueue(); }, timerProcessQueue);
+}
 
 function initialize()
 {
@@ -29,9 +88,6 @@ function initialize()
 
     refreshView();
 }
-
-window.setInterval(function () { refreshView(); }, timerRefreshView);
-window.setInterval(function () { processQueue(); }, timerProcessQueue);
 
 function sendRequestToRclone(query, params, fn)
 {

@@ -14,6 +14,20 @@
 <body>
     <div class="body-block header">
         <h1>rclone rc GUI</h1>
+        <input id="btn-settings" type="image" class="icon"
+            src="/images/gear-wide-connected.svg" title="Show/hide settings">
+    </div>
+
+    <div id="settings">
+        <h4 style="margin:0 0 10px 0;">Settings</h4>
+
+        <div class="settings-item">
+            <input id="chbx-polling" type="checkbox">
+            <label for="chbx-polling">auto-refreshing the view</label>
+        </div>
+        <div id="manualRefresh" class="settings-item" style="display:none;">
+            <button id="btn-manualRefresh" type="button">Refresh the view manually</button>
+        </div>
     </div>
 
     <div class="body-block">
@@ -73,7 +87,7 @@
                     <div class="panelFilesContainer">
                         <div id="leftPanelFiles" class="filesList">
                             <div class="fileLine">
-                                <img class='icon' src="/images/file.svg">
+                                <img class="icon" src="/images/file.svg">
                                 <p>..</p>
                             </div>
                         </div>
@@ -108,7 +122,7 @@
                     <div class="panelFilesContainer">
                         <div id="rightPanelFiles" class="filesList">
                             <div class="fileLine">
-                                <img class='icon' src="/images/file.svg">
+                                <img class="icon" src="/images/file.svg">
                                 <p>..</p>
                             </div>
                         </div>

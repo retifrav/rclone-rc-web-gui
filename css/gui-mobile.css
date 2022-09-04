@@ -10,9 +10,13 @@
         padding: 10px;
     }
 
-    img.icon {
+    .icon {
         width: 1em;
         height: 1em;
+    }
+    .header > .icon {
+        width: 1.5em;
+        height: 1.5em;
     }
 
     .controls,
@@ -25,5 +29,15 @@
     }
     .lastButtons > * {
         margin: 2px 0;
+    }
+
+    /* --- settings panel --- */
+
+    #settings {
+        padding: 10px 15px;
+    }
+
+    .settings-item {
+        margin-top: 5px;
     }
 }

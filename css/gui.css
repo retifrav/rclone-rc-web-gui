@@ -1,6 +1,6 @@
 html {
     box-sizing: border-box;
-    background: #e5e5e5;
+    background-color: #e5e5e5;
 }
 *,
 *:before,
@@ -37,10 +37,12 @@ h6 { font-size: 0.7em; }
     margin-bottom: 0;
 }
 .header, .footer {
-    background: #ebebeb;
+    background-color: #ebebeb;
 }
 .header {
-    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .footer {
     display: flex;
@@ -116,14 +118,14 @@ td > img {
     width: 1.2em;
     height: 1.2em;
 }
-img.icon {
+.icon {
     width: 1.5em;
     height: 1.5em;
 }
 
 pre {
     padding: 8px 12px;
-    background: #ebebeb;
+    background-color: #ebebeb;
     border-radius: 0.25em;
 }
 
@@ -178,14 +180,14 @@ pre {
     align-items: center;
     padding: 10px;
 }
-.fileLine > img.icon {
+.fileLine > .icon {
     flex-shrink: 0;
 }
 .fileLine > p {
     margin: 0 0 0 10px;
 }
 .folderLine:hover {
-    background: #ebebeb;
+    background-color: #ebebeb;
     cursor: pointer;
 }
 
@@ -240,3 +242,36 @@ pre {
 #currentTransfersBody img {
     cursor: pointer;
 }
+
+/* --- settings panel --- */
+
+#settings {
+    display: none;
+    background-color: #ebebeb;
+    border: 1px solid gray;
+    padding: 15px 20px;
+}
+
+#settings * {
+    color: #4c4c4c;
+}
+#settings *:not(h1, h2, h3, h4, h5, h6) {
+    font-size: 0.9em;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+.settings-item > input[type="checkbox"] {
+    width: 1.25em;
+    height: 1.25em;
+}
+.settings-item > label {
+    margin-left: 4px;
+}
+.settings-item > button {
+    padding: 4px 8px;
+}
+

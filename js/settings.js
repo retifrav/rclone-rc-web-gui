@@ -22,5 +22,6 @@ var remotes = {
     }
 }
 
+timerRefreshEnabled = true;
 timerRefreshView = 2000;
 timerProcessQueue = 5000;
