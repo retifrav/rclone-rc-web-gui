@@ -19,6 +19,7 @@ function getIconType(mimeType)
         case "audio/aac":
         case "audio/mpeg":
         case "audio/ac3":
+        case "audio/flac":
             return "music-note-beamed.svg";
         case "image/jpeg":
         case "image/png":
