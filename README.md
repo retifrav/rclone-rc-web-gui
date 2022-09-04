@@ -55,30 +55,30 @@ First of all, set your `rclone rcd` host, port, username and password in `/js/se
 
 Start `rclone` remote control daemon and point it to the folder with web GUI:
 
-```
-cd /path/to/web/GUI
+``` sh
+$ cd /path/to/web/gui
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
 ```
 
 or
 
-```
-$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/GUI
+``` sh
+$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/gui
 ```
 
 I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to folder operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
 
-If you want to serve web GUI files with a proper web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
+If you want to serve web GUI files with a web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
 
-```
-$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:8000
+``` sh
+$ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:5572 /path/to/web/gui
 ```
 
 You might also want to create a service for running `rclone` daemon.
 
 #### Possible issues
 
-When you serve GUI with some web-server and not `rclone` daemon (*so it's a different origin*), you can get the following errors.
+In certain situations you might get [different origins](https://decovar.dev/blog/2019/10/10/the-fuck-is-this-cors/) between server and client, mostly when serving web GUI from a remote host, but that can also happen while testing it on your local host.
 
 ##### Wrong username/password
 
@@ -100,9 +100,11 @@ If you get
 
 or
 
-> Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1:8000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The 'Access-Control-Allow-Origin' header has a value 'http://127.0.0.1:5572/' that is not equal to the supplied origin.
+> Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1:5572' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The 'Access-Control-Allow-Origin' header has a value 'http://127.0.0.1:5572/' that is not equal to the supplied origin.
 
-check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:8000` option.
+check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
+
+Also note that `rclone` might automatically open the web GUI (*right after you execute `rclone rcd`*) with <http://localhost:5572> location, and that will of course cause a CORS mismatch. You'll need to open exactly <http://127.0.0.1:5572>, if that is what you've set in `--rc-allow-origin`.
 
 ### Configuration
 
@@ -110,7 +112,7 @@ There are several settings available for you to configure in `/js/settings.js`.
 
 Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
 
-```
+``` js
 var remotes = {
     "disk": {
         "startingFolder": "media/somedisk/downloads",
