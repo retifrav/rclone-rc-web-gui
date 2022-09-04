@@ -220,7 +220,7 @@ function openPath(path, filesPanelID)
     let div = ""
         .concat(`<div class='fileLine folderLine'
             onclick="openPath('${basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'")}', '${filesPanelID}');">`)
-        .concat("<img class='icon' src='/images/file.svg'>")
+        .concat("<img class='icon' src='./images/file.svg'>")
         .concat("<p>..</p>")
         .concat("</div>");
     filesPanel.appendChild(htmlToElement(div));
@@ -262,7 +262,7 @@ function openPath(path, filesPanelID)
             {
                 div = div.concat(`<div class='fileLine' data-type='file' data-path="${fileNamePath}">`)
             }
-            div = div.concat("<img class='icon' src='/images/", getIconType(listOfFilesAndFolders[r]["MimeType"]), "'>")
+            div = div.concat("<img class='icon' src='./images/", getIconType(listOfFilesAndFolders[r]["MimeType"]), "'>")
                 .concat("<p>", fileName, "</p>")
                 .concat("</div></div>");
             filesPanel.appendChild(htmlToElement(div));
@@ -305,7 +305,7 @@ function updateCurrentTransfers(currentTransfers)
                 <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
                 <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
                 <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
-                <td><img src="/images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');"></td>
+                <td><img src="./images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');"></td>
                 </tr>`;
             currentTransfersBody.appendChild(htmlToElement(tr));
         }
@@ -316,7 +316,7 @@ function updateCurrentTransfers(currentTransfers)
         let tr = `<tr style="font-style:italic;">
             <td><code>${transfersQueue[q].operationType}</code></td>
             <td colspan="4" class="canBeLong">${transfersQueue[q].dataPath}</td>
-            <td><img src="/images/x-square.svg" onclick="removeFromQueue(this, ${q});"></td>
+            <td><img src="./images/x-square.svg" onclick="removeFromQueue(this, ${q});"></td>
             </tr>`;
         currentTransfersBody.appendChild(htmlToElement(tr));
     }
