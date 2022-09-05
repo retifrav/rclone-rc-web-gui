@@ -3,13 +3,14 @@
 <!-- MarkdownTOC -->
 
 - [About](#about)
-    - [Use-case](#use-case)
+    - [An example use-case](#an-example-use-case)
     - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [How to use it](#how-to-use-it)
     - [Launch](#launch)
         - [Possible issues](#possible-issues)
             - [Wrong username/password](#wrong-usernamepassword)
             - [CORS header does not match](#cors-header-does-not-match)
+        - [An example deployment on a GNU/Linux server](#an-example-deployment-on-a-gnulinux-server)
     - [Configuration](#configuration)
     - [Queue](#queue)
     - [Search](#search)
@@ -28,7 +29,7 @@ Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozi
 
 ![rclone rc GUI](/screenshot.png?raw=true)
 
-### Use-case
+### An example use-case
 
 I have a remote seedbox and a local media server (*running on Raspberry Pi*), and I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that, thanks to its `rc` mode, it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
 
@@ -105,6 +106,107 @@ or
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
 Also note that `rclone` might automatically open the web GUI (*right after you execute `rclone rcd`*) with <http://localhost:5572> location, and that will of course cause a CORS mismatch. You'll need to open exactly <http://127.0.0.1:5572>, if that is what you've set in `--rc-allow-origin`.
+
+#### An example deployment on a GNU/Linux server
+
+- `rclone rcd` is run as a systemd service
+- NGINX is used as a reverse proxy
+- web GUI is available via custom path such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`
+
+Get the package, for example with Git:
+
+``` sh
+$ cd /var/www
+$ git clone https://github.com/retifrav/rclone-rc-web-gui.git
+$ sudo chown -R www-data:www-data /var/www/rclone-rc-web-gui /var/www/html
+```
+
+Create a systemd service:
+
+``` sh
+$ sudo nano /etc/systemd/system/rclone-gui.service
+```
+``` ini
+[Unit]
+Description=rclone web GUI
+
+[Service]
+WorkingDirectory=/media/
+ExecStart=rclone rcd --rc-web-gui-no-open-browser --rc-addr 127.0.0.1:8004 --rc-allow-origin http://IP-ADDRESS-OR-DOMAIN --rc-htpasswd /home/SOME-USER/.htpasswd --transfers 1 --multi-thread-streams 1 /var/www/rclone-rc-web-gui/
+Restart=always
+RestartSec=10
+SyslogIdentifier=rclonewebgui
+User=SOME-USER
+
+[Install]
+WantedBy=multi-user.target
+```
+
+here:
+
+- `http://IP-ADDRESS-OR-DOMAIN` - the requests will be coming from the same server, so you need to provide here either the IP address of that server or its domain, if you have one. In my case it's just a server in my local network, so I've set this to `http://192.168.1.11` (*static MAC-binded IP address of my server*);
+- `SOME-USER` - a user from which `rclone` will be run, perhaps it's a good idea to create a new user for this purpose and limit its access to just one folder such as `/media/`;
+- `WorkingDirectory=/media/` - if you'll have your local filesystem as one of the rclone's remote too, then `/media/` would be a starting folder. For me that's where I mount external disks, so it makes sense;
+- `.htpasswd` - a slightly better security, instead of providing credentials in plain text they are stored [somewhat encrypted](https://github.com/retifrav/scraps/blob/master/_linux/index.md#basic-authentication).
+
+Enable and start the service:
+
+``` sh
+$ sudo systemctl enable rclone-gui.service
+$ sudo systemctl start rclone-gui.service
+```
+
+NGINX configuration:
+
+``` sh
+$ sudo nano /etc/nginx/sites-enabled/default
+```
+``` nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+    
+    # a "parent" website or some welcome/home page
+    # that is what will open on http://IP-ADDRESS-OR-DOMAIN/
+    root /var/www/html;
+
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # rclone rc web GUI, will open on http://IP-ADDRESS-OR-DOMAIN/rclone/
+    location /rclone/ {
+        proxy_pass http://localhost:8004/;
+    }
+}
+```
+``` sh
+$ sudo systemctl restart nginx.service
+```
+
+Set the credentials (*the same ones that are in `/home/SOME-USER/.htpasswd`*), adjust the host value and set the empty port:
+
+``` sh
+$ sudo -u www-data nano /var/www/rclone-rc-web-gui/js/settings.js
+```
+``` js
+var rcloneHost = "http://IP-ADDRESS-OR-DOMAIN/rclone";
+var rclonePort = "";
+var rcloneUser = "USERNAME-FROM-HTPASSWD";
+var rclonePass = "PASSWORD-FROM-HTPASSWD";
+```
+
+Add some remotes to rclone config, if you haven't yet:
+
+``` sh
+$ rclone config
+```
+
+Now you should be able to access the web GUI on <http://IP-ADDRESS-OR-DOMAIN/rclone/>.
 
 ### Configuration
 
