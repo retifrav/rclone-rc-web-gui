@@ -196,16 +196,18 @@ function openPath(path, filesPanelID)
 
     if (path.trim() === "") { return; }
 
-    let filesPanel = document.getElementById(filesPanelID);
+    const filesPanel = document.getElementById(filesPanelID);
     while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
 
     filesPanel.parentNode.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
 
-    //let firstSlash = path.indexOf("/") + 1;
-    let lastSlash = path.lastIndexOf("/") + 1;
-    let basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
-    //let currentPath = path.substring(firstSlash, path.length);
-    let nextPath = lastSlash !== 0 ? path.substring(lastSlash, path.length) : "";
+    //const firstSlash = path.indexOf("/") + 1;
+    const lastSlash = path.lastIndexOf("/") + 1;
+    const basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
+    //const currentPath = path.substring(firstSlash, path.length);
+    const nextPath = lastSlash !== 0 ? path.substring(lastSlash, path.length) : "";
+    const oneLevelUpPath = basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'");
+    const pathHint = path.replace(/^.*:/, "");
 
     //console.group("Paths");
     // console.debug("Last slash", lastSlash);
@@ -218,10 +220,13 @@ function openPath(path, filesPanelID)
     panelsPaths[filesPanelID] = path;
 
     let div = ""
-        .concat(`<div class='fileLine folderLine'
-            onclick="openPath('${basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'")}', '${filesPanelID}');">`)
+        .concat(
+            `<div class='fileLine folderLine'
+            onclick="openPath('${oneLevelUpPath}', '${filesPanelID}');">`
+        )
         .concat("<img class='icon' src='./images/file.svg'>")
-        .concat("<p>..</p>")
+        .concat(`<p><span class="path-hint">${pathHint == "/" ? "" : pathHint}/</span>..</p>`)
+        //.concat(`<img src="./images/info-square.svg" style="margin-left:auto;" title="${oneLevelUpPath}">`)
         .concat("</div>");
     filesPanel.appendChild(htmlToElement(div));
     filesPanel.appendChild(htmlToElement("<div class='loadingAnimation'></div>"));

@@ -1,4 +1,4 @@
-var guiVersion = "0.1.2";
+const guiVersion = "0.1.2";
 
 var rcloneHost = "http://127.0.0.1:5572";
 var rcloneUser = "YOUR-USERNAME";

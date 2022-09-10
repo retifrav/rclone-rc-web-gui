@@ -190,6 +190,9 @@ pre {
     background-color: #ebebeb;
     cursor: pointer;
 }
+.fileLine > p > span.path-hint {
+    color: gray;
+}
 
 .filesPanelHeader {
     display: flex;
