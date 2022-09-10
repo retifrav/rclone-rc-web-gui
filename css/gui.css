@@ -227,12 +227,21 @@ pre {
 .create-folder {
     display: flex;
 }
+.controls > *,
+.create-folder > *,
+.lastButtons > * {
+    margin-left: 4px;
+}
+.controls > *:first-child,
+.create-folder > *:first-child,
+.lastButtons > *:first-child {
+    margin-left: 0;
+}
 .create-folder {
     display: none;
 }
 .create-folder > input {
     flex-grow: 1;
-    margin: 1px;
 }
 .lastButtons {
     display: flex;

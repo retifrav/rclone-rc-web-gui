@@ -22,11 +22,8 @@
     .controls,
     .lastButtons {
         flex-direction: column;
-        margin: -2px;
     }
-    .controls > * {
-        margin: 2px;
-    }
+    .controls > *,
     .lastButtons > * {
         margin: 2px 0;
     }
