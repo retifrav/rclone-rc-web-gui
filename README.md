@@ -188,14 +188,13 @@ server {
 $ sudo systemctl restart nginx.service
 ```
 
-Set the credentials (*the same ones that are in `/home/SOME-USER/.htpasswd`*), adjust the host value and set the empty port:
+Set the credentials (*the same ones that are in `/home/SOME-USER/.htpasswd`*) and adjust the host value:
 
 ``` sh
 $ sudo -u www-data nano /var/www/rclone-rc-web-gui/js/settings.js
 ```
 ``` js
-var rcloneHost = "http://IP-ADDRESS-OR-DOMAIN/rclone";
-var rclonePort = "";
+var rcloneHost = "http://IP-ADDRESS-OR-DOMAIN/rclone"; // using port 80, so no need to set it
 var rcloneUser = "USERNAME-FROM-HTPASSWD";
 var rclonePass = "PASSWORD-FROM-HTPASSWD";
 ```
