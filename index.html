@@ -13,17 +13,23 @@
 </head>
 <body>
     <div class="body-block header">
-        <h1>rclone rc GUI</h1>
+        <h1 style="flex-grow:1;">rclone rc GUI</h1>
+        <img id="indicator-gui-frozen" class="icon" src="./images/snow2.svg"
+            title="The GUI is frozen in time and isn't updating">
         <input id="btn-settings" type="image" class="icon"
             src="./images/gear-wide-connected.svg" title="Show/hide settings">
     </div>
 
     <div id="settings">
-        <h4 style="margin:0 0 10px 0;">Settings</h4>
+        <h4 style="margin:0 0 15px 0;">Settings</h4>
 
         <div class="settings-item">
             <input id="chbx-polling" type="checkbox">
             <label for="chbx-polling">auto-refreshing the view</label>
+        </div>
+        <div id="inputRefresh" class="settings-item">
+            <input id="input-refresh-view" type="number" min="1000" max="120000" value="2000" step="1000">
+            <label for="input-refresh-view">view is refreshed every <b id="input-refresh-view-value"></b> seconds</label>
         </div>
         <div id="manualRefresh" class="settings-item" style="display:none;">
             <button id="btn-manualRefresh" type="button">Refresh the view manually</button>

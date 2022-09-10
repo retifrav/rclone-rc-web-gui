@@ -44,6 +44,12 @@ h6 { font-size: 0.7em; }
     justify-content: space-between;
     align-items: center;
 }
+.header > * {
+    margin-left: 10px;
+}
+.header > *:first-child {
+    margin: 0;
+}
 .footer {
     display: flex;
     justify-content: space-between;
@@ -121,6 +127,10 @@ td > img {
 .icon {
     width: 1.5em;
     height: 1.5em;
+}
+.header > .icon {
+    width: 2em;
+    height: 2em;
 }
 
 pre {
@@ -253,6 +263,11 @@ pre {
 
 #currentTransfersBody img {
     cursor: pointer;
+}
+
+#indicator-gui-frozen {
+    display: none;
+    cursor: help;
 }
 
 /* --- settings panel --- */

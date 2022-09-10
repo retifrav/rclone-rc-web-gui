@@ -13,6 +13,10 @@ const settingsBlock = document.getElementById("settings");
 const settingsChbxBolling = document.getElementById("chbx-polling");
 const manualRefresh = document.getElementById("manualRefresh");
 const btnManualRefresh = document.getElementById("btn-manualRefresh");
+const indicatorGuiFrozen = document.getElementById("indicator-gui-frozen");
+const inputRefreshView = document.getElementById("input-refresh-view");
+const inputRefresh = document.getElementById("inputRefresh");
+const inputRefreshViewValue = document.getElementById("input-refresh-view-value");
 
 window.onload = () =>
 {
@@ -26,7 +30,6 @@ window.onload = () =>
         {
             if (settingsOpen === false)
             {
-                this.classList.add("img-rotated");
                 settingsBlock.style.display = "block";
             }
             else
@@ -44,29 +47,69 @@ window.onload = () =>
             if (this.checked === true)
             {
                 timerRefreshEnabled = true;
+                indicatorGuiFrozen.style.display = "none";
                 manualRefresh.style.display = "none";
+                inputRefresh.style.display = "flex";
             }
             else
             {
                 timerRefreshEnabled = false;
+                indicatorGuiFrozen.style.display = "block";
+                inputRefresh.style.display = "none";
                 manualRefresh.style.display = "flex";
             }
         }
     );
 
-    btnManualRefresh.addEventListener("click", refreshView);
-
-    window.setInterval(
+    inputRefreshView.addEventListener(
+        "change",
         function()
         {
-            if (timerRefreshEnabled === true)
+            const val = parseInt(this.value);
+
+            if(Number.isNaN(val))
             {
-                refreshView();
+                alert("This value must be a number.");
+                inputRefreshView.value = timerRefreshView;
+                return;
             }
-        },
+
+            if(val < 1000 || val > 120000)
+            {
+                alert("This value can't be less than 1 000 or greater than 120 000.");
+                inputRefreshView.value = timerRefreshView;
+                return;
+            }
+
+            timerRefreshView = val;
+            inputRefreshViewValue.textContent = timerRefreshView / 1000;
+
+            window.clearInterval(timerRefreshViewInterval);
+            timerRefreshViewInterval = window.setInterval(
+                timerRefreshViewFunction,
+                timerRefreshView
+            );
+        }
+    );
+
+    btnManualRefresh.addEventListener("click", refreshView);
+
+    timerRefreshViewInterval = window.setInterval(
+        timerRefreshViewFunction,
         timerRefreshView
     );
-    window.setInterval(function () { processQueue(); }, timerProcessQueue);
+    timerProcessQueueInterval = window.setInterval(
+        processQueue,
+        timerProcessQueue
+    );
+}
+
+function timerRefreshViewFunction()
+{
+    if (timerRefreshEnabled === true)
+    {
+        refreshView();
+    }
 }
 
 function initialize()
@@ -85,6 +128,9 @@ function initialize()
         updateRemotesSelects("leftPanelRemote", rez);
         updateRemotesSelects("rightPanelRemote", rez);
     });
+
+    inputRefreshView.value = timerRefreshView;
+    inputRefreshViewValue.textContent = timerRefreshView / 1000;
 
     refreshView();
 }

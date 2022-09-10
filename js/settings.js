@@ -1,4 +1,4 @@
-const guiVersion = "0.1.2";
+const guiVersion = "0.2.0";
 
 var rcloneHost = "http://127.0.0.1:5572";
 var rcloneUser = "YOUR-USERNAME";
@@ -21,6 +21,8 @@ var remotes = {
     }
 }
 
-timerRefreshEnabled = true;
-timerRefreshView = 2000;
-timerProcessQueue = 5000;
+var timerRefreshEnabled = true;
+var timerRefreshView = 2000;
+var timerRefreshViewInterval = null;
+var timerProcessQueue = 5000;
+var timerProcessQueueInterval = null;
