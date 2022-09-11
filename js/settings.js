@@ -22,7 +22,7 @@ var remotes = {
 }
 
 var timerRefreshEnabled = true;
-var timerRefreshView = 2000;
+var timerRefreshView = 2; // seconds
 var timerRefreshViewInterval = null;
-var timerProcessQueue = 5000;
+var timerProcessQueue = 5; // seconds
 var timerProcessQueueInterval = null;

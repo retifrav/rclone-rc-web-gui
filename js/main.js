@@ -16,7 +16,6 @@ const btnManualRefresh = document.getElementById("btn-manualRefresh");
 const indicatorGuiFrozen = document.getElementById("indicator-gui-frozen");
 const inputRefreshView = document.getElementById("input-refresh-view");
 const inputRefresh = document.getElementById("inputRefresh");
-const inputRefreshViewValue = document.getElementById("input-refresh-view-value");
 
 window.onload = () =>
 {
@@ -74,20 +73,19 @@ window.onload = () =>
                 return;
             }
 
-            if(val < 1000 || val > 120000)
+            if(val < 1 || val > 120)
             {
-                alert("This value can't be less than 1 000 or greater than 120 000.");
+                alert("This value can't be less than 1 or greater than 120.");
                 inputRefreshView.value = timerRefreshView;
                 return;
             }
 
             timerRefreshView = val;
-            inputRefreshViewValue.textContent = timerRefreshView / 1000;
 
             window.clearInterval(timerRefreshViewInterval);
             timerRefreshViewInterval = window.setInterval(
                 timerRefreshViewFunction,
-                timerRefreshView
+                timerRefreshView * 1000
             );
         }
     );
@@ -96,11 +94,11 @@ window.onload = () =>
 
     timerRefreshViewInterval = window.setInterval(
         timerRefreshViewFunction,
-        timerRefreshView
+        timerRefreshView * 1000
     );
     timerProcessQueueInterval = window.setInterval(
         processQueue,
-        timerProcessQueue
+        timerProcessQueue * 1000
     );
 }
 
@@ -130,7 +128,6 @@ function initialize()
     });
 
     inputRefreshView.value = timerRefreshView;
-    inputRefreshViewValue.textContent = timerRefreshView / 1000;
 
     refreshView();
 }

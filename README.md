@@ -105,7 +105,7 @@ or
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
-Also note that `rclone` might automatically open the web GUI (*right after you execute `rclone rcd`*) with <http://localhost:5572> location, and that will of course cause a CORS mismatch. You'll need to open exactly <http://127.0.0.1:5572>, if that is what you've set in `--rc-allow-origin`.
+Also note that without `--rc-web-gui-no-open-browser` provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneHost` to `http://localhost:5572` in `settings.js`.
 
 #### An example deployment on a GNU/Linux server
 

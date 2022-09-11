@@ -28,8 +28,9 @@
             <label for="chbx-polling">auto-refreshing the view</label>
         </div>
         <div id="inputRefresh" class="settings-item">
-            <input id="input-refresh-view" type="number" min="1000" max="120000" value="2000" step="1000">
-            <label for="input-refresh-view">view is refreshed every <b id="input-refresh-view-value"></b> seconds</label>
+            <label for="input-refresh-view">View is refreshed every</label>
+            <input id="input-refresh-view" type="number" min="1" max="120" value="2" step="1" style="width:4em;">
+            <label for="input-refresh-view">seconds</label>
         </div>
         <div id="manualRefresh" class="settings-item" style="display:none;">
             <button id="btn-manualRefresh" type="button">Refresh the view manually</button>

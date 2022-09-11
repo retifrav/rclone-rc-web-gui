@@ -43,6 +43,10 @@ h6 { font-size: 0.7em; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid gray;
+}
+.footer {
+    border-top: 1px solid gray;
 }
 .header > * {
     margin-left: 10px;
@@ -274,8 +278,8 @@ pre {
 
 #settings {
     display: none;
-    background-color: #ebebeb;
-    border: 1px solid gray;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid gray;
     padding: 15px 20px;
 }
 
@@ -295,8 +299,11 @@ pre {
     width: 1.25em;
     height: 1.25em;
 }
-.settings-item > label {
+.settings-item > * {
     margin-left: 4px;
+}
+.settings-item > *:first-child {
+    margin-left: 0;
 }
 .settings-item > button {
     padding: 4px 8px;
