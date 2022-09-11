@@ -10,7 +10,7 @@ var spanFAIL = "<span style='color:red;'>error</span>";
 
 let settingsOpen = false;
 const settingsBlock = document.getElementById("settings");
-const settingsChbxBolling = document.getElementById("chbx-polling");
+const settingsChbxPolling = document.getElementById("chbx-polling");
 const manualRefresh = document.getElementById("manualRefresh");
 const btnManualRefresh = document.getElementById("btn-manualRefresh");
 const indicatorGuiFrozen = document.getElementById("indicator-gui-frozen");
@@ -21,7 +21,7 @@ window.onload = () =>
 {
     initialize();
 
-    settingsChbxBolling.checked = timerRefreshEnabled;
+    settingsChbxPolling.checked = timerRefreshEnabled;
 
     document.getElementById("btn-settings").addEventListener(
         "click",
@@ -39,7 +39,7 @@ window.onload = () =>
         }
     );
 
-    settingsChbxBolling.addEventListener(
+    settingsChbxPolling.addEventListener(
         "change",
         function()
         {
@@ -126,6 +126,11 @@ function initialize()
         updateRemotesSelects("leftPanelRemote", rez);
         updateRemotesSelects("rightPanelRemote", rez);
     });
+
+    if (timerRefreshEnabled === false)
+    {
+        indicatorGuiFrozen.style.display = "block";
+    }
 
     inputRefreshView.value = timerRefreshView;
 
