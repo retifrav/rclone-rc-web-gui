@@ -1,12 +1,33 @@
-function htmlToElement(html)
+type rcListItem =
 {
-    let template = document.createElement("template");
-    html = html.trim();
-    template.innerHTML = html;
-    return template.content.firstChild;
+    "Path": string,
+    "Name": string,
+    "Size": number,
+    "MimeType": string,
+    "ModTime": Date,
+    "IsDir": boolean
 }
 
-function getIconType(mimeType)
+type rcTransfer =
+{
+    "error": string,
+    "name": string,
+    "size": number,
+    "bytes": number,
+    "checked": boolean,
+    "started_at": Date,
+    "completed_at": Date,
+    "group": string
+}
+
+function htmlToElement(html: string) : HTMLElement
+{
+    let template: HTMLTemplateElement = document.createElement("template");
+    template.innerHTML = html.trim();
+    return template.content.firstChild as HTMLElement;
+}
+
+function getIconType(mimeType: string) : string
 {
     switch (mimeType)
     {
@@ -47,27 +68,26 @@ function getIconType(mimeType)
     }
 }
 
-function getHumanReadableValue(sizeInBytes, metric)
+function getHumanReadableValue(sizeInBytes: number, metric: string) : string
 {
-    let rez = 0;
-    let metricRank = "MB";
-    let sizeInMB = sizeInBytes / 1024 / 1024;
-    let sizeInGB = sizeInMB / 1024;
+    let rez: string = "0";
+    let metricRank: string = "MB";
+    let sizeInMB: number = sizeInBytes / 1024 / 1024;
+    let sizeInGB: number = sizeInMB / 1024;
     if (sizeInGB < 1)
     {
-        rez = parseFloat(sizeInMB).toFixed(2);
+        rez = sizeInMB.toFixed(2);
     }
     else
     {
         metricRank = "GB";
-        rez = parseFloat(sizeInGB).toFixed(2);
+        rez = sizeInGB.toFixed(2);
     }
-    if (isNaN(rez)) { rez = 0; }
     return `${rez} ${metricRank}${metric}`;
 }
 
-// TODO sort jobs with the same group (folder transfer)
-function sortJobs(a, b)
+// TODO: sort jobs with the same group (folder transfer)
+function sortJobs(a: rcTransfer, b: rcTransfer) : number
 {
     if (a.group === undefined || b.group === undefined) { return 0; }
 
@@ -87,20 +107,20 @@ function sortJobs(a, b)
     else { return 1; }
 }
 
-function sortFilesAndFolders(a, b)
+function sortFilesAndFolders(a: rcListItem, b: rcListItem) : number
 {
     if (a.IsDir === true && b.IsDir === false) { return -1; }
     if (a.IsDir === false && b.IsDir === true) { return 1; }
     return 0;
 }
 
-function getDestinationPath(currentFilePanel)
+function getDestinationPath(currentFilePanel: string) : string
 {
-    if (currentFilePanel == "leftPanelFiles") { return panelsPaths["rightPanelFiles"]; }
+    if (currentFilePanel === "leftPanelFiles") { return panelsPaths["rightPanelFiles"]; }
     else { return panelsPaths["leftPanelFiles"]; }
 }
 
-function panelsPathsHaveValue()
+function panelsPathsHaveValue() : boolean
 {
     if (panelsPaths["leftPanelFiles"] === "" || panelsPaths["rightPanelFiles"] === "")
     {
@@ -109,7 +129,7 @@ function panelsPathsHaveValue()
     else { return true; }
 }
 
-function getFolderOperation(operationType)
+function getFolderOperation(operationType: string) : string
 {
     switch (operationType)
     {
@@ -124,7 +144,7 @@ function getFolderOperation(operationType)
     }
 }
 
-function getFileOperation(operationType)
+function getFileOperation(operationType: string) : string
 {
     switch (operationType)
     {

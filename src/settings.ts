@@ -13,6 +13,7 @@ var asyncOperations: string[] = [
     "/operations/deletefile"
 ]
 
+// TODO: properly type this structure too
 var remotes = {
     "someExampleRemote": {
         "startingFolder": "path/to/some/path/there",
