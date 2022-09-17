@@ -5,6 +5,7 @@
 - [About](#about)
     - [An example use-case](#an-example-use-case)
     - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
+- [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launch](#launch)
         - [Possible issues](#possible-issues)
@@ -48,9 +49,28 @@ So my goal was to improve these points. ~~Although cancelling a transfer turned 
 
 Having a fancy GUI was/is the lowest priority for me, so expect the GUI to be very basic. Perhaps one could even say not basic but clean and simple.
 
+## Building
+
+You need to compile TypeScript sources to JavaScript. For that you need to have [tsc](https://www.typescriptlang.org/download) tool, which is installed with `npm`, which is installed with [Node.js](https://nodejs.org/en/download/). Yes, we all hate Node.js, but that's the easiest way I know for installing `tsc`:
+
+``` sh
+$ npm install -g typescript@latest
+```
+
+Once you have the tool, compile the sources:
+
+``` sh
+$ cd /path/to/rclone-rc-web-gui
+$ tsc --version
+$ tsc
+$ echo $?
+```
+
+Resulting JavaScript files will be put to `./js` folder. After that you can use the GUI.
+
 ## How to use it
 
-First of all, set your `rclone rcd` host, port, username and password in `/js/settings.js`. Also make sure that you have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
+First of all, set your `rclone rcd` host, port, username and password in `./js/settings.js`. Also make sure that you have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
 
 ### Launch
 
@@ -258,7 +278,7 @@ If you discover any issues/bugs, report them [here](https://github.com/retifrav/
 
 ### Dependencies
 
-The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS.
+The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS. Well actually, now it's not just JavaScript but TypeScript, so there is a requirement to have `tsc` tool for compiling TypeScript sources to JavaScript.
 
 ### Resources
 
