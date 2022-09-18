@@ -1,4 +1,7 @@
-import { panelsPaths } from "./main.js";
+export const panelsPaths: {[key: string]: string} = {
+    "leftPanelFiles": "",
+    "rightPanelFiles": ""
+}
 
 export type rcListItem =
 {

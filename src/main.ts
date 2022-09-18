@@ -1,11 +1,6 @@
 import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 
-export const panelsPaths: {[key: string]: string} = {
-    "leftPanelFiles": "",
-    "rightPanelFiles": ""
-}
-
 type QueueItem = {
     "dtAdded": Date,
     "operationType": string,
@@ -19,6 +14,13 @@ type QueueItem = {
 const transfersQueue: Array<QueueItem> = []
 
 let settingsOpen: boolean = false;
+
+const rcloneOS: HTMLSpanElement =
+    document.getElementById("rcloneOS") as HTMLSpanElement;
+const rcloneVersion: HTMLSpanElement =
+    document.getElementById("rcloneVersion") as HTMLSpanElement;
+const guiVersion: HTMLSpanElement =
+    document.getElementById("guiVersion") as HTMLSpanElement;
 
 const btnSettings: HTMLButtonElement =
     document.getElementById("btn-settings") as HTMLButtonElement;
@@ -37,13 +39,6 @@ const inputRefreshView: HTMLInputElement =
 const inputRefresh: HTMLDivElement =
     document.getElementById("inputRefresh") as HTMLDivElement;
 
-const rcloneOS: HTMLSpanElement =
-    document.getElementById("rcloneOS") as HTMLSpanElement;
-const rcloneVersion: HTMLSpanElement =
-    document.getElementById("rcloneVersion") as HTMLSpanElement;
-const guiVersion: HTMLSpanElement =
-    document.getElementById("guiVersion") as HTMLSpanElement;
-
 const currentTransfersBlock: HTMLDivElement =
     document.getElementById("currentTransfers") as HTMLDivElement;
 const currentTransfersCount: HTMLSpanElement =
@@ -57,6 +52,11 @@ const completedTransfersCount: HTMLSpanElement =
     document.getElementById("completedTransfersCount") as HTMLSpanElement;
 const completedTransfersBody: HTMLTableSectionElement =
     document.getElementById("completedTransfersBody") as HTMLTableSectionElement;
+
+const leftPanelRemote: HTMLSelectElement =
+    document.getElementById("leftPanelRemote") as HTMLSelectElement;
+const rightPanelRemote: HTMLSelectElement =
+    document.getElementById("rightPanelRemote") as HTMLSelectElement;
 
 window.onload = () =>
 {
@@ -168,8 +168,8 @@ function initialize()
     // get remotes
     sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
     {
-        updateRemotesSelects("leftPanelRemote", rez);
-        updateRemotesSelects("rightPanelRemote", rez);
+        updateRemotesSelects(leftPanelRemote, "leftPanelFiles", rez);
+        updateRemotesSelects(rightPanelRemote, "rightPanelFiles", rez);
     });
 
     if (settings.userSettings.timerRefreshEnabled === false)
@@ -238,11 +238,13 @@ function sendRequestToRclone(query: string, params: functions.rcRequest | null, 
     };
 }
 
-function updateRemotesSelects(selectID: string, optionsList: functions.rcRemotes)
+function updateRemotesSelects(
+    panelRemote: HTMLSelectElement,
+    panelFilesName: string,
+    optionsList: functions.rcRemotes
+    )
 {
-    const selectObj: HTMLSelectElement = document.getElementById(selectID) as HTMLSelectElement;
-    const selectParentNode = selectObj.parentNode!;
-    const newSelectObj: HTMLSelectElement = selectObj.cloneNode(false) as HTMLSelectElement;
+    const newSelectObj: HTMLSelectElement = panelRemote.cloneNode(false) as HTMLSelectElement;
     newSelectObj.options.add(new Option("- choose a remote -", ""));
     for (const o in optionsList["remotes"])
     {
@@ -268,10 +270,14 @@ function updateRemotesSelects(selectID: string, optionsList: functions.rcRemotes
             newSelectObj.options.add(new Option(remoteText, remote));
         }
     }
-    selectParentNode.replaceChild(newSelectObj, selectObj);
+    newSelectObj.addEventListener(
+        "change",
+        function() { remoteChanged(this, panelFilesName); }
+    );
+    panelRemote.parentNode!.replaceChild(newSelectObj, panelRemote);
 }
 
-export function remoteChanged(remotesList: HTMLSelectElement, filesPanelID: string)
+function remoteChanged(remotesList: HTMLSelectElement, filesPanelID: string)
 {
     const remote = remotesList.value;
     if (remote === "") { return; }
@@ -314,7 +320,7 @@ function openPath(path: string, filesPanelID: string)
     //console.debug("Next path:", nextPath);
     //console.groupEnd();
 
-    panelsPaths[filesPanelID] = path;
+    functions.panelsPaths[filesPanelID] = path;
 
     let div = ""
         .concat(
@@ -351,7 +357,7 @@ function openPath(path: string, filesPanelID: string)
         for (let r in listOfFilesAndFolders)
         {
             let fileName = listOfFilesAndFolders[r]["Name"];
-            let fileNamePath = panelsPaths[filesPanelID].concat("/", fileName);
+            let fileNamePath = functions.panelsPaths[filesPanelID].concat("/", fileName);
 
             let folderNamePath = basePath.concat(listOfFilesAndFolders[r]["Path"]);
 
@@ -494,13 +500,13 @@ function getCompletedTransfers()
     });
 }
 
-export function refreshFilesListing()
+function refreshFilesListing()
 {
     refreshClicked("leftPanelFiles");
     refreshClicked("rightPanelFiles");
 }
 
-export function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
+function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
 {
     cancelBtn.style.display = "none";
 
@@ -516,32 +522,32 @@ export function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
     });
 }
 
-export function removeFromQueue(removeBtn: HTMLButtonElement, q: number)
+function removeFromQueue(removeBtn: HTMLButtonElement, q: number)
 {
     removeBtn.style.display = "none";
     transfersQueue.splice(q, 1);
 }
 
-export function copyClicked(btn: HTMLButtonElement, filesPanelID: string)
+function copyClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "copy", filesPanelID);
 }
 
-export function moveClicked(btn: HTMLButtonElement, filesPanelID: string)
+function moveClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "move", filesPanelID);
 }
 
-export function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
+function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "delete", filesPanelID);
 }
 
 function refreshClicked(filesPanelID: string)
 {
-    if (panelsPaths[filesPanelID] !== "")
+    if (functions.panelsPaths[filesPanelID] !== "")
     {
-        openPath(panelsPaths[filesPanelID], filesPanelID);
+        openPath(functions.panelsPaths[filesPanelID], filesPanelID);
     }
 }
 
@@ -678,7 +684,7 @@ function copyOrMoveOperation(
             // }
             // else
             // {
-            //     openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
             // }
         });
     }
@@ -704,7 +710,7 @@ function copyOrMoveOperation(
             // }
             // else
             // {
-            //     openPath(panelsPaths[panelToUpdate], panelToUpdate);
+            //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
             // }
         });
     }
@@ -734,11 +740,11 @@ function deleteOperation(
     sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
     {
         //console.debug("Delete result:", rez);
-        //openPath(panelsPaths[_filesPanelID], _filesPanelID);
+        //openPath(functions.panelsPaths[_filesPanelID], _filesPanelID);
     });
 }
 
-export function showCreateFolder(btn: HTMLButtonElement)
+function showCreateFolder(btn: HTMLButtonElement)
 {
     const panelDiv = btn.parentNode!.parentNode!.parentNode!;
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
@@ -752,9 +758,9 @@ function hideCreateFolder(btn: HTMLButtonElement)
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 }
 
-export function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
+function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
-    const currentPath: string = panelsPaths[filesPanelID];
+    const currentPath: string = functions.panelsPaths[filesPanelID];
     if (currentPath !== "")
     {
         const folderName = (btn.parentNode!.querySelector("input") as HTMLInputElement).value.trim();
