@@ -1,10 +1,10 @@
-const guiVersion: string = "0.2.1";
+export const guiVersion: string = "0.2.1";
 
-var rcloneHost: string = "http://127.0.0.1:5572";
-var rcloneUser: string = "YOUR-USERNAME";
-var rclonePass: string = "YOUR-PASSWORD";
+export var rcloneHost: string = "http://127.0.0.1:5572";
+export var rcloneUser: string = "YOUR-USERNAME";
+export var rclonePass: string = "YOUR-PASSWORD";
 
-var asyncOperations: string[] = [
+export const asyncOperations: string[] = [
     "/sync/copy",
     "/sync/move",
     "/operations/purge",
@@ -13,8 +13,12 @@ var asyncOperations: string[] = [
     "/operations/deletefile"
 ]
 
-// TODO: properly type this structure too
-var remotes = {
+type Remote = {
+    startingFolder: string,
+    canQueryDisk: boolean,
+    pathToQueryDisk: string
+}
+export const remotes: {[key: string]: Remote} = {
     "someExampleRemote": {
         "startingFolder": "path/to/some/path/there",
         "canQueryDisk": true,
@@ -22,8 +26,17 @@ var remotes = {
     }
 }
 
-var timerRefreshEnabled: boolean = true;
-var timerRefreshView: number = 2; // seconds
-var timerRefreshViewInterval: ReturnType<typeof setInterval> | null = null;
-var timerProcessQueue: number = 5; // seconds
-var timerProcessQueueInterval: ReturnType<typeof setInterval> | null = null;
+type UserSettings = {
+    timerRefreshEnabled: boolean,
+    timerRefreshView: number,
+    timerRefreshViewInterval: ReturnType<typeof setInterval> | undefined,
+    timerProcessQueue: number,
+    timerProcessQueueInterval: ReturnType<typeof setInterval> | undefined
+}
+export const userSettings: UserSettings = {
+    timerRefreshEnabled: true,
+    timerRefreshView: 2, // seconds
+    timerRefreshViewInterval: undefined,
+    timerProcessQueue: 5, // seconds
+    timerProcessQueueInterval: undefined
+}

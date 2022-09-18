@@ -1,29 +1,70 @@
-var panelsPaths = {
+import * as settings from "./settings.js";
+import * as functions from "./functions.js";
+
+export const panelsPaths: {[key: string]: string} = {
     "leftPanelFiles": "",
     "rightPanelFiles": ""
 }
 
-transfersQueue = []
+type QueueItem = {
+    "dtAdded": Date,
+    "operationType": string,
+    "dataType": string,
+    "dataPath": string,
+    "sourcePath": string,
+    "targetPath": string,
+    "dstFS": string,
+    "filesPanelID": string
+}
+const transfersQueue: Array<QueueItem> = []
 
-var spanOK = "<span style='color:green;'>OK</span>";
-var spanFAIL = "<span style='color:red;'>error</span>";
+let settingsOpen: boolean = false;
 
-let settingsOpen = false;
-const settingsBlock = document.getElementById("settings");
-const settingsChbxPolling = document.getElementById("chbx-polling");
-const manualRefresh = document.getElementById("manualRefresh");
-const btnManualRefresh = document.getElementById("btn-manualRefresh");
-const indicatorGuiFrozen = document.getElementById("indicator-gui-frozen");
-const inputRefreshView = document.getElementById("input-refresh-view");
-const inputRefresh = document.getElementById("inputRefresh");
+const btnSettings: HTMLButtonElement =
+    document.getElementById("btn-settings") as HTMLButtonElement;
+const settingsBlock: HTMLDivElement =
+    document.getElementById("settings") as HTMLDivElement;
+const settingsChbxPolling: HTMLInputElement =
+    document.getElementById("chbx-polling") as HTMLInputElement;
+const manualRefresh: HTMLDivElement =
+    document.getElementById("manualRefresh") as HTMLDivElement;
+const btnManualRefresh: HTMLButtonElement =
+    document.getElementById("btn-manualRefresh") as HTMLButtonElement;
+const indicatorGuiFrozen: HTMLImageElement =
+    document.getElementById("indicator-gui-frozen") as HTMLImageElement;
+const inputRefreshView: HTMLInputElement =
+    document.getElementById("input-refresh-view") as HTMLInputElement;
+const inputRefresh: HTMLDivElement =
+    document.getElementById("inputRefresh") as HTMLDivElement;
+
+const rcloneOS: HTMLSpanElement =
+    document.getElementById("rcloneOS") as HTMLSpanElement;
+const rcloneVersion: HTMLSpanElement =
+    document.getElementById("rcloneVersion") as HTMLSpanElement;
+const guiVersion: HTMLSpanElement =
+    document.getElementById("guiVersion") as HTMLSpanElement;
+
+const currentTransfersBlock: HTMLDivElement =
+    document.getElementById("currentTransfers") as HTMLDivElement;
+const currentTransfersCount: HTMLSpanElement =
+    document.getElementById("currentTransfersCount") as HTMLSpanElement;
+const currentTransfersBody: HTMLTableSectionElement =
+    document.getElementById("currentTransfersBody") as HTMLTableSectionElement;
+
+const completedTransfersBlock: HTMLDivElement =
+    document.getElementById("completedTransfers") as HTMLDivElement;
+const completedTransfersCount: HTMLSpanElement =
+    document.getElementById("completedTransfersCount") as HTMLSpanElement;
+const completedTransfersBody: HTMLTableSectionElement =
+    document.getElementById("completedTransfersBody") as HTMLTableSectionElement;
 
 window.onload = () =>
 {
     initialize();
 
-    settingsChbxPolling.checked = timerRefreshEnabled;
+    settingsChbxPolling.checked = settings.userSettings.timerRefreshEnabled;
 
-    document.getElementById("btn-settings").addEventListener(
+    btnSettings.addEventListener(
         "click",
         function()
         {
@@ -45,14 +86,14 @@ window.onload = () =>
         {
             if (this.checked === true)
             {
-                timerRefreshEnabled = true;
+                settings.userSettings.timerRefreshEnabled = true;
                 indicatorGuiFrozen.style.display = "none";
                 manualRefresh.style.display = "none";
                 inputRefresh.style.display = "flex";
             }
             else
             {
-                timerRefreshEnabled = false;
+                settings.userSettings.timerRefreshEnabled = false;
                 indicatorGuiFrozen.style.display = "block";
                 inputRefresh.style.display = "none";
                 manualRefresh.style.display = "flex";
@@ -69,42 +110,42 @@ window.onload = () =>
             if(Number.isNaN(val))
             {
                 alert("This value must be a number.");
-                inputRefreshView.value = timerRefreshView;
+                inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
                 return;
             }
 
             if(val < 1 || val > 120)
             {
                 alert("This value can't be less than 1 or greater than 120.");
-                inputRefreshView.value = timerRefreshView;
+                inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
                 return;
             }
 
-            timerRefreshView = val;
+            settings.userSettings.timerRefreshView = val;
 
-            window.clearInterval(timerRefreshViewInterval);
-            timerRefreshViewInterval = window.setInterval(
+            window.clearInterval(settings.userSettings.timerRefreshViewInterval);
+            settings.userSettings.timerRefreshViewInterval = window.setInterval(
                 timerRefreshViewFunction,
-                timerRefreshView * 1000
+                settings.userSettings.timerRefreshView * 1000
             );
         }
     );
 
     btnManualRefresh.addEventListener("click", refreshView);
 
-    timerRefreshViewInterval = window.setInterval(
+    settings.userSettings.timerRefreshViewInterval = window.setInterval(
         timerRefreshViewFunction,
-        timerRefreshView * 1000
+        settings.userSettings.timerRefreshView * 1000
     );
-    timerProcessQueueInterval = window.setInterval(
+    settings.userSettings.timerProcessQueueInterval = window.setInterval(
         processQueue,
-        timerProcessQueue * 1000
+        settings.userSettings.timerProcessQueue * 1000
     );
 }
 
 function timerRefreshViewFunction()
 {
-    if (timerRefreshEnabled === true)
+    if (settings.userSettings.timerRefreshEnabled === true)
     {
         refreshView();
     }
@@ -113,43 +154,50 @@ function timerRefreshViewFunction()
 function initialize()
 {
     // get versions
-    sendRequestToRclone("/core/version", "", function(rez)
-    {
-        document.getElementById("rcloneOS").textContent = rez["os"].concat(" (", rez["arch"], ")");
-        document.getElementById("rcloneVersion").textContent = rez["version"];
-        document.getElementById("guiVersion").textContent = guiVersion;
-    });
+    sendRequestToRclone(
+        "/core/version",
+        null,
+        function(rez: functions.rcVersion)
+        {
+            rcloneOS.textContent = rez["os"].concat(" (", rez["arch"], ")");
+            rcloneVersion.textContent = rez["version"];
+            guiVersion.textContent = settings.guiVersion;
+        }
+    );
 
     // get remotes
-    sendRequestToRclone("/config/listremotes", "", function(rez)
+    sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
     {
         updateRemotesSelects("leftPanelRemote", rez);
         updateRemotesSelects("rightPanelRemote", rez);
     });
 
-    if (timerRefreshEnabled === false)
+    if (settings.userSettings.timerRefreshEnabled === false)
     {
         indicatorGuiFrozen.style.display = "block";
     }
 
-    inputRefreshView.value = timerRefreshView;
+    inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
 
     refreshView();
 }
 
-function sendRequestToRclone(query, params, fn)
+function sendRequestToRclone(query: string, params: functions.rcRequest | null, fn: Function)
 {
-    let url = rcloneHost.concat(query);
+    let url = settings.rcloneHost.concat(query);
     let xhr = new XMLHttpRequest();
     xhr.open("POST", url);
-    xhr.setRequestHeader("Authorization", "Basic " + btoa(rcloneUser.concat(":", rclonePass)));
+    xhr.setRequestHeader(
+        "Authorization",
+        "Basic " + btoa(settings.rcloneUser.concat(":", settings.rclonePass))
+    );
 
     // console.group("Command:", query);
     // console.debug("URL:", url);
-    if (params === "") { xhr.send(); }
+    if (params === null) { xhr.send(); }
     else
     {
-        if (asyncOperations.includes(query))
+        if (settings.asyncOperations.includes(query))
         {
             params["_async"] = true;
         }
@@ -190,27 +238,27 @@ function sendRequestToRclone(query, params, fn)
     };
 }
 
-function updateRemotesSelects(selectID, optionsList)
+function updateRemotesSelects(selectID: string, optionsList: functions.rcRemotes)
 {
-    let selectObj = document.getElementById(selectID);
-    let selectParentNode = selectObj.parentNode;
-    let newSelectObj = selectObj.cloneNode(false);
+    const selectObj: HTMLSelectElement = document.getElementById(selectID) as HTMLSelectElement;
+    const selectParentNode = selectObj.parentNode!;
+    const newSelectObj: HTMLSelectElement = selectObj.cloneNode(false) as HTMLSelectElement;
     newSelectObj.options.add(new Option("- choose a remote -", ""));
-    for (let o in optionsList["remotes"])
+    for (const o in optionsList["remotes"])
     {
-        let remote = optionsList["remotes"][o];
+        const remote: string = optionsList["remotes"][o];
         let remoteText = remote;
 
         let availableDiskSpace = undefined;
         // try to get available disk space
-        if (remotes[remote] !== undefined && remotes[remote]["canQueryDisk"] === true)
+        if (settings.remotes[remote] !== undefined && settings.remotes[remote]["canQueryDisk"] === true)
         {
-            let params = {
-                "fs": remote.concat(":/", remotes[remote]["pathToQueryDisk"])
+            const params: functions.rcRequest = {
+                "fs": remote.concat(":/", settings.remotes[remote]["pathToQueryDisk"])
             };
-            sendRequestToRclone("/operations/about", params, function(rez)
+            sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout)
             {
-                availableDiskSpace = getHumanReadableValue(rez["free"], "");
+                availableDiskSpace = functions.getHumanReadableValue(rez["free"], "");
                 remoteText = remoteText.concat(` (${availableDiskSpace} left)`);
                 newSelectObj.options.add(new Option(remoteText, remote));
             });
@@ -223,31 +271,32 @@ function updateRemotesSelects(selectID, optionsList)
     selectParentNode.replaceChild(newSelectObj, selectObj);
 }
 
-function remoteChanged(remotesList, filesPanelID)
+export function remoteChanged(remotesList: HTMLSelectElement, filesPanelID: string)
 {
-    let remote = remotesList.value;
+    const remote = remotesList.value;
     if (remote === "") { return; }
 
     //console.debug(remotes[remote]);
     openPath(
         remote.concat(
             ":/",
-            remotes[remote] === undefined ? "" : remotes[remote]["startingFolder"]
+            settings.remotes[remote] === undefined ? "" : settings.remotes[remote]["startingFolder"]
         ),
         filesPanelID
     );
 }
 
-function openPath(path, filesPanelID)
+function openPath(path: string, filesPanelID: string)
 {
     //console.debug(path);
 
     if (path.trim() === "") { return; }
 
-    const filesPanel = document.getElementById(filesPanelID);
+    const filesPanel: HTMLDivElement = document.getElementById(filesPanelID) as HTMLDivElement;
     while (filesPanel.firstChild) { filesPanel.removeChild(filesPanel.firstChild); }
 
-    filesPanel.parentNode.parentNode.getElementsByClassName("filesCount")[0].textContent = "-";
+    (filesPanel.parentNode!.parentNode! as HTMLDivElement)
+        .getElementsByClassName("filesCount")[0].textContent = "-";
 
     //const firstSlash = path.indexOf("/") + 1;
     const lastSlash = path.lastIndexOf("/") + 1;
@@ -276,15 +325,17 @@ function openPath(path, filesPanelID)
         .concat(`<p><span class="path-hint">${pathHint == "/" ? "" : pathHint}/</span>..</p>`)
         //.concat(`<img src="./images/info-square.svg" style="margin-left:auto;" title="${oneLevelUpPath}">`)
         .concat("</div>");
-    filesPanel.appendChild(htmlToElement(div));
-    filesPanel.appendChild(htmlToElement("<div class='loadingAnimation'></div>"));
-    let params = {
+    filesPanel.appendChild(functions.htmlToElement(div));
+    filesPanel.appendChild(functions.htmlToElement("<div class='loadingAnimation'></div>"));
+    let params: functions.rcRequest = {
         "fs": basePath,
         "remote": nextPath
     };
-    sendRequestToRclone("/operations/list", params, function(rez)
+    sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]})
     {
-        filesPanel.parentNode.parentNode.getElementsByClassName("loadingAnimation")[0].style.display = "none";
+        ((filesPanel.parentNode!.parentNode as HTMLDivElement)
+            .getElementsByClassName("loadingAnimation")[0] as HTMLDivElement
+        ).style.display = "none";
 
         if (rez === null)
         {
@@ -292,10 +343,11 @@ function openPath(path, filesPanelID)
             return;
         }
 
-        listOfFilesAndFolders = rez["list"];
-        listOfFilesAndFolders.sort(sortFilesAndFolders);
+        const listOfFilesAndFolders: functions.rcListItem[] = rez["list"];
+        listOfFilesAndFolders.sort(functions.sortFilesAndFolders);
         //console.table(listOfFilesAndFolders);
-        filesPanel.parentNode.parentNode.getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length;
+        (filesPanel.parentNode!.parentNode as HTMLDivElement)
+            .getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length.toString();
         for (let r in listOfFilesAndFolders)
         {
             let fileName = listOfFilesAndFolders[r]["Name"];
@@ -315,18 +367,19 @@ function openPath(path, filesPanelID)
             {
                 div = div.concat(`<div class='fileLine' data-type='file' data-path="${fileNamePath}">`)
             }
-            div = div.concat("<img class='icon' src='./images/", getIconType(listOfFilesAndFolders[r]["MimeType"]), "'>")
+            div = div.concat(
+                "<img class='icon' src='./images/",
+                functions.getIconType(listOfFilesAndFolders[r]["MimeType"]), "'>")
                 .concat("<p>", fileName, "</p>")
                 .concat("</div></div>");
-            filesPanel.appendChild(htmlToElement(div));
+            filesPanel.appendChild(functions.htmlToElement(div));
         }
     });
 }
 
-function updateCurrentTransfers(currentTransfers)
+function updateCurrentTransfers(currentTransfers: functions.rcTransfer[])
 {
     //console.table(currentTransfers);
-    let currentTransfersBody = document.getElementById("currentTransfersBody");
     while (currentTransfersBody.firstChild)
     {
         currentTransfersBody.removeChild(currentTransfersBody.firstChild);
@@ -336,11 +389,11 @@ function updateCurrentTransfers(currentTransfers)
 
     if (currentTransfers === undefined || !currentTransfers.length)
     {
-        document.getElementById("currentTransfersCount").textContent = "0";
+        currentTransfersCount.textContent = "0";
 
         if (!transfersQueue.length)
         {
-            document.getElementById("currentTransfers").style.display = "none";
+            currentTransfersBlock.style.display = "none";
             return;
         }
         else { addQueueElementsOnly = true; }
@@ -348,19 +401,20 @@ function updateCurrentTransfers(currentTransfers)
 
     if (!addQueueElementsOnly) // add items from current transfers list
     {
-        document.getElementById("currentTransfersCount").textContent = currentTransfers.length;
-        currentTransfers.sort(sortJobs);
+        currentTransfersCount.textContent = currentTransfers.length.toString();
+        currentTransfers.sort(functions.sortJobs);
         for (let t = 0; t < currentTransfers.length; t++)
         {
-            let tr = `<tr>
+            const tr = `<tr>
                 <td>${t + 1}</td>
                 <td class="canBeLong">${currentTransfers[t]["name"]}</td>
-                <td>${getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
-                <td>${getHumanReadableValue(parseFloat(currentTransfers[t]["speed"]).toFixed(), "/s")}</td>
+                <td>${functions.getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
+                <td>${functions.getHumanReadableValue(currentTransfers[t]["speed"], "/s")}</td>
                 <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
-                <td><img src="./images/x-square.svg" onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');"></td>
+                <td><img src="./images/x-square.svg"
+                    onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');"></td>
                 </tr>`;
-            currentTransfersBody.appendChild(htmlToElement(tr));
+            currentTransfersBody.appendChild(functions.htmlToElement(tr));
         }
     }
     // add items from the queue
@@ -371,14 +425,13 @@ function updateCurrentTransfers(currentTransfers)
             <td colspan="4" class="canBeLong">${transfersQueue[q].dataPath}</td>
             <td><img src="./images/x-square.svg" onclick="removeFromQueue(this, ${q});"></td>
             </tr>`;
-        currentTransfersBody.appendChild(htmlToElement(tr));
+        currentTransfersBody.appendChild(functions.htmlToElement(tr));
     }
-    document.getElementById("currentTransfers").style.display = "block";
+    currentTransfersBlock.style.display = "block";
 }
 
-function updateCompletedTransfers(completedTransfers)
+function updateCompletedTransfers(completedTransfers: functions.rcTransfer[])
 {
-    let completedTransfersBody = document.getElementById("completedTransfersBody");
     while (completedTransfersBody.firstChild)
     {
         completedTransfersBody.removeChild(completedTransfersBody.firstChild);
@@ -387,32 +440,34 @@ function updateCompletedTransfers(completedTransfers)
     if (completedTransfers === undefined || !completedTransfers.length)
     {
         // let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
-        // completedTransfersBody.appendChild(htmlToElement(tr));
-        document.getElementById("completedTransfers").style.display = "none";
-        document.getElementById("completedTransfersCount").textContent = "0";
+        // completedTransfersBody.appendChild(functions.htmlToElement(tr));
+        completedTransfersBlock.style.display = "none";
+        completedTransfersCount.textContent = "0";
         return;
     }
 
-    let completedTransfersCount = 0;
-    completedTransfers.sort(sortJobs).reverse();
+    let completedTransfersCnt: number = 0;
+    completedTransfers.sort(functions.sortJobs).reverse();
     for (let t in completedTransfers)
     {
         // don't count checks as actual transfers
         if (completedTransfers[t]["checked"] === true) //|| completedTransfers[t]["bytes"] === 0)
         { continue; }
 
-        completedTransfersCount++;
+        completedTransfersCnt++;
 
-        let tr = `<tr>
+        const spanOK: string = "<span style='color:green;'>OK</span>";
+        const spanFAIL: string = "<span style='color:red;'>error</span>";
+        const tr: string = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
             <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
             <td class="canBeLong">${completedTransfers[t]["name"]}</td>
-            <td>${getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
+            <td>${functions.getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
             </tr>`;
-        completedTransfersBody.appendChild(htmlToElement(tr));
+        completedTransfersBody.appendChild(functions.htmlToElement(tr));
     }
-    document.getElementById("completedTransfersCount").textContent = completedTransfersCount;
-    document.getElementById("completedTransfers").style.display = "block";
+    completedTransfersCount.textContent = completedTransfersCnt.toString();
+    completedTransfersBlock.style.display = "block";
 }
 
 function refreshView()
@@ -424,7 +479,7 @@ function refreshView()
 
 function getCurrentTransfers()
 {
-    sendRequestToRclone("/core/stats", "", function(rez)
+    sendRequestToRclone("/core/stats", null, function(rez: functions.rcStats)
     {
         updateCurrentTransfers(rez["transferring"]);
     });
@@ -432,20 +487,20 @@ function getCurrentTransfers()
 
 function getCompletedTransfers()
 {
-    sendRequestToRclone("/core/transferred", "", function(rez)
+    sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransfer[]})
     {
         //console.table(rez["transferred"]);
         updateCompletedTransfers(rez["transferred"]);
     });
 }
 
-function refreshFilesListing()
+export function refreshFilesListing()
 {
     refreshClicked("leftPanelFiles");
     refreshClicked("rightPanelFiles");
 }
 
-function cancelTransfer(cancelBtn, groupID)
+export function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
 {
     cancelBtn.style.display = "none";
 
@@ -453,36 +508,36 @@ function cancelTransfer(cancelBtn, groupID)
         groupID.lastIndexOf("/") + 1,
         groupID.length
     );
-    let params = { "jobid": jobID };
-    sendRequestToRclone("/job/stop", params, function(rez)
+    let params: functions.rcRequest = { "jobid": jobID };
+    sendRequestToRclone("/job/stop", params, function()//function(rez: {error: string})
     {
         //console.debug(rez);
         refreshView();
     });
 }
 
-function removeFromQueue(removeBtn, q)
+export function removeFromQueue(removeBtn: HTMLButtonElement, q: number)
 {
     removeBtn.style.display = "none";
     transfersQueue.splice(q, 1);
 }
 
-function copyClicked(btn, filesPanelID)
+export function copyClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "copy", filesPanelID);
 }
 
-function moveClicked(btn, filesPanelID)
+export function moveClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "move", filesPanelID);
 }
 
-function deleteClicked(btn, filesPanelID)
+export function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     operationClicked(btn, "delete", filesPanelID);
 }
 
-function refreshClicked(filesPanelID)
+function refreshClicked(filesPanelID: string)
 {
     if (panelsPaths[filesPanelID] !== "")
     {
@@ -490,11 +545,11 @@ function refreshClicked(filesPanelID)
     }
 }
 
-function operationClicked(btn, operationType, filesPanelID)
+function operationClicked(btn: HTMLButtonElement, operationType: string, filesPanelID: string)
 {
     if (operationType === "copy" || operationType === "move")
     {
-        if (panelsPathsHaveValue() !== true)
+        if (functions.panelsPathsHaveValue() !== true)
         {
             alert("Cannot perform an operation when one of the panels does not have a remote chosen.");
             return;
@@ -507,22 +562,26 @@ function operationClicked(btn, operationType, filesPanelID)
     addToQueue(operationType, filesPanelID);
 }
 
-function addToQueue(operationType, filesPanelID)
+function addToQueue(operationType: string, filesPanelID: string)
 {
-    let checkedBoxes = document.getElementById(filesPanelID)
-        .querySelectorAll("input[name=fileListItem]:checked");
+    const checkedBoxes: HTMLInputElement[] = Array.from(
+        (document.getElementById(filesPanelID) as HTMLDivElement)
+            .querySelectorAll("input[name=fileListItem]:checked")
+    );
     //console.debug(checkedBoxes, checkedBoxes.length);
     for (let i = 0; i < checkedBoxes.length; i++)
     {
         //console.debug("doing file operation");
         //console.debug(checkedBoxes[i].parentNode.parentNode.getElementsByClassName("fileLine")[0].dataset.path);
 
-        let dataPath = checkedBoxes[i].nextElementSibling.dataset.path;
-        let lastSlash = dataPath.lastIndexOf("/") + 1;
-        let sourcePath = dataPath.substring(0, lastSlash);
-        let targetPath = dataPath.substring(lastSlash, dataPath.length);
+        const checkedBox: HTMLInputElement = checkedBoxes[i].nextElementSibling as HTMLInputElement;
 
-        let dataType = checkedBoxes[i].nextElementSibling.dataset.type;
+        const dataPath = checkedBox.dataset.path!;
+        const lastSlash = dataPath.lastIndexOf("/") + 1;
+        const sourcePath = dataPath.substring(0, lastSlash);
+        const targetPath = dataPath.substring(lastSlash, dataPath.length);
+
+        const dataType = checkedBox.dataset.type!;
 
         transfersQueue.push(
             {
@@ -533,8 +592,8 @@ function addToQueue(operationType, filesPanelID)
                 "sourcePath": sourcePath,
                 "targetPath": targetPath,
                 "dstFS": dataType === "folder"
-                    ? getDestinationPath(filesPanelID).concat("/", targetPath)
-                    : getDestinationPath(filesPanelID).concat("/"),
+                    ? functions.getDestinationPath(filesPanelID).concat("/", targetPath)
+                    : functions.getDestinationPath(filesPanelID).concat("/"),
                 "filesPanelID": filesPanelID
             }
         );
@@ -545,12 +604,12 @@ function addToQueue(operationType, filesPanelID)
 function processQueue()
 {
     // console.debug(
-    //     document.getElementById("currentTransfersCount").textContent,
+    //     currentTransfersCount.textContent,
     //     transfersQueue.length
     // );
     //console.table(transfersQueue);
     if ( // the queue is empty or of there already are active transfers
-        document.getElementById("currentTransfersCount").textContent !== "0"
+        currentTransfersCount.textContent !== "0"
         || !transfersQueue.length
     ) { return; }
 
@@ -580,30 +639,37 @@ function processQueue()
                 );
             break;
         default:
-            console.error(`Unknown operation type: ${operationType}`);
+            console.error(`Unknown operation type: ${firstItemFromQueue.operationType}`);
     }
 }
 
-function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targetPath, dstFS, filesPanelID)
+function copyOrMoveOperation(
+    operationType: string,
+    dataType: string,
+    dataPath: string,
+    sourcePath: string,
+    targetPath: string,
+    dstFS: string,
+    _filesPanelID: string
+    )
 {
-    let panelToUpdate = filesPanelID === "leftPanelFiles" ? "rightPanelFiles" : "leftPanelFiles";
+    //const panelToUpdate = _filesPanelID === "leftPanelFiles" ? "rightPanelFiles" : "leftPanelFiles";
 
     if (dataType === "folder")
     {
-        let params = {
-            "srcFs": dataPath,
-            "dstFs": dstFS
-        };
+        const params: functions.rcRequest = {}
+        params["srcFs"] = dataPath;
+        params["dstFs"] = dstFS;
         if (operationType === "move")
         {
-            params["deleteEmptySrcDirs"] = "true";
+            params["deleteEmptySrcDirs"] = true;
         }
-        let folderOperation = getFolderOperation(operationType);
+        let folderOperation = functions.getFolderOperation(operationType);
         if (folderOperation === "")
         {
             console.error(`Unknown operation type: ${operationType}`);
         }
-        sendRequestToRclone(folderOperation, params, function(rez)
+        sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
         {
             //console.debug("Folder operation result:", rez);
             // if (operationType === "move")
@@ -618,18 +684,18 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
     }
     else
     {
-        let params = {
+        const params: functions.rcRequest = {
             "srcFs": sourcePath,
             "srcRemote": targetPath,
             "dstFs": dstFS,
             "dstRemote": targetPath
         };
-        let fileOperation = getFileOperation(operationType);
+        let fileOperation = functions.getFileOperation(operationType);
         if (fileOperation === "")
         {
             console.error(`Unknown operation type: ${operationType}`);
         }
-        sendRequestToRclone(fileOperation, params, function(rez)
+        sendRequestToRclone(fileOperation, params, function(_rez: {jobid: string})
         {
             //console.debug("File operation result:", rez);
             // if (operationType === "move")
@@ -644,48 +710,54 @@ function copyOrMoveOperation(operationType, dataType, dataPath, sourcePath, targ
     }
 }
 
-function deleteOperation(operationType, dataType, sourcePath, targetPath, filesPanelID)
+function deleteOperation(
+    operationType: string,
+    dataType: string,
+    sourcePath: string,
+    targetPath: string,
+    _filesPanelID: string
+    )
 {
-    let params = {
+    let params: functions.rcRequest = {
         "fs": sourcePath,
         "remote": targetPath
     };
 
     let folderOperation = dataType === "folder"
-        ? getFolderOperation(operationType)
-        : getFileOperation(operationType);
+        ? functions.getFolderOperation(operationType)
+        : functions.getFileOperation(operationType);
     if (folderOperation === "")
     {
         console.error(`Unknown operation type: ${operationType}`);
     }
     // console.debug("Delete:", folderOperation, params);
-    sendRequestToRclone(folderOperation, params, function(rez)
+    sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
     {
         //console.debug("Delete result:", rez);
-        //openPath(panelsPaths[filesPanelID], filesPanelID);
+        //openPath(panelsPaths[_filesPanelID], _filesPanelID);
     });
 }
 
-function showCreateFolder(btn)
+export function showCreateFolder(btn: HTMLButtonElement)
 {
-    let panelDiv = btn.parentNode.parentNode.parentNode;
-    panelDiv.querySelector(".controls").style.display = "none";
-    panelDiv.querySelector(".create-folder").style.display = "flex";
+    const panelDiv = btn.parentNode!.parentNode!.parentNode!;
+    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
+    (panelDiv.querySelector(".create-folder") as HTMLDivElement).style.display = "flex";
 }
 
-function hideCreateFolder(btn)
+function hideCreateFolder(btn: HTMLButtonElement)
 {
-    let panelDiv = btn.parentNode.parentNode;
-    panelDiv.querySelector(".create-folder").style.display = "none";
-    panelDiv.querySelector(".controls").style.display = "flex";
+    let panelDiv = btn!.parentNode!.parentNode!;
+    (panelDiv.querySelector(".create-folder") as HTMLDivElement).style.display = "none";
+    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 }
 
-function createFolderClicked(btn, filesPanelID)
+export function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
-    let currentPath = panelsPaths[filesPanelID];
+    const currentPath: string = panelsPaths[filesPanelID];
     if (currentPath !== "")
     {
-        let folderName = btn.parentNode.querySelector("input").value.trim();
+        const folderName = (btn.parentNode!.querySelector("input") as HTMLInputElement).value.trim();
         if (!folderName)
         {
             alert("A folder has no name.");
@@ -694,24 +766,24 @@ function createFolderClicked(btn, filesPanelID)
 
         btn.style.display = "none";
 
-        let lastSlash = currentPath.lastIndexOf("/") + 1;
-        let basePath = lastSlash !== 0 ? currentPath.substring(0, lastSlash) : currentPath.concat("/");
-        let targetPath = currentPath.substring(lastSlash, currentPath.length).concat("/", folderName);
-        console.debug(currentPath, basePath, targetPath);
+        // const lastSlash = currentPath.lastIndexOf("/") + 1;
+        // const basePath = lastSlash !== 0 ? currentPath.substring(0, lastSlash) : currentPath.concat("/");
+        // const targetPath = currentPath.substring(lastSlash, currentPath.length).concat("/", folderName);
+        //console.debug(currentPath, basePath, targetPath);
 
-        let params = {
+        const params: functions.rcRequest = {
             "fs": currentPath,
             "remote": folderName
         };
-        sendRequestToRclone("/operations/mkdir", params, function(rez)
+        sendRequestToRclone("/operations/mkdir", params, function()//function(rez)
         {
             btn.style.display = "block";
-            if (rez === null)
-            {
-                console.error("Request returned a null value, looks like there is something wrong with the request");
-                return;
-            }
-            else
+            // if (rez === null)
+            // {
+            //     console.error("Request returned a null value, looks like there is something wrong with the request");
+            //     return;
+            // }
+            // else
             {
                 hideCreateFolder(btn);
                 refreshClicked(filesPanelID);

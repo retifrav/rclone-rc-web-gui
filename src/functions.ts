@@ -1,33 +1,92 @@
-type rcListItem =
+import { panelsPaths } from "./main.js";
+
+export type rcListItem =
 {
-    "Path": string,
-    "Name": string,
-    "Size": number,
-    "MimeType": string,
-    "ModTime": Date,
-    "IsDir": boolean
+    Path: string,
+    Name: string,
+    Size: number,
+    MimeType: string,
+    ModTime: Date,
+    IsDir: boolean
 }
 
-type rcTransfer =
+export type rcTransfer =
 {
-    "error": string,
-    "name": string,
-    "size": number,
-    "bytes": number,
-    "checked": boolean,
-    "started_at": Date,
-    "completed_at": Date,
-    "group": string
+    error: string,
+    name: string,
+    size: number,
+    bytes: number,
+    checked: boolean,
+    started_at: Date,
+    completed_at: Date,
+    group: string,
+    speed: number,
+    percentage: number
 }
 
-function htmlToElement(html: string) : HTMLElement
+export type rcVersion = {
+    arch: string,
+    decomposed: number[],
+    goTags: string,
+    goVersion: string,
+    isBeta: boolean,
+    isGit: boolean,
+    linking: string,
+    os: string,
+    version: string
+}
+
+export type rcAbout = {
+    free: number,
+    total: number,
+    used: number
+}
+
+export type rcRemotes = {
+    remotes: string[]
+}
+
+export type rcRequest = {
+    _async?: boolean,
+    remote?: string,
+    jobid?: string,
+    fs?: string,
+    srcFs?: string,
+    srcRemote?: string,
+    dstFs?: string,
+    dstRemote?: string,
+    deleteEmptySrcDirs?: boolean
+}
+
+export type rcStats = {
+    bytes: number,
+    checks: number,
+    deletedDirs: number,
+    deletes: number,
+    elapsedTime: number,
+    errors: number,
+    eta: number,
+    fatalError: boolean,
+    lastError: string,
+    renames: number,
+    retryError: boolean,
+    speed: number,
+    totalBytes: number,
+    totalChecks: number,
+    totalTransfers: number,
+    transferTime: number,
+    transfers: number,
+    transferring: rcTransfer[]
+}
+
+export function htmlToElement(html: string) : HTMLElement
 {
     let template: HTMLTemplateElement = document.createElement("template");
     template.innerHTML = html.trim();
     return template.content.firstChild as HTMLElement;
 }
 
-function getIconType(mimeType: string) : string
+export function getIconType(mimeType: string) : string
 {
     switch (mimeType)
     {
@@ -68,7 +127,7 @@ function getIconType(mimeType: string) : string
     }
 }
 
-function getHumanReadableValue(sizeInBytes: number, metric: string) : string
+export function getHumanReadableValue(sizeInBytes: number, metric: string) : string
 {
     let rez: string = "0";
     let metricRank: string = "MB";
@@ -87,7 +146,7 @@ function getHumanReadableValue(sizeInBytes: number, metric: string) : string
 }
 
 // TODO: sort jobs with the same group (folder transfer)
-function sortJobs(a: rcTransfer, b: rcTransfer) : number
+export function sortJobs(a: rcTransfer, b: rcTransfer) : number
 {
     if (a.group === undefined || b.group === undefined) { return 0; }
 
@@ -107,20 +166,20 @@ function sortJobs(a: rcTransfer, b: rcTransfer) : number
     else { return 1; }
 }
 
-function sortFilesAndFolders(a: rcListItem, b: rcListItem) : number
+export function sortFilesAndFolders(a: rcListItem, b: rcListItem) : number
 {
     if (a.IsDir === true && b.IsDir === false) { return -1; }
     if (a.IsDir === false && b.IsDir === true) { return 1; }
     return 0;
 }
 
-function getDestinationPath(currentFilePanel: string) : string
+export function getDestinationPath(currentFilePanel: string) : string
 {
     if (currentFilePanel === "leftPanelFiles") { return panelsPaths["rightPanelFiles"]; }
     else { return panelsPaths["leftPanelFiles"]; }
 }
 
-function panelsPathsHaveValue() : boolean
+export function panelsPathsHaveValue() : boolean
 {
     if (panelsPaths["leftPanelFiles"] === "" || panelsPaths["rightPanelFiles"] === "")
     {
@@ -129,7 +188,7 @@ function panelsPathsHaveValue() : boolean
     else { return true; }
 }
 
-function getFolderOperation(operationType: string) : string
+export function getFolderOperation(operationType: string) : string
 {
     switch (operationType)
     {
@@ -144,7 +203,7 @@ function getFolderOperation(operationType: string) : string
     }
 }
 
-function getFileOperation(operationType: string) : string
+export function getFileOperation(operationType: string) : string
 {
     switch (operationType)
     {
