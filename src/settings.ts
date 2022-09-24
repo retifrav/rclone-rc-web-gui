@@ -1,4 +1,4 @@
-export const guiVersion: string = "0.2.1";
+export const guiVersion: string = "0.3.0";
 
 export var rcloneHost: string = "http://127.0.0.1:5572";
 export var rcloneUser: string = "YOUR-USERNAME";

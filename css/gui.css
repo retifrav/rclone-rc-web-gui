@@ -93,7 +93,7 @@ td > progress {
 
 #completedTransfers > table,
 #completedTransfers > table td:nth-last-child(2) {
-    width: initial;
+    width: 100%;
 }
 #currentTransfers > table td,
 #completedTransfers > table td:first-child,
@@ -109,6 +109,9 @@ td > progress {
 }
 #completedTransfersBody {
     color: #555;
+}
+#completedTransfersBody > tr:hover {
+    background-color: #f6f6f6;
 }
 
 #currentTransfers {
@@ -135,6 +138,12 @@ td > img {
 .header > .icon {
     width: 2em;
     height: 2em;
+}
+
+button.with-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 pre {
