@@ -242,7 +242,8 @@ var remotes = {
     },
     "seedbox": {
         "startingFolder": "files",
-        "canQueryDisk": false
+        "canQueryDisk": false,
+        "pathToQueryDisk": ""
     }
 }
 ```
