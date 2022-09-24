@@ -58,6 +58,35 @@ const leftPanelRemote: HTMLSelectElement =
 const rightPanelRemote: HTMLSelectElement =
     document.getElementById("rightPanelRemote") as HTMLSelectElement;
 
+const leftPanelCommandCopy: HTMLButtonElement =
+    document.getElementById("leftPanelCommandCopy") as HTMLButtonElement;
+const rightPanelCommandCopy: HTMLButtonElement =
+    document.getElementById("rightPanelCommandCopy") as HTMLButtonElement;
+const leftPanelCommandMove: HTMLButtonElement =
+    document.getElementById("leftPanelCommandMove") as HTMLButtonElement;
+const rightPanelCommandMove: HTMLButtonElement =
+    document.getElementById("rightPanelCommandMove") as HTMLButtonElement;
+const leftPanelCommandDelete: HTMLButtonElement =
+    document.getElementById("leftPanelCommandDelete") as HTMLButtonElement;
+const rightPanelCommandDelete: HTMLButtonElement =
+    document.getElementById("rightPanelCommandDelete") as HTMLButtonElement;
+const leftPanelCommandShowCreateFolder: HTMLButtonElement =
+    document.getElementById("leftPanelCommandShowCreateFolder") as HTMLButtonElement;
+const rightPanelCommandShowCreateFolder: HTMLButtonElement =
+    document.getElementById("rightPanelCommandShowCreateFolder") as HTMLButtonElement;
+const leftPanelCommandCreateFolder: HTMLButtonElement =
+    document.getElementById("leftPanelCommandCreateFolder") as HTMLButtonElement;
+const rightPanelCommandCreateFolder: HTMLButtonElement =
+    document.getElementById("rightPanelCommandCreateFolder") as HTMLButtonElement;
+const leftPanelCommandHideCreateFolder: HTMLButtonElement =
+    document.getElementById("leftPanelCommandHideCreateFolder") as HTMLButtonElement;
+const rightPanelCommandHideCreateFolder: HTMLButtonElement =
+    document.getElementById("rightPanelCommandHideCreateFolder") as HTMLButtonElement;
+const leftPanelCommandRefresh: HTMLButtonElement =
+    document.getElementById("leftPanelCommandRefresh") as HTMLButtonElement;
+const rightPanelCommandRefresh: HTMLButtonElement =
+    document.getElementById("rightPanelCommandRefresh") as HTMLButtonElement;
+
 window.onload = () =>
 {
     initialize();
@@ -140,6 +169,63 @@ window.onload = () =>
     settings.userSettings.timerProcessQueueInterval = window.setInterval(
         processQueue,
         settings.userSettings.timerProcessQueue * 1000
+    );
+
+    leftPanelCommandCopy.addEventListener(
+        "click",
+        function() { copyClicked(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandCopy.addEventListener(
+        "click",
+        function() { copyClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelCommandMove.addEventListener(
+        "click",
+        function() { moveClicked(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandMove.addEventListener(
+        "click",
+        function() { moveClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelCommandDelete.addEventListener(
+        "click",
+        function() { deleteClicked(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandDelete.addEventListener(
+        "click",
+        function() { deleteClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelCommandShowCreateFolder.addEventListener(
+        "click",
+        function() { showCreateFolder(this); }
+    );
+    rightPanelCommandShowCreateFolder.addEventListener(
+        "click",
+        function() { showCreateFolder(this); }
+    );
+    leftPanelCommandCreateFolder.addEventListener(
+        "click",
+        function() { createFolderClicked(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandCreateFolder.addEventListener(
+        "click",
+        function() { createFolderClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelCommandHideCreateFolder.addEventListener(
+        "click",
+        function() { hideCreateFolder(this); }
+    );
+    rightPanelCommandHideCreateFolder.addEventListener(
+        "click",
+        function() { hideCreateFolder(this) }
+    );
+    leftPanelCommandRefresh.addEventListener(
+        "click",
+        function() { refreshClicked("leftPanelFiles"); }
+    );
+    rightPanelCommandRefresh.addEventListener(
+        "click",
+        function() { refreshClicked("rightPanelFiles"); }
     );
 }
 
@@ -506,27 +592,139 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransfer[])
         currentTransfers.sort(functions.sortJobs);
         for (let t = 0; t < currentTransfers.length; t++)
         {
-            const tr = `<tr>
-                <td>${t + 1}</td>
-                <td class="canBeLong">${currentTransfers[t]["name"]}</td>
-                <td>${functions.getHumanReadableValue(currentTransfers[t]["size"], "")}</td>
-                <td>${functions.getHumanReadableValue(currentTransfers[t]["speed"], "/s")}</td>
-                <td><progress value="${currentTransfers[t]["percentage"]}" max="100"></progress></td>
-                <td><img src="./images/x-square.svg"
-                    onclick="cancelTransfer(this, '${currentTransfers[t]["group"]}');"></td>
-                </tr>`;
-            currentTransfersBody.appendChild(functions.htmlToElement(tr));
+            const tr: HTMLTableRowElement = document.createElement("tr");
+            // number
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td")
+                )
+            ).appendChild(
+                Object.assign(
+                    document.createTextNode((t + 1).toString())
+                )
+            );
+            // name
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td"),
+                    {
+                        className: "canBeLong"
+                    }
+                )
+            ).appendChild(
+                Object.assign(
+                    document.createTextNode(currentTransfers[t]["name"])
+                )
+            );
+            // size
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td")
+                )
+            ).appendChild(
+                Object.assign(
+                    document.createTextNode(functions.getHumanReadableValue(currentTransfers[t]["size"], ""))
+                )
+            );
+            // speed
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td")
+                )
+            ).appendChild(
+                Object.assign(
+                    document.createTextNode(functions.getHumanReadableValue(currentTransfers[t]["speed"], "/s"))
+                )
+            );
+            // progress
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td")
+                )
+            ).appendChild(
+                Object.assign(
+                    document.createElement("progress"),
+                    {
+                        value: currentTransfers[t]["percentage"],
+                        max: 100
+                    }
+                )
+            );
+            // cancel
+            const imgCancel: HTMLImageElement = Object.assign(
+                document.createElement("img"),
+                {
+                    src: "./images/x-square.svg"
+                }
+            );
+            imgCancel.addEventListener(
+                "click",
+                function() { cancelTransfer(this, currentTransfers[t]["group"]); }
+            );
+            tr.appendChild(
+                Object.assign(
+                    document.createElement("td")
+                )
+            ).appendChild(imgCancel);
+
+            currentTransfersBody.appendChild(tr);
         }
     }
     // add items from the queue
     for (let q = 0; q < transfersQueue.length; q++)
     {
-        let tr = `<tr style="font-style:italic;">
-            <td><code>${transfersQueue[q].operationType}</code></td>
-            <td colspan="4" class="canBeLong">${transfersQueue[q].dataPath}</td>
-            <td><img src="./images/x-square.svg" onclick="removeFromQueue(this, ${q});"></td>
-            </tr>`;
-        currentTransfersBody.appendChild(functions.htmlToElement(tr));
+        const tr: HTMLTableRowElement = Object.assign(
+            document.createElement("tr"),
+            {
+                style: "font-style:italic;"
+            }
+        );
+        // operation type
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td")
+            )
+        ).appendChild(
+            Object.assign(
+                document.createElement("code")
+            )
+        ).appendChild(
+            Object.assign(
+                document.createTextNode(transfersQueue[q].operationType)
+            )
+        );
+        // target
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td"),
+                {
+                    colSpan: 4,
+                    className: "canBeLong"
+                }
+            )
+        ).appendChild(
+            Object.assign(
+                document.createTextNode(transfersQueue[q].dataPath)
+            )
+        );
+        // cancel
+        const imgCancel: HTMLImageElement = Object.assign(
+            document.createElement("img"),
+            {
+                src: "./images/x-square.svg"
+            }
+        );
+        imgCancel.addEventListener(
+            "click",
+            function() { removeFromQueue(this, q); }
+        );
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td")
+            )
+        ).appendChild(imgCancel);
+
+        currentTransfersBody.appendChild(tr);
     }
     currentTransfersBlock.style.display = "block";
 }
@@ -601,7 +799,7 @@ function refreshFilesListing()
     refreshClicked("rightPanelFiles");
 }
 
-function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
+function cancelTransfer(cancelBtn: HTMLImageElement, groupID: string)
 {
     cancelBtn.style.display = "none";
 
@@ -617,7 +815,7 @@ function cancelTransfer(cancelBtn: HTMLButtonElement, groupID: string)
     });
 }
 
-function removeFromQueue(removeBtn: HTMLButtonElement, q: number)
+function removeFromQueue(removeBtn: HTMLImageElement, q: number)
 {
     removeBtn.style.display = "none";
     transfersQueue.splice(q, 1);

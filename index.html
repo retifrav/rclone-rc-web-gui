@@ -68,21 +68,21 @@
         <div id="files">
             <div class="filesPanelWrapper">
                 <div class="controls">
-                    <button type="button" onclick="copyClicked(this, 'leftPanelFiles');">Copy</button>
-                    <button type="button" onclick="moveClicked(this, 'leftPanelFiles');">Move</button>
-                    <button type="button" onclick="deleteClicked(this, 'leftPanelFiles');">Delete</button>
+                    <button id="leftPanelCommandCopy" type="button">Copy</button>
+                    <button id="leftPanelCommandMove" type="button">Move</button>
+                    <button id="leftPanelCommandDelete" type="button">Delete</button>
                     <div class="lastButtons">
-                        <button type="button" onclick="showCreateFolder(this);">
+                        <button id="leftPanelCommandShowCreateFolder" type="button">
                             Create&nbsp;folder</button>
-                        <button type="button" onclick="refreshClicked('leftPanelFiles');">
                             Refresh
+                        <button id="leftPanelCommandRefresh" type="button" class="with-icon">
                         </button>
                     </div>
                 </div>
                 <div class="create-folder">
                     <input type="text" placeholder="Folder name">
-                    <button type="button" onclick="createFolderClicked(this, 'leftPanelFiles');">Create</button>
-                    <button type="button" onclick="hideCreateFolder(this);">Cancel</button>
+                    <button id="leftPanelCommandCreateFolder" type="button">Create</button>
+                    <button id="leftPanelCommandHideCreateFolder" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
                     <div class="filesPanelHeader">
@@ -103,21 +103,21 @@
             </div>
             <div class="filesPanelWrapper">
                 <div class="controls">
-                    <button type="button" onclick="copyClicked(this, 'rightPanelFiles');">Copy</button>
-                    <button type="button" onclick="moveClicked(this, 'rightPanelFiles');">Move</button>
-                    <button type="button" onclick="deleteClicked(this, 'rightPanelFiles');">Delete</button>
+                    <button id="rightPanelCommandCopy" type="button">Copy</button>
+                    <button id="rightPanelCommandMove" type="button">Move</button>
+                    <button id="rightPanelCommandDelete" type="button">Delete</button>
                     <div class="lastButtons">
-                        <button type="button" onclick="showCreateFolder(this);">
+                        <button id="rightPanelCommandShowCreateFolder" type="button">
                             Create&nbsp;folder</button>
-                        <button type="button" onclick="refreshClicked('rightPanelFiles');">
                             Refresh
+                        <button id="rightPanelCommandRefresh" type="button" class="with-icon">
                         </button>
                     </div>
                 </div>
                 <div class="create-folder">
                     <input type="text" placeholder="Folder name">
-                    <button type="button" onclick="createFolderClicked(this, 'rightPanelFiles');">Create</button>
-                    <button type="button" onclick="hideCreateFolder(this);">Cancel</button>
+                    <button id="rightPanelCommandCreateFolder" type="button">Create</button>
+                    <button id="rightPanelCommandHideCreateFolder" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
                     <div class="filesPanelHeader">
