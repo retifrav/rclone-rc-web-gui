@@ -322,17 +322,48 @@ function openPath(path: string, filesPanelID: string)
 
     functions.panelsPaths[filesPanelID] = path;
 
-    let div = ""
-        .concat(
-            `<div class='fileLine folderLine'
-            onclick="openPath('${oneLevelUpPath}', '${filesPanelID}');">`
-        )
-        .concat("<img class='icon' src='./images/file.svg'>")
-        .concat(`<p><span class="path-hint">${pathHint == "/" ? "" : pathHint}/</span>..</p>`)
-        //.concat(`<img src="./images/info-square.svg" style="margin-left:auto;" title="${oneLevelUpPath}">`)
-        .concat("</div>");
-    filesPanel.appendChild(functions.htmlToElement(div));
+    const divFileLine: HTMLDivElement = Object.assign(
+        document.createElement("div"),
+        {
+            className: "fileLine folderLine"
+        }
+    );
+    divFileLine.addEventListener(
+        "click",
+        () =>
+        {
+            openPath(oneLevelUpPath, filesPanelID);
+        }
+    );
+
+    const img: HTMLImageElement = Object.assign(
+        document.createElement("img"),
+        {
+            className: "icon",
+            src: "./images/file.svg"
+        }
+    );
+    divFileLine.appendChild(img);
+
+    const p: HTMLParagraphElement = document.createElement("p");
+    const span: HTMLSpanElement = Object.assign(
+        document.createElement("span"),
+        {
+            className: "path-hint"
+        }
+    );
+    const spanContent: Text = document.createTextNode(`${pathHint == "/" ? "" : pathHint}/`);
+    const spanContentTwoDots: Text = document.createTextNode("..");
+    span.appendChild(spanContent);
+    p.appendChild(span);
+    p.appendChild(spanContentTwoDots);
+    //.concat(`<img src="./images/info-square.svg" style="margin-left:auto;" title="${oneLevelUpPath}">`)
+    divFileLine.appendChild(p);
+
+    filesPanel.appendChild(divFileLine);
+
     filesPanel.appendChild(functions.htmlToElement("<div class='loadingAnimation'></div>"));
+
     let params: functions.rcRequest = {
         "fs": basePath,
         "remote": nextPath
@@ -361,24 +392,88 @@ function openPath(path: string, filesPanelID: string)
 
             let folderNamePath = basePath.concat(listOfFilesAndFolders[r]["Path"]);
 
-            div = "<div class='file-list-item'><input type='checkbox' name='fileListItem'>";
+            const divFileList: HTMLDivElement = document.createElement("div");
+            divFileList.classList.add("file-list-item");
+
+            // const inputCheckbox: HTMLInputElement = document.createElement("input");
+            // inputCheckbox.type = "checkbox";
+            // inputCheckbox.name = "fileListItem";
+            divFileList.appendChild(
+                Object.assign(
+                    document.createElement("input"),
+                    {
+                        type: "checkbox",
+                        name: "fileListItem"
+                    }
+                )
+            );
+
+            let divFileListItem: HTMLDivElement = document.createElement("div");
             if (listOfFilesAndFolders[r]["IsDir"] === true)
             {
-                div = div.concat(`<div class='fileLine folderLine'
-                    data-type='folder' data-path="${folderNamePath}"
-                    onclick="openPath('${folderNamePath.replace(/'/g, "\\'")}', '${filesPanelID}');">`
-                )
+                divFileListItem = Object.assign(
+                    document.createElement("div"),
+                    {
+                        className: "fileLine folderLine"
+                        //dataset: { type: "folder", path: folderNamePath } // readonly, can't assign
+                    }
+                );
+                // not very convenient
+                // const dataset: {[key: string]: string} = { type: "folder", path: folderNamePath };
+                // for (const d in dataset) {
+                //     divFileListItem.setAttribute(`data-${d}`, dataset[d]);
+                // }
+                // seems to be the best way to assign dataset attributes
+                Object.assign(
+                    divFileListItem.dataset,
+                    {
+                        type: "folder",
+                        path: folderNamePath
+                    }
+                );
+                divFileListItem.addEventListener(
+                    "click",
+                    () =>
+                    {
+                        openPath(folderNamePath.replace(/'/g, "\\'"), filesPanelID);
+                    }
+                );
             }
             else
             {
-                div = div.concat(`<div class='fileLine' data-type='file' data-path="${fileNamePath}">`)
+                divFileListItem = Object.assign(
+                    document.createElement("div"),
+                    {
+                        className: "fileLine"
+                    }
+                );
+                Object.assign(
+                    divFileListItem.dataset,
+                    {
+                        type: "file",
+                        path: fileNamePath
+                    }
+                );
             }
-            div = div.concat(
-                "<img class='icon' src='./images/",
-                functions.getIconType(listOfFilesAndFolders[r]["MimeType"]), "'>")
-                .concat("<p>", fileName, "</p>")
-                .concat("</div></div>");
-            filesPanel.appendChild(functions.htmlToElement(div));
+
+            divFileListItem.appendChild(
+                Object.assign(
+                    document.createElement("img"),
+                    {
+                        classList: [ "icon" ],
+                        src: `./images/${functions.getIconType(listOfFilesAndFolders[r]["MimeType"])}`
+                    }
+                )
+            );
+
+            const pFileNameContent: Text = document.createTextNode(fileName);
+            const pFileName: HTMLParagraphElement = document.createElement("p");
+            pFileName.appendChild(pFileNameContent);
+            divFileListItem.appendChild(pFileName);
+
+            divFileList.appendChild(divFileListItem);
+
+            filesPanel.appendChild(divFileList);
         }
     });
 }
