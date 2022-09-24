@@ -89,9 +89,34 @@ const rightPanelCommandRefresh: HTMLButtonElement =
 
 window.onload = () =>
 {
-    initialize();
-
     settingsChbxPolling.checked = settings.userSettings.timerRefreshEnabled;
+    inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
+
+    // get versions
+    sendRequestToRclone(
+        "/core/version",
+        null,
+        function(rez: functions.rcVersion)
+        {
+            rcloneOS.textContent = rez["os"].concat(" (", rez["arch"], ")");
+            rcloneVersion.textContent = rez["version"];
+            guiVersion.textContent = settings.guiVersion;
+        }
+    );
+
+    // get remotes
+    sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
+    {
+        updateRemotesSelects(leftPanelRemote, "leftPanelFiles", rez);
+        updateRemotesSelects(rightPanelRemote, "rightPanelFiles", rez);
+    });
+
+    if (settings.userSettings.timerRefreshEnabled === false)
+    {
+        indicatorGuiFrozen.style.display = "block";
+    }
+
+    refreshView();
 
     btnSettings.addEventListener(
         "click",
@@ -235,37 +260,6 @@ function timerRefreshViewFunction()
     {
         refreshView();
     }
-}
-
-function initialize()
-{
-    // get versions
-    sendRequestToRclone(
-        "/core/version",
-        null,
-        function(rez: functions.rcVersion)
-        {
-            rcloneOS.textContent = rez["os"].concat(" (", rez["arch"], ")");
-            rcloneVersion.textContent = rez["version"];
-            guiVersion.textContent = settings.guiVersion;
-        }
-    );
-
-    // get remotes
-    sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
-    {
-        updateRemotesSelects(leftPanelRemote, "leftPanelFiles", rez);
-        updateRemotesSelects(rightPanelRemote, "rightPanelFiles", rez);
-    });
-
-    if (settings.userSettings.timerRefreshEnabled === false)
-    {
-        indicatorGuiFrozen.style.display = "block";
-    }
-
-    inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
-
-    refreshView();
 }
 
 function sendRequestToRclone(query: string, params: functions.rcRequest | null, fn: Function)
