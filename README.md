@@ -3,6 +3,8 @@
 <!-- MarkdownTOC -->
 
 - [About](#about)
+    - [Supported rc API commands](#supported-rc-api-commands)
+        - [Sync command isn't supported](#sync-command-isnt-supported)
     - [An example use-case](#an-example-use-case)
     - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [Building](#building)
@@ -29,6 +31,26 @@ A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/), somew
 Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)), which are sent to a running `rclone rcd` using [rc API](https://rclone.org/rc/).
 
 ![rclone rc GUI](/screenshot.png?raw=true)
+
+### Supported rc API commands
+
+- listing files and directories
+    + [operations/list](https://rclone.org/rc/#operations-list)
+- copying files and directories
+    + [sync/copy](https://rclone.org/rc/#sync-copy)
+    + [operations/copyfile](https://rclone.org/rc/#operations-copyfile)
+- moving files and directories
+    + [sync/move](https://rclone.org/rc/#sync-move)
+    + [operations/movefile](https://rclone.org/rc/#operations-movefile)
+- deleting files and directories
+    + [operations/purge](https://rclone.org/rc/#operations-purge)
+    + [operations/deletefile](https://rclone.org/rc/#operations-deletefile)
+- creating a new directory
+    + [operations/mkdir](https://rclone.org/rc/#operations-mkdir)
+
+#### Sync command isn't supported
+
+The [sync/sync](https://rclone.org/rc/#sync-sync) command support isn't implemented, and [that is intentional](https://github.com/retifrav/rclone-rc-web-gui/issues/10). Comparing to moving/deleting, the syncing operation is a weapon of mass destruction and can cause severe data loss, so I decided not to have it available in the GUI. Adding support for it is likely to be very trivial, so you most probably will be able to do it yourself, but don't send it as a pull request to this repository as it will be rejected.
 
 ### An example use-case
 
@@ -87,7 +109,7 @@ or
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/gui
 ```
 
-I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to folder operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
+I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to directory operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
 
 If you want to serve web GUI files with a web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
 
@@ -279,7 +301,7 @@ If you discover any issues/bugs, report them [here](https://github.com/retifrav/
 
 ### Dependencies
 
-The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS. Well actually, now it's not just JavaScript but TypeScript, so there is a requirement to have `tsc` tool for compiling TypeScript sources to JavaScript.
+The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS. Well actually, now it's not JavaScript but TypeScript, so there is a requirement to have `tsc` tool for compiling TypeScript sources to JavaScript.
 
 ### Resources
 
