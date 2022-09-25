@@ -56,7 +56,7 @@ The [sync/sync](https://rclone.org/rc/#sync-sync) command support isn't implemen
 
 I have a remote seedbox and a local media server (*running on Raspberry Pi*), and I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that, thanks to its `rc` mode, it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
 
-More details about the use-case are in [this article](https://retifrav.github.io/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
+More details about the use-case are in [this article](https://decovar.dev/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
 
 ### Comparison with rclone-webui-react
 

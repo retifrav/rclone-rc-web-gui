@@ -148,7 +148,7 @@ export function getHumanReadableValue(sizeInBytes: number, metric: string) : str
     return `${rez} ${metricRank}${metric}`;
 }
 
-// TODO: sort jobs with the same group (folder transfer)
+// TODO: sort jobs with the same group (items from a folder transfer are sorted in the "wrong" order)
 export function sortJobs(a: rcTransfer, b: rcTransfer) : number
 {
     if (a.group === undefined || b.group === undefined) { return 0; }
