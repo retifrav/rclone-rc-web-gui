@@ -81,6 +81,8 @@ Otherwise, the project scripts sources are in TypeScript (*starting with `v0.3.0
 $ npm install -g typescript@latest
 ```
 
+This is the only thing what Node.js is needed for, I promise.
+
 Once you have the tool, compile the sources:
 
 ``` sh
@@ -99,7 +101,7 @@ First of all, set your `rclone rcd` host, port, username and password in `./js/s
 Start `rclone` remote control daemon and point it to the folder with web GUI:
 
 ``` sh
-$ cd /path/to/web/gui
+$ cd /path/to/rclone-rc-web-gui
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
 ```
 
@@ -153,13 +155,14 @@ Also note that without `--rc-web-gui-no-open-browser` provided for `rclone rcd` 
 
 - `rclone rcd` is run as a systemd service
 - NGINX is used as a reverse proxy
-- web GUI is available via custom path such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`
+- web GUI is available via custom base URL such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`
 
-Get the package, for example with Git:
+Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*):
 
 ``` sh
 $ cd /var/www
-$ git clone https://github.com/retifrav/rclone-rc-web-gui.git
+$ wget https://github.com/retifrav/rclone-rc-web-gui/releases/latest/download/rclone-rc-web-gui.zip
+$ unzip ./rclone-rc-web-gui.zip
 $ sudo chown -R www-data:www-data /var/www/rclone-rc-web-gui /var/www/html
 ```
 
