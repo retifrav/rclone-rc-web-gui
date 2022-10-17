@@ -1050,7 +1050,8 @@ function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
     const currentPath: string = functions.panelsPaths[filesPanelID];
     if (currentPath !== "")
     {
-        const folderName = (btn.parentNode!.querySelector("input") as HTMLInputElement).value.trim();
+        const folderNameInput = btn.parentNode!.querySelector("input") as HTMLInputElement;
+        const folderName = folderNameInput.value.trim();
         if (!folderName)
         {
             alert("A folder has no name.");
@@ -1078,6 +1079,7 @@ function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
             // }
             // else
             {
+                folderNameInput.value = "";
                 hideCreateFolder(btn);
                 refreshClicked(filesPanelID);
             }
