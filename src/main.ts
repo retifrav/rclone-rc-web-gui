@@ -267,10 +267,11 @@ function sendRequestToRclone(query: string, params: functions.rcRequest | null, 
     let url = settings.rcloneHost.concat(query);
     let xhr = new XMLHttpRequest();
     xhr.open("POST", url);
-    xhr.setRequestHeader(
-        "Authorization",
-        "Basic " + btoa(settings.rcloneUser.concat(":", settings.rclonePass))
-    );
+    if (typeof(settings.rcloneUser) != "undefined" && typeof(settings.rclonePass) != "undefined")
+        xhr.setRequestHeader(
+            "Authorization",
+            "Basic " + btoa(settings.rcloneUser.concat(":", settings.rclonePass))
+        );
 
     // console.group("Command:", query);
     // console.debug("URL:", url);
