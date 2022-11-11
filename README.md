@@ -127,15 +127,9 @@ In certain situations you might get [different origins](https://decovar.dev/blog
 
 ##### Wrong username/password
 
-If you get:
+If you get `401`/`403` errors for all/some of the requests, then check that the values you've provided in `--rc-user` and `--rc-pass` match the `rcloneUser` and `rclonePass` values in your `settings.js`.
 
-> Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://127.0.0.1:5572/config/listremotes. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing).
-
-or
-
-> Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
-
-check if you have provided correct username and password.
+If you didn't intend to use authentication, then make sure that you launched `rclone rcd` with `--rc-no-auth` flag and that `rcloneUser` and `rclonePass` variables are set to `undefined`.
 
 ##### CORS header does not match
 

@@ -1,8 +1,10 @@
 export const guiVersion: string = "0.3.0";
 
 export var rcloneHost: string = "http://127.0.0.1:5572";
-export var rcloneUser: string = "YOUR-USERNAME";
-export var rclonePass: string = "YOUR-PASSWORD";
+
+// if --rc-no-auth is provided, keep undefined, otherwise ...
+export var rcloneUser: string | undefined = undefined; // ... what is set in --rc-user
+export var rclonePass: string | undefined = undefined; // ... what is set in --rc-pass
 
 export const asyncOperations: string[] = [
     "/sync/copy",
