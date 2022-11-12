@@ -70,6 +70,10 @@ const leftPanelCommandDelete: HTMLButtonElement =
     document.getElementById("leftPanelCommandDelete") as HTMLButtonElement;
 const rightPanelCommandDelete: HTMLButtonElement =
     document.getElementById("rightPanelCommandDelete") as HTMLButtonElement;
+const leftPanelNewFolderName: HTMLInputElement =
+    document.getElementById("leftPanelNewFolderName") as HTMLInputElement;
+const rightPanelNewFolderName: HTMLInputElement =
+    document.getElementById("rightPanelNewFolderName") as HTMLInputElement;
 const leftPanelCommandShowCreateFolder: HTMLButtonElement =
     document.getElementById("leftPanelCommandShowCreateFolder") as HTMLButtonElement;
 const rightPanelCommandShowCreateFolder: HTMLButtonElement =
@@ -219,6 +223,26 @@ window.onload = () =>
     rightPanelCommandDelete.addEventListener(
         "click",
         function() { deleteClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelNewFolderName.addEventListener(
+        "keypress",
+        function(e)
+        {
+            if (e.key === "Enter")
+            {
+                createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
+            }
+        }
+    );
+    rightPanelNewFolderName.addEventListener(
+         "keypress",
+         function(e)
+         {
+             if (e.key === "Enter")
+             {
+                 createFolderClicked(rightPanelCommandCreateFolder, "rightPanelFiles");
+             }
+         }
     );
     leftPanelCommandShowCreateFolder.addEventListener(
         "click",
@@ -1038,7 +1062,10 @@ function showCreateFolder(btn: HTMLButtonElement)
 {
     const panelDiv = btn.parentNode!.parentNode!.parentNode!;
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
-    (panelDiv.querySelector(".create-folder") as HTMLDivElement).style.display = "flex";
+
+    const createFolderBlock = panelDiv.querySelector(".create-folder") as HTMLDivElement;
+    createFolderBlock.style.display = "flex";
+    (createFolderBlock.querySelector("input") as HTMLInputElement).focus();
 }
 
 function hideCreateFolder(btn: HTMLButtonElement)
