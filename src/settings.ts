@@ -1,10 +1,21 @@
 export const guiVersion: string = "0.3.0";
 
-export var rcloneHost: string = "http://127.0.0.1:5572";
-
-// if --rc-no-auth is provided, keep undefined, otherwise ...
-export var rcloneUser: string | undefined = undefined; // ... what is set in --rc-user
-export var rclonePass: string | undefined = undefined; // ... what is set in --rc-pass
+type RcloneSettings = {
+    host: string,
+    user: string | null,
+    pass: string | null,
+    loginToken: string | null
+}
+export const rcloneSettings: RcloneSettings = {
+    host: "http://127.0.0.1:5572",
+    // null if --rc-no-auth, otherwise what is set in --rc-user
+    user: null,
+    // null if --rc-no-auth, otherwise what is set in --rc-pass
+    pass: null,
+    // null if there is no login_token in URL query parameters,
+    // otherwise is set from there and takes over user/pass
+    loginToken: null
+}
 
 export const asyncOperations: string[] = [
     "/sync/copy",

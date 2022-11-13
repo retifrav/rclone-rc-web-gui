@@ -10,9 +10,9 @@
 - [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launching](#launching)
-        - [Using --rc-web-gui](#using---rc-web-gui)
+        - [With --rc-web-gui](#with---rc-web-gui)
             - [Authentication](#authentication)
-        - [Manually downloading the archive](#manually-downloading-the-archive)
+        - [From local path](#from-local-path)
         - [Possible issues](#possible-issues)
             - [Wrong username/password](#wrong-usernamepassword)
             - [CORS header does not match](#cors-header-does-not-match)
@@ -29,7 +29,7 @@
 
 ## About
 
-A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
+A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/) (*remote control daemon*), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
 
 Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)), which are sent to a running `rclone rcd` using [rc API](https://rclone.org/rc/).
 
@@ -101,29 +101,35 @@ Before launching the GUI, you need to have your remotes configured in `~/.config
 
 ### Launching
 
-#### Using --rc-web-gui
+#### With --rc-web-gui
 
 The easiest would be to let `rclone` handle [downloading and serving](https://rclone.org/gui/) the latest release:
 
 ``` sh
-$ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 --rc-web-gui --rc-web-fetch-url https://api.github.com/repos/retifrav/rclone-rc-web-gui/releases/latest --rc-no-auth
+$ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 \
+    --rc-web-gui \
+    --rc-web-fetch-url https://api.github.com/repos/retifrav/rclone-rc-web-gui/releases/latest
 ```
 
-If you have used this functionality before, then you might have a different web GUI already downloaded in your system (*for example, on Mac OS it would be here: `/Users/YOUR-USERNAME/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
+If you have used this functionality before, then you might have a different web GUI already downloaded in your system (*for example, on Mac OS it would be here: `~/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
 
 ##### Authentication
 
-Naturally, there will be no authentication because of the `--rc-no-auth`. That's the only way this can work without requiring user to do anything, as remote archive contains default/undefined credentials.
+By default `rclone` will generate a random password and will also compose a Base64-encoded authentication token for the `Authorization` header. That token will be also set as an URL query parameter (*`?login_token=HERE-GOES-THE-VALUE`*), which is how the code will be able to get it.
 
-To set authentication you would need to replace `--rc-no-auth` with `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `/Users/YOUR-USERNAME/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values would be overwritten on the next GUI update.
+The GUI URL will be openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
 
-Probably later I'll add a web-service that would generate a package with pre-set credentials, so users could provide those as URL query parameters.
+If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values would be overwritten on the next GUI update.
 
-#### Manually downloading the archive
+Probably later I'll add a web-service that would generate a package with pre-set credentials, so users could provide those as query parameters in the endpoint URL.
+
+Or you can just set `--rc-no-auth` to disable authentication.
+
+#### From local path
 
 Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*). Set your `rclone rcd` host, port, username and password in `./js/settings.js`.
 
-Start `rclone` remote control daemon and point it to the folder with web GUI:
+Launch `rclone rcd` and point it to the folder with web GUI:
 
 ``` sh
 $ cd /path/to/rclone-rc-web-gui
@@ -136,7 +142,7 @@ or
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/gui
 ```
 
-I personally prefer to have only one ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to directory operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
+I personally prefer to have only 1 ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to directory operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
 
 If you want to serve web GUI files with a web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
 
@@ -152,9 +158,9 @@ In certain situations you might get [different origins](https://decovar.dev/blog
 
 ##### Wrong username/password
 
-If you get `401`/`403` errors for all/some of the requests, then check that the values you've provided in `--rc-user` and `--rc-pass` match the `rcloneUser` and `rclonePass` values in your `settings.js`.
+If you get `401`/`403` errors for all/some of the requests, then check that the values you've provided in `--rc-user` and `--rc-pass` match the `rcloneSettings.user` and `rcloneSettings.pass` values in your `settings.js`.
 
-If you didn't intend to use authentication, then make sure that you launched `rclone rcd` with `--rc-no-auth` flag and that `rcloneUser` and `rclonePass` variables are set to `undefined`.
+If you didn't intend to use authentication, then make sure that you launched `rclone rcd` with `--rc-no-auth` flag and that `rcloneSettings.user`, `rcloneSettings.pass` (*and `rcloneSettings.loginToken`*) are set to `null`.
 
 ##### CORS header does not match
 
@@ -168,7 +174,7 @@ or
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
-Also note that without `--rc-web-gui-no-open-browser` provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneHost` to `http://localhost:5572` in `settings.js`.
+Also note that without `--rc-web-gui-no-open-browser` provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
 
 #### An example deployment on a GNU/Linux server
 
@@ -273,7 +279,7 @@ Now you should be able to access the web GUI on <http://IP-ADDRESS-OR-DOMAIN/rcl
 
 ### Configuration
 
-There are several settings available for you to configure in `/js/settings.js`.
+There are several settings available for you to configure in `./js/settings.js`.
 
 Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
 

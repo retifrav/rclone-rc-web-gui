@@ -96,6 +96,12 @@ window.onload = () =>
     settingsChbxPolling.checked = settings.userSettings.timerRefreshEnabled;
     inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
 
+    // check if there is login_token query parameter present
+    settings.rcloneSettings.loginToken = new URLSearchParams(
+        window.location.search
+    ).get("login_token");
+    //console.debug(settings.rcloneSettings.loginToken);
+
     // get versions
     sendRequestToRclone(
         "/core/version",
@@ -288,14 +294,21 @@ function timerRefreshViewFunction()
 
 function sendRequestToRclone(query: string, params: functions.rcRequest | null, fn: Function)
 {
-    let url = settings.rcloneHost.concat(query);
+    let url = settings.rcloneSettings.host.concat(query);
     let xhr = new XMLHttpRequest();
     xhr.open("POST", url);
-    if (settings.rcloneUser !== undefined && settings.rclonePass !== undefined)
+    if (settings.rcloneSettings.loginToken !== null)
     {
         xhr.setRequestHeader(
             "Authorization",
-            "Basic " + btoa(settings.rcloneUser.concat(":", settings.rclonePass))
+            `Basic ${settings.rcloneSettings.loginToken}`
+        );
+    }
+    else if (settings.rcloneSettings.user !== null && settings.rcloneSettings.pass !== null)
+    {
+        xhr.setRequestHeader(
+            "Authorization",
+            `Basic ${btoa(settings.rcloneSettings.user.concat(":", settings.rcloneSettings.pass))}`
         );
     }
 
