@@ -136,7 +136,7 @@ $ cd /path/to/rclone-rc-web-gui
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD .
 ```
 
-or
+or:
 
 ``` sh
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path/to/web/gui
