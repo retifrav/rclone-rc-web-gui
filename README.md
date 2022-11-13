@@ -154,8 +154,6 @@ You might also want to [create a service](#an-example-deployment-on-a-gnulinux-s
 
 #### Possible issues
 
-In certain situations you might get [different origins](https://decovar.dev/blog/2019/10/10/the-fuck-is-this-cors/) between server and client, mostly when serving web GUI from a remote host, but that can also happen while testing it on your local host.
-
 ##### Wrong username/password
 
 If you get `401`/`403` errors for all/some of the requests, then check that the values you've provided in `--rc-user` and `--rc-pass` match the `rcloneSettings.user` and `rcloneSettings.pass` values in your `settings.js`.
@@ -164,11 +162,13 @@ If you didn't intend to use authentication, then make sure that you launched `rc
 
 ##### CORS header does not match
 
-If you get
+In certain situations you might get [different origins](https://decovar.dev/blog/2019/10/10/the-fuck-is-this-cors/) between server and client, mostly when serving web GUI from a remote host, but that can also happen while testing it on your local host.
+
+If you get:
 
 > Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://127.0.0.1:5572/core/version. (Reason: CORS header ‘Access-Control-Allow-Origin’ does not match ‘http://127.0.0.1:5572/’).
 
-or
+or:
 
 > Access to XMLHttpRequest at 'http://127.0.0.1:5572/core/version' from origin 'http://127.0.0.1:5572' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The 'Access-Control-Allow-Origin' header has a value 'http://127.0.0.1:5572/' that is not equal to the supplied origin.
 
