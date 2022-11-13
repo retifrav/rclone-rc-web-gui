@@ -1,4 +1,4 @@
-export const guiVersion: string = "0.3.0";
+export const guiVersion: string = "0.4.0";
 
 type RcloneSettings = {
     host: string,
