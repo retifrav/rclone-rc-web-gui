@@ -9,7 +9,10 @@
     - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
 - [Building](#building)
 - [How to use it](#how-to-use-it)
-    - [Launch](#launch)
+    - [Launching](#launching)
+        - [Using --rc-web-gui](#using---rc-web-gui)
+            - [Authentication](#authentication)
+        - [Manually downloading the archive](#manually-downloading-the-archive)
         - [Possible issues](#possible-issues)
             - [Wrong username/password](#wrong-usernamepassword)
             - [CORS header does not match](#cors-header-does-not-match)
@@ -94,9 +97,31 @@ Resulting JavaScript files will be put to `./js` folder. After that you can use 
 
 ## How to use it
 
-First of all, set your `rclone rcd` host, port, username and password in `./js/settings.js`. Also make sure that you have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
+Before launching the GUI, you need to have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
 
-### Launch
+### Launching
+
+#### Using --rc-web-gui
+
+The easiest would be to let `rclone` handle [downloading and serving](https://rclone.org/gui/) the latest release:
+
+``` sh
+$ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 --rc-web-gui --rc-web-fetch-url https://api.github.com/repos/retifrav/rclone-rc-web-gui/releases/latest --rc-no-auth
+```
+
+If you have used this functionality before, then you might have a different web GUI already downloaded in your system (*for example, on Mac OS it would be here: `/Users/YOUR-USERNAME/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
+
+##### Authentication
+
+Naturally, there will be no authentication because of the `--rc-no-auth`. That's the only way this can work without requiring user to do anything, as remote archive contains default/undefined credentials.
+
+To set authentication you would need to replace `--rc-no-auth` with `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `/Users/YOUR-USERNAME/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values would be overwritten on the next GUI update.
+
+Probably later I'll add a web-service that would generate a package with pre-set credentials, so users could provide those as URL query parameters.
+
+#### Manually downloading the archive
+
+Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*). Set your `rclone rcd` host, port, username and password in `./js/settings.js`.
 
 Start `rclone` remote control daemon and point it to the folder with web GUI:
 
@@ -119,7 +144,7 @@ If you want to serve web GUI files with a web-server, then launch `rclone` daemo
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:5572 /path/to/web/gui
 ```
 
-You might also want to create a service for running `rclone` daemon.
+You might also want to [create a service](#an-example-deployment-on-a-gnulinux-server) for running `rclone` daemon.
 
 #### Possible issues
 
