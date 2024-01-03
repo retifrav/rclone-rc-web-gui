@@ -186,9 +186,10 @@ Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/rele
 
 ``` sh
 $ cd /var/www
-$ wget https://github.com/retifrav/rclone-rc-web-gui/releases/latest/download/rclone-rc-web-gui.zip
-$ unzip ./rclone-rc-web-gui.zip
-$ sudo chown -R www-data:www-data /var/www/rclone-rc-web-gui /var/www/html
+$ sudo wget https://github.com/retifrav/rclone-rc-web-gui/releases/latest/download/rclone-rc-web-gui.zip
+$ sudo unzip ./rclone-rc-web-gui.zip && sudo rm ./rclone-rc-web-gui.zip
+$ sudo mv ./build ./rclone-rc-web-gui
+$ sudo chown -R www-data:www-data /var/www/rclone-rc-web-gui
 ```
 
 Create a systemd service:
@@ -206,7 +207,8 @@ ExecStart=rclone rcd --rc-web-gui-no-open-browser --rc-addr 127.0.0.1:8004 --rc-
 Restart=always
 RestartSec=10
 SyslogIdentifier=rclonewebgui
-User=SOME-USER
+User=SOME-USER-WITH-REQUIRED-DISK-ACCESS
+Group=www-data
 
 [Install]
 WantedBy=multi-user.target
@@ -215,8 +217,8 @@ WantedBy=multi-user.target
 here:
 
 - `http://IP-ADDRESS-OR-DOMAIN` - the requests will be coming from the same server, so you need to provide here either the IP address of that server or its domain, if you have one. In my case it's just a server in my local network, so I've set this to `http://192.168.1.11` (*static MAC-binded IP address of my server*);
-- `SOME-USER` - a user from which `rclone` will be run, perhaps it's a good idea to create a new user for this purpose and limit its access to just one folder such as `/media/`;
-- `WorkingDirectory=/media/` - if you'll have your local filesystem as one of the rclone's remote too, then `/media/` would be a starting folder. For me that's where I mount external disks, so it makes sense;
+- `SOME-USER-WITH-REQUIRED-DISK-ACCESS` - a user from which `rclone` will be run, so perhaps it's a good idea to create a new user for this purpose and limit its access to just one folder such as `/media/`;
+- `WorkingDirectory=/media/` - if you'll have your local filesystem as one of the rclone's remote too, then `/media/` would be a starting folder (*for me that's where I mount external disks*);
 - `.htpasswd` - a slightly better security, instead of providing credentials in plain text they are stored [somewhat encrypted](https://github.com/retifrav/scraps/blob/master/_linux/index.md#basic-authentication).
 
 Enable and start the service:
