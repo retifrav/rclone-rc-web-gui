@@ -117,13 +117,13 @@ If you have used this functionality before, then you might have a different web 
 
 By default `rclone` will generate a random password and will also compose a Base64-encoded authentication token for the `Authorization` header. That token will be also set as an URL query parameter (*`?login_token=HERE-GOES-THE-VALUE`*), which is how the code will be able to get it.
 
-The GUI URL will be openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
+The GUI URL will be auto-openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are that your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
 
-If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values would be overwritten on the next GUI update.
+In case of launching it on a remote server, you obviously won't get a web-browser auto-openned with provided credentials, so add `--rc-web-gui-no-open-browser` to the CLI, and then it will print the URL with credentials to the `stdout`.
 
-Probably later I'll add a web-service that would generate a package with pre-set credentials, so users could provide those as query parameters in the endpoint URL.
+If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values will be overwritten on the next GUI update.
 
-Or you can just set `--rc-no-auth` to disable authentication.
+Or you can just set `--rc-no-auth` to disable authentication, which is not recommended.
 
 #### From local path
 
