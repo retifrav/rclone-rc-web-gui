@@ -140,10 +140,20 @@ td > img {
     height: 2em;
 }
 
+div.controls button,
+div.create-folder button,
+div.create-folder input {
+    padding: 4px 6px;
+}
+
 button.with-icon {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 5px;
+}
+button.with-icon > span.hide-on-desktop {
+    display: none;
 }
 
 pre {
@@ -171,14 +181,15 @@ pre {
     margin-top: 5px;
     border: 1px solid #ccc;
     flex: 1 0;
-    overflow-y: auto;
 }
-.filesPanel > select {
-    padding: 3px;
+.filesPanel select {
+    padding: 3px 6px;
 }
 .panelFilesContainer {
     max-height: 700px;
+    margin-top: 4px;
     padding: 5px 0;
+    overflow-y: auto;
 }
 .filesList {
     display: flex;
@@ -253,16 +264,12 @@ pre {
 .create-folder {
     display: flex;
 }
-.controls > *,
-.create-folder > *,
-.lastButtons > * {
-    margin-left: 4px;
+.controls,
+.create-folder,
+.lastButtons {
+    gap: 4px;
 }
-.controls > *:first-child,
-.create-folder > *:first-child,
-.lastButtons > *:first-child {
-    margin-left: 0;
-}
+
 .create-folder {
     display: none;
 }

@@ -68,14 +68,31 @@
         <div id="files">
             <div class="filesPanelWrapper">
                 <div class="controls">
-                    <button id="leftPanelCommandCopy" type="button">Copy</button>
-                    <button id="leftPanelCommandMove" type="button">Move</button>
-                    <button id="leftPanelCommandDelete" type="button">Delete</button>
+                    <button id="leftPanelCommandCopy" type="button" class="with-icon"
+                        title="Copy selected files/folders to the right panel">
+                        <img src="./images/arrow-right-square.svg">
+                        <span>Copy</span>
+                    </button>
+                    <button id="leftPanelCommandMove" type="button" class="with-icon"
+                        title="Move selected files/folders to the right panel">
+                        <img src="./images/arrow-right-square-fill.svg">
+                        <span>Move</span>
+                    </button>
+                    <button id="leftPanelCommandDelete" type="button" class="with-icon"
+                        title="Delete selected files/folders">
+                        <img src="./images/trash3.svg">
+                        <span>Delete</span>
+                    </button>
                     <div class="lastButtons">
-                        <button id="leftPanelCommandShowCreateFolder" type="button">
-                            Create&nbsp;folder</button>
-                        <button id="leftPanelCommandRefresh" type="button" class="with-icon">
+                        <button id="leftPanelCommandShowCreateFolder" type="button" class="with-icon"
+                            title="Create a new folder">
+                            <img src="./images/folder-plus.svg">
+                            <span class="hide-on-desktop">New&nbsp;folder</span>
+                        </button>
+                        <button id="leftPanelCommandRefresh" type="button" class="with-icon"
+                            title="Refresh the list">
                             <img src="./images/arrow-clockwise.svg">
+                            <span class="hide-on-desktop">Refresh</span>
                         </button>
                     </div>
                 </div>
@@ -103,14 +120,31 @@
             </div>
             <div class="filesPanelWrapper">
                 <div class="controls">
-                    <button id="rightPanelCommandCopy" type="button">Copy</button>
-                    <button id="rightPanelCommandMove" type="button">Move</button>
-                    <button id="rightPanelCommandDelete" type="button">Delete</button>
+                    <button id="rightPanelCommandCopy" type="button" class="with-icon"
+                        title="Copy selected files/folders to the left panel">
+                        <img src="./images/arrow-left-square.svg">
+                        <span>Copy</span>
+                    </button>
+                    <button id="rightPanelCommandMove" type="button" class="with-icon"
+                        title="Move selected files/folders to the left panel">
+                        <img src="./images/arrow-left-square-fill.svg">
+                        <span>Move</span>
+                    </button>
+                    <button id="rightPanelCommandDelete" type="button" class="with-icon"
+                        title="Delete selected files/folders">
+                        <img src="./images/trash3.svg">
+                        <span>Delete</span>
+                    </button>
                     <div class="lastButtons">
-                        <button id="rightPanelCommandShowCreateFolder" type="button">
-                            Create&nbsp;folder</button>
-                        <button id="rightPanelCommandRefresh" type="button" class="with-icon">
+                        <button id="rightPanelCommandShowCreateFolder" type="button" class="with-icon"
+                            title="Create a new folder">
+                            <img src="./images/folder-plus.svg">
+                            <span class="hide-on-desktop">New&nbsp;folder</span>
+                        </button>
+                        <button id="rightPanelCommandRefresh" type="button" class="with-icon"
+                            title="Refresh the list">
                             <img src="./images/arrow-clockwise.svg">
+                            <span class="hide-on-desktop">Refresh</span>
                         </button>
                     </div>
                 </div>

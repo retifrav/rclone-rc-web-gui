@@ -78,7 +78,7 @@ Having a fancy GUI was/is the lowest priority for me, so expect the GUI to be ve
 
 Skip this section, if you have downloaded a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page, because the scripts there are already in JavaScript, so it is ready to be used out-of-the-box.
 
-Otherwise, the project scripts sources are in TypeScript (*starting with `v0.3.0`*), and so they need to be compiled to JavaScript. For that you'll need to have [tsc](https://www.typescriptlang.org/download) tool, which is installed with `npm`, which is installed with [Node.js](https://nodejs.org/en/download/). Yes, we all hate Node.js, but that's the easiest way I know for installing TypeScript compiler:
+Otherwise, the project scripts sources are in TypeScript (*starting with `v0.3.0`*), and so they need to be compiled to JavaScript. For that you'll need to have [tsc](https://typescriptlang.org/download) tool, which is installed with `npm`, which is installed with [Node.js](https://nodejs.org/en/download/). Yes, we all hate Node.js, but that's the easiest way I know for installing TypeScript compiler:
 
 ``` sh
 $ npm install -g typescript@latest

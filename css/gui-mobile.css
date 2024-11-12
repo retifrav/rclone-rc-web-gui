@@ -1,4 +1,4 @@
-@media only screen and (max-width: 700px) {
+@media only screen and (max-width: 720px) {
     h1 { font-size: 1.5em; }
     h2 { font-size: 1.3em; }
     h3 { font-size: 1.15em; }
@@ -23,9 +23,16 @@
     .lastButtons {
         flex-direction: column;
     }
-    .controls > *,
-    .lastButtons > * {
-        margin: 2px 0;
+    .lastButtons {
+        margin-left: unset;
+    }
+
+    div.controls button {
+        padding: 6px 0;
+    }
+
+    button.with-icon > span.hide-on-desktop {
+        display: block;
     }
 
     /* --- settings panel --- */
