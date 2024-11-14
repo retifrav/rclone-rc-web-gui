@@ -10,6 +10,12 @@
         padding: 10px;
     }
 
+    #completedTransfers,
+    #currentTransfers,
+    .filesList {
+        font-size: 0.9rem;
+    }
+
     .icon {
         width: 1em;
         height: 1em;

@@ -255,7 +255,7 @@ window.onload = () =>
     );
     // create new folder
     leftPanelNewFolderName.addEventListener(
-        "keydown", // with `keyup` the `Enter` key event gets into a "loop"
+        "keydown", // with `keyup` the `Enter` key event gets into a "loop" on closing the alert with `Enter` too
         function(e)
         {
             switch (e.key)
@@ -270,7 +270,7 @@ window.onload = () =>
         }
     );
     rightPanelNewFolderName.addEventListener(
-         "keydown", // with `keyup` the `Enter` key event gets into a "loop"
+         "keydown", // with `keyup` the `Enter` key event gets into a "loop" on closing the alert with `Enter` too
          function(e)
          {
             switch (e.key)
