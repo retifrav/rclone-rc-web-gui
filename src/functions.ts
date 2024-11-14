@@ -82,6 +82,17 @@ export type rcStats = {
     transferring: rcTransfer[]
 }
 
+export const debounce = <F extends (...args: any[]) => any>
+    (func: F, waitFor: number) => {
+    let timeout = 0;
+
+    return (...args: Parameters<F>): Promise<ReturnType<F>> =>
+        new Promise(resolve => {
+            if (timeout) { clearTimeout(timeout); }
+            timeout = setTimeout(() => resolve(func(...args)), waitFor);
+        });
+}
+
 export function htmlToElement(html: string) : HTMLElement
 {
     let template: HTMLTemplateElement = document.createElement("template");
@@ -219,4 +230,18 @@ export function getFileOperation(operationType: string) : string
         default:
             return "";
     }
+}
+
+export function acceptableKeyEventForSearch(ke: KeyboardEvent) : boolean
+{
+    if (
+        (ke.keyCode > 64 && ke.keyCode < 91)
+        ||
+        (ke.keyCode > 96 && ke.keyCode < 123)
+        ||
+        (ke.keyCode === 8 || (ke.keyCode === 8 && ke.ctrlKey)) // backspace // the `(ke.keyCode === 8 && ke.metaKey)` works only with `keydown`, and also `metaKey` doesn't seem to be a modifier?
+        ||
+        (ke.keyCode === 46 || (ke.keyCode === 46 && ke.ctrlKey)) // delete // the `(ke.keyCode === 46 && ke.metaKey)` works only with `keydown`, and also `metaKey` doesn't seem to be a modifier?
+    )
+    { return true; } else { return false; }
 }

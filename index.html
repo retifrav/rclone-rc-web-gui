@@ -89,6 +89,11 @@
                             <img src="./images/folder-plus.svg">
                             <span class="hide-on-desktop">New&nbsp;folder</span>
                         </button>
+                        <button id="leftPanelCommandShowSearch" type="button" class="with-icon"
+                            title="Search among displayed files/folders">
+                            <img src="./images/search.svg">
+                            <span class="hide-on-desktop">Search</span>
+                        </button>
                         <button id="leftPanelCommandRefresh" type="button" class="with-icon"
                             title="Refresh the list">
                             <img src="./images/arrow-clockwise.svg">
@@ -96,10 +101,14 @@
                         </button>
                     </div>
                 </div>
-                <div class="create-folder">
+                <div class="input-query create-folder">
                     <input id="leftPanelNewFolderName" type="text" placeholder="Folder name">
                     <button id="leftPanelCommandCreateFolder" type="button">Create</button>
                     <button id="leftPanelCommandHideCreateFolder" type="button">Cancel</button>
+                </div>
+                <div class="input-query search">
+                    <input id="leftPanelSearchQuery" type="text" placeholder="Filter files/folders by name">
+                    <button id="leftPanelCommandHideSearch" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
                     <div class="filesPanelHeader">
@@ -141,6 +150,11 @@
                             <img src="./images/folder-plus.svg">
                             <span class="hide-on-desktop">New&nbsp;folder</span>
                         </button>
+                        <button id="rightPanelCommandShowSearch" type="button" class="with-icon"
+                            title="Search among displayed files/folders">
+                            <img src="./images/search.svg">
+                            <span class="hide-on-desktop">Search</span>
+                        </button>
                         <button id="rightPanelCommandRefresh" type="button" class="with-icon"
                             title="Refresh the list">
                             <img src="./images/arrow-clockwise.svg">
@@ -148,10 +162,14 @@
                         </button>
                     </div>
                 </div>
-                <div class="create-folder">
+                <div class="input-query create-folder">
                     <input id="rightPanelNewFolderName" type="text" placeholder="Folder name">
                     <button id="rightPanelCommandCreateFolder" type="button">Create</button>
                     <button id="rightPanelCommandHideCreateFolder" type="button">Cancel</button>
+                </div>
+                <div class="input-query search">
+                    <input id="rightPanelSearchQuery" type="text" placeholder="Filter files/folders by name">
+                    <button id="rightPanelCommandHideSearch" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
                     <div class="filesPanelHeader">

@@ -58,18 +58,22 @@ const leftPanelRemote: HTMLSelectElement =
 const rightPanelRemote: HTMLSelectElement =
     document.getElementById("rightPanelRemote") as HTMLSelectElement;
 
+// copy
 const leftPanelCommandCopy: HTMLButtonElement =
     document.getElementById("leftPanelCommandCopy") as HTMLButtonElement;
 const rightPanelCommandCopy: HTMLButtonElement =
     document.getElementById("rightPanelCommandCopy") as HTMLButtonElement;
+//move
 const leftPanelCommandMove: HTMLButtonElement =
     document.getElementById("leftPanelCommandMove") as HTMLButtonElement;
 const rightPanelCommandMove: HTMLButtonElement =
     document.getElementById("rightPanelCommandMove") as HTMLButtonElement;
+//delete
 const leftPanelCommandDelete: HTMLButtonElement =
     document.getElementById("leftPanelCommandDelete") as HTMLButtonElement;
 const rightPanelCommandDelete: HTMLButtonElement =
     document.getElementById("rightPanelCommandDelete") as HTMLButtonElement;
+// create new folder
 const leftPanelNewFolderName: HTMLInputElement =
     document.getElementById("leftPanelNewFolderName") as HTMLInputElement;
 const rightPanelNewFolderName: HTMLInputElement =
@@ -86,10 +90,24 @@ const leftPanelCommandHideCreateFolder: HTMLButtonElement =
     document.getElementById("leftPanelCommandHideCreateFolder") as HTMLButtonElement;
 const rightPanelCommandHideCreateFolder: HTMLButtonElement =
     document.getElementById("rightPanelCommandHideCreateFolder") as HTMLButtonElement;
+// refresh
 const leftPanelCommandRefresh: HTMLButtonElement =
     document.getElementById("leftPanelCommandRefresh") as HTMLButtonElement;
 const rightPanelCommandRefresh: HTMLButtonElement =
     document.getElementById("rightPanelCommandRefresh") as HTMLButtonElement;
+// search
+const leftPanelSearchQuery: HTMLInputElement =
+    (document.getElementById("leftPanelSearchQuery") as HTMLInputElement);
+const rightPanelSearchQuery: HTMLInputElement =
+    (document.getElementById("rightPanelSearchQuery") as HTMLInputElement);
+const leftPanelCommandShowSearch: HTMLButtonElement =
+    document.getElementById("leftPanelCommandShowSearch") as HTMLButtonElement;
+const rightPanelCommandShowSearch: HTMLButtonElement =
+    document.getElementById("rightPanelCommandShowSearch") as HTMLButtonElement;
+const leftPanelCommandHideSearch: HTMLButtonElement =
+    document.getElementById("leftPanelCommandHideSearch") as HTMLButtonElement;
+const rightPanelCommandHideSearch: HTMLButtonElement =
+    document.getElementById("rightPanelCommandHideSearch") as HTMLButtonElement;
 
 window.onload = () =>
 {
@@ -125,6 +143,9 @@ window.onload = () =>
     {
         indicatorGuiFrozen.style.display = "block";
     }
+
+    leftPanelSearchQuery.value = "";
+    rightPanelSearchQuery.value = "";
 
     refreshView();
 
@@ -230,33 +251,44 @@ window.onload = () =>
         "click",
         function() { deleteClicked(this, "rightPanelFiles"); }
     );
+    // create new folder
     leftPanelNewFolderName.addEventListener(
-        "keypress",
+        "keydown", // with `keyup` the `Enter` key event gets into a "loop"
         function(e)
         {
-            if (e.key === "Enter")
+            switch (e.key)
             {
-                createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
+                case "Enter":
+                    createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
+                    break;
+                case "Escape":
+                    hideCreateFolder(this);
+                    break;
             }
         }
     );
     rightPanelNewFolderName.addEventListener(
-         "keypress",
+         "keydown", // with `keyup` the `Enter` key event gets into a "loop"
          function(e)
          {
-             if (e.key === "Enter")
-             {
-                 createFolderClicked(rightPanelCommandCreateFolder, "rightPanelFiles");
-             }
+            switch (e.key)
+            {
+                case "Enter":
+                    createFolderClicked(rightPanelCommandCreateFolder, "rightPanelFiles");
+                    break;
+                case "Escape":
+                    hideCreateFolder(this);
+                    break;
+            }
          }
     );
     leftPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { showCreateFolder(this); }
+        function() { showCreateFolder(this, "leftPanelFiles"); }
     );
     rightPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { showCreateFolder(this); }
+        function() { showCreateFolder(this, "rightPanelFiles"); }
     );
     leftPanelCommandCreateFolder.addEventListener(
         "click",
@@ -274,6 +306,7 @@ window.onload = () =>
         "click",
         function() { hideCreateFolder(this) }
     );
+    // refresh
     leftPanelCommandRefresh.addEventListener(
         "click",
         function() { refreshClicked("leftPanelFiles"); }
@@ -281,6 +314,59 @@ window.onload = () =>
     rightPanelCommandRefresh.addEventListener(
         "click",
         function() { refreshClicked("rightPanelFiles"); }
+    );
+    // search
+    leftPanelCommandShowSearch.addEventListener(
+        "click",
+        function() { showSearch(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandShowSearch.addEventListener(
+        "click",
+        function() { showSearch(this, "rightPanelFiles"); }
+    );
+    leftPanelSearchQuery.addEventListener(
+        "keyup",
+        function(e)
+        {
+            switch (e.key)
+            {
+                case "Escape":
+                    hideSearch(this, "leftPanelFiles");
+                    break;
+                default:
+                    if (functions.acceptableKeyEventForSearch(e))
+                    {
+                        searchQueryChanged(leftPanelSearchQuery.value, "leftPanelFiles");
+                    }
+                    break;
+            }
+        }
+    );
+    rightPanelSearchQuery.addEventListener(
+        "keyup",
+        function(e)
+        {
+            switch (e.key)
+            {
+                case "Escape":
+                    hideSearch(this, "rightPanelFiles");
+                    break;
+                default:
+                    if (functions.acceptableKeyEventForSearch(e))
+                    {
+                        searchQueryChanged(rightPanelSearchQuery.value, "rightPanelFiles");
+                    }
+                    break;
+            }
+        }
+    );
+    leftPanelCommandHideSearch.addEventListener(
+        "click",
+        function() { hideSearch(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandHideSearch.addEventListener(
+        "click",
+        function() { hideSearch(this, "rightPanelFiles") }
     );
 }
 
@@ -876,6 +962,10 @@ function refreshClicked(filesPanelID: string)
     {
         openPath(functions.panelsPaths[filesPanelID], filesPanelID);
     }
+    else
+    {
+        alert("Nothing to refresh, choose a remote first.");
+    }
 }
 
 function operationClicked(btn: HTMLButtonElement, operationType: string, filesPanelID: string)
@@ -1071,20 +1161,26 @@ function deleteOperation(
     });
 }
 
-function showCreateFolder(btn: HTMLButtonElement)
+function showCreateFolder(btn: HTMLButtonElement, filesPanelID: string)
 {
+    if (functions.panelsPaths[filesPanelID] === "")
+    {
+        alert("Nothing to create a folder in, choose a remote first.");
+        return;
+    }
+
     const panelDiv = btn.parentNode!.parentNode!.parentNode!;
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
 
-    const createFolderBlock = panelDiv.querySelector(".create-folder") as HTMLDivElement;
+    const createFolderBlock = panelDiv.querySelector(".input-query.create-folder") as HTMLDivElement;
     createFolderBlock.style.display = "flex";
     (createFolderBlock.querySelector("input") as HTMLInputElement).focus();
 }
 
-function hideCreateFolder(btn: HTMLButtonElement)
+function hideCreateFolder(btn: HTMLButtonElement | HTMLInputElement)
 {
     let panelDiv = btn!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".create-folder") as HTMLDivElement).style.display = "none";
+    (panelDiv.querySelector(".input-query.create-folder") as HTMLDivElement).style.display = "none";
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 }
 
@@ -1134,3 +1230,74 @@ function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
         return;
     }
 }
+
+function showSearch(btn: HTMLButtonElement, filesPanelID: string)
+{
+    if (functions.panelsPaths[filesPanelID] === "")
+    {
+        alert("Nothing to search in, choose a remote first.");
+        return;
+    }
+
+    const panelDiv = btn.parentNode!.parentNode!.parentNode!;
+    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
+
+    const searchBlock = panelDiv.querySelector(".input-query.search") as HTMLDivElement;
+    searchBlock.style.display = "flex";
+    (searchBlock.querySelector("input") as HTMLInputElement).focus();
+}
+
+function hideSearch(btn: HTMLButtonElement | HTMLInputElement, filesPanelID: string)
+{
+    let panelDiv = btn!.parentNode!.parentNode!;
+    (panelDiv.querySelector(".input-query.search") as HTMLDivElement).style.display = "none";
+    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
+
+    clearSearch(filesPanelID);
+}
+
+function clearSearch(filesPanelID: string)
+{
+    const fileLines: HTMLDivElement[] = Array.from(
+        (document.getElementById(filesPanelID) as HTMLDivElement)
+            .querySelectorAll(".file-list-item > .fileLine")
+    );
+    for (let i = 0; i < fileLines.length; i++)
+    {
+        (fileLines[i].parentNode as HTMLDivElement).style.display = "flex";
+    }
+}
+
+const searchQueryChanged = functions.debounce(
+    (searchTerm: string, filesPanelID: string) =>
+    {
+        clearSearch(filesPanelID);
+
+        // don't start search until there are at least 3 symbols
+        if (searchTerm.length < 3)
+        {
+            if (searchTerm.length !== 0) { console.warn("The search query is too short"); }
+            return;
+        }
+
+        //console.debug(`Searching for [${searchTerm}]...`);
+
+        const fileLines: HTMLDivElement[] = Array.from(
+            (document.getElementById(filesPanelID) as HTMLDivElement)
+                .querySelectorAll(".file-list-item > .fileLine")
+        );
+        for (let i = 0; i < fileLines.length; i++)
+        {
+            if (
+                !(fileLines[i].querySelector("p") as HTMLParagraphElement)
+                    .textContent!.toLowerCase().includes(
+                        searchTerm.toLowerCase()
+                    )
+            )
+            {
+                (fileLines[i].parentNode as HTMLDivElement).style.display = "none";
+            }
+        }
+    },
+    200
+);

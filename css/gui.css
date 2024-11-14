@@ -141,8 +141,8 @@ td > img {
 }
 
 div.controls button,
-div.create-folder button,
-div.create-folder input {
+div.input-query button,
+div.input-query input {
     padding: 4px 6px;
 }
 
@@ -261,19 +261,19 @@ pre {
 }
 
 .controls,
-.create-folder {
+.input-query {
     display: flex;
 }
 .controls,
-.create-folder,
+.input-query,
 .lastButtons {
     gap: 4px;
 }
 
-.create-folder {
+.input-query {
     display: none;
 }
-.create-folder > input {
+.input-query > input {
     flex-grow: 1;
 }
 .lastButtons {
