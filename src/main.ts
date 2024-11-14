@@ -1,5 +1,7 @@
 import * as settings from "./settings.js";
 import * as functions from "./functions.js";
+import * as folder from "./folder.js";
+import * as search from "./search.js";
 
 type QueueItem = {
     "dtAdded": Date,
@@ -121,7 +123,7 @@ window.onload = () =>
     //console.debug(settings.rcloneSettings.loginToken);
 
     // get versions
-    sendRequestToRclone(
+    functions.sendRequestToRclone(
         "/core/version",
         null,
         function(rez: functions.rcVersion)
@@ -133,7 +135,7 @@ window.onload = () =>
     );
 
     // get remotes
-    sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
+    functions.sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
     {
         updateRemotesSelects(leftPanelRemote, "leftPanelFiles", rez);
         updateRemotesSelects(rightPanelRemote, "rightPanelFiles", rez);
@@ -259,10 +261,10 @@ window.onload = () =>
             switch (e.key)
             {
                 case "Enter":
-                    createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
+                    folder.createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
                     break;
                 case "Escape":
-                    hideCreateFolder(this);
+                    folder.hideCreateFolder(this);
                     break;
             }
         }
@@ -274,37 +276,40 @@ window.onload = () =>
             switch (e.key)
             {
                 case "Enter":
-                    createFolderClicked(rightPanelCommandCreateFolder, "rightPanelFiles");
+                    folder.createFolderClicked(
+                        rightPanelCommandCreateFolder,
+                        "rightPanelFiles"
+                    );
                     break;
                 case "Escape":
-                    hideCreateFolder(this);
+                    folder.hideCreateFolder(this);
                     break;
             }
          }
     );
     leftPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { showCreateFolder(this, "leftPanelFiles"); }
+        function() { folder.showCreateFolder(this, "leftPanelFiles"); }
     );
     rightPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { showCreateFolder(this, "rightPanelFiles"); }
+        function() { folder.showCreateFolder(this, "rightPanelFiles"); }
     );
     leftPanelCommandCreateFolder.addEventListener(
         "click",
-        function() { createFolderClicked(this, "leftPanelFiles"); }
+        function() { folder.createFolderClicked(this, "leftPanelFiles"); }
     );
     rightPanelCommandCreateFolder.addEventListener(
         "click",
-        function() { createFolderClicked(this, "rightPanelFiles"); }
+        function() { folder.createFolderClicked(this, "rightPanelFiles"); }
     );
     leftPanelCommandHideCreateFolder.addEventListener(
         "click",
-        function() { hideCreateFolder(this); }
+        function() { folder.hideCreateFolder(this); }
     );
     rightPanelCommandHideCreateFolder.addEventListener(
         "click",
-        function() { hideCreateFolder(this) }
+        function() { folder.hideCreateFolder(this) }
     );
     // refresh
     leftPanelCommandRefresh.addEventListener(
@@ -318,11 +323,11 @@ window.onload = () =>
     // search
     leftPanelCommandShowSearch.addEventListener(
         "click",
-        function() { showSearch(this, "leftPanelFiles"); }
+        function() { search.showSearch(this, "leftPanelFiles"); }
     );
     rightPanelCommandShowSearch.addEventListener(
         "click",
-        function() { showSearch(this, "rightPanelFiles"); }
+        function() { search.showSearch(this, "rightPanelFiles"); }
     );
     leftPanelSearchQuery.addEventListener(
         "keyup",
@@ -331,12 +336,15 @@ window.onload = () =>
             switch (e.key)
             {
                 case "Escape":
-                    hideSearch(this, "leftPanelFiles");
+                    search.hideSearch(this, "leftPanelFiles");
                     break;
                 default:
                     if (functions.acceptableKeyEventForSearch(e))
                     {
-                        searchQueryChanged(leftPanelSearchQuery.value, "leftPanelFiles");
+                        search.searchQueryChanged(
+                            leftPanelSearchQuery.value,
+                            "leftPanelFiles"
+                        );
                     }
                     break;
             }
@@ -349,12 +357,15 @@ window.onload = () =>
             switch (e.key)
             {
                 case "Escape":
-                    hideSearch(this, "rightPanelFiles");
+                    search.hideSearch(this, "rightPanelFiles");
                     break;
                 default:
                     if (functions.acceptableKeyEventForSearch(e))
                     {
-                        searchQueryChanged(rightPanelSearchQuery.value, "rightPanelFiles");
+                        search.searchQueryChanged(
+                            rightPanelSearchQuery.value,
+                            "rightPanelFiles"
+                        );
                     }
                     break;
             }
@@ -362,11 +373,11 @@ window.onload = () =>
     );
     leftPanelCommandHideSearch.addEventListener(
         "click",
-        function() { hideSearch(this, "leftPanelFiles"); }
+        function() { search.hideSearch(this, "leftPanelFiles"); }
     );
     rightPanelCommandHideSearch.addEventListener(
         "click",
-        function() { hideSearch(this, "rightPanelFiles") }
+        function() { search.hideSearch(this, "rightPanelFiles") }
     );
 }
 
@@ -376,72 +387,6 @@ function timerRefreshViewFunction()
     {
         refreshView();
     }
-}
-
-function sendRequestToRclone(query: string, params: functions.rcRequest | null, fn: Function)
-{
-    let url = settings.rcloneSettings.host.concat(query);
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    if (settings.rcloneSettings.loginToken !== null)
-    {
-        xhr.setRequestHeader(
-            "Authorization",
-            `Basic ${settings.rcloneSettings.loginToken}`
-        );
-    }
-    else if (settings.rcloneSettings.user !== null && settings.rcloneSettings.pass !== null)
-    {
-        xhr.setRequestHeader(
-            "Authorization",
-            `Basic ${btoa(settings.rcloneSettings.user.concat(":", settings.rcloneSettings.pass))}`
-        );
-    }
-
-    // console.group("Command:", query);
-    // console.debug("URL:", url);
-    if (params === null) { xhr.send(); }
-    else
-    {
-        if (settings.asyncOperations.includes(query))
-        {
-            params["_async"] = true;
-        }
-        // console.debug("Parameters: ", params);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(JSON.stringify(params));
-    }
-    // console.groupEnd();
-
-    xhr.onload = function()
-    {
-        if (xhr.status != 200)
-        {
-            console.group("Request has failed");
-            console.error("Error, HTTP status code:", xhr.status);
-            if (xhr.status === 500)
-            {
-                let rezError = JSON.parse(xhr.response)["error"];
-                if (rezError !== undefined && rezError !== null)
-                {
-                    console.error(rezError);
-                    //alert("rclone reported an error. Check console for more details");
-                }
-            }
-            console.groupEnd();
-            fn(null);
-        }
-        else
-        {
-            //console.debug(xhr.response);
-            fn(JSON.parse(xhr.response));
-        }
-    };
-
-    xhr.onerror = function()
-    {
-        console.error("Couldn't send the request");
-    };
 }
 
 function updateRemotesSelects(
@@ -464,7 +409,7 @@ function updateRemotesSelects(
             const params: functions.rcRequest = {
                 "fs": remote.concat(":/", settings.remotes[remote]["pathToQueryDisk"])
             };
-            sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout)
+            functions.sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout)
             {
                 availableDiskSpace = functions.getHumanReadableValue(rez["free"], "");
                 remoteText = remoteText.concat(` (${availableDiskSpace} left)`);
@@ -574,7 +519,7 @@ function openPath(path: string, filesPanelID: string)
         "fs": basePath,
         "remote": nextPath
     };
-    sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]})
+    functions.sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]})
     {
         ((filesPanel.parentNode!.parentNode as HTMLDivElement)
             .getElementsByClassName("loadingAnimation")[0] as HTMLDivElement
@@ -898,7 +843,7 @@ function refreshView()
 
 function getCurrentTransfers()
 {
-    sendRequestToRclone("/core/stats", null, function(rez: functions.rcStats)
+    functions.sendRequestToRclone("/core/stats", null, function(rez: functions.rcStats)
     {
         updateCurrentTransfers(rez["transferring"]);
     });
@@ -906,7 +851,7 @@ function getCurrentTransfers()
 
 function getCompletedTransfers()
 {
-    sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransfer[]})
+    functions.sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransfer[]})
     {
         //console.table(rez["transferred"]);
         updateCompletedTransfers(rez["transferred"]);
@@ -928,7 +873,7 @@ function cancelTransfer(cancelBtn: HTMLImageElement, groupID: string)
         groupID.length
     );
     let params: functions.rcRequest = { "jobid": jobID };
-    sendRequestToRclone("/job/stop", params, function()//function(rez: {error: string})
+    functions.sendRequestToRclone("/job/stop", params, function()//function(rez: {error: string})
     {
         //console.debug(rez);
         refreshView();
@@ -956,7 +901,7 @@ function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
     operationClicked(btn, "delete", filesPanelID);
 }
 
-function refreshClicked(filesPanelID: string)
+export function refreshClicked(filesPanelID: string)
 {
     if (functions.panelsPaths[filesPanelID] !== "")
     {
@@ -1092,7 +1037,7 @@ function copyOrMoveOperation(
         {
             console.error(`Unknown operation type: ${operationType}`);
         }
-        sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
+        functions.sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
         {
             //console.debug("Folder operation result:", rez);
             // if (operationType === "move")
@@ -1118,7 +1063,7 @@ function copyOrMoveOperation(
         {
             console.error(`Unknown operation type: ${operationType}`);
         }
-        sendRequestToRclone(fileOperation, params, function(_rez: {jobid: string})
+        functions.sendRequestToRclone(fileOperation, params, function(_rez: {jobid: string})
         {
             //console.debug("File operation result:", rez);
             // if (operationType === "move")
@@ -1154,150 +1099,9 @@ function deleteOperation(
         console.error(`Unknown operation type: ${operationType}`);
     }
     // console.debug("Delete:", folderOperation, params);
-    sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
+    functions.sendRequestToRclone(folderOperation, params, function(_rez: {jobid: string})
     {
         //console.debug("Delete result:", rez);
         //openPath(functions.panelsPaths[_filesPanelID], _filesPanelID);
     });
 }
-
-function showCreateFolder(btn: HTMLButtonElement, filesPanelID: string)
-{
-    if (functions.panelsPaths[filesPanelID] === "")
-    {
-        alert("Nothing to create a folder in, choose a remote first.");
-        return;
-    }
-
-    const panelDiv = btn.parentNode!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
-
-    const createFolderBlock = panelDiv.querySelector(".input-query.create-folder") as HTMLDivElement;
-    createFolderBlock.style.display = "flex";
-    (createFolderBlock.querySelector("input") as HTMLInputElement).focus();
-}
-
-function hideCreateFolder(btn: HTMLButtonElement | HTMLInputElement)
-{
-    let panelDiv = btn!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".input-query.create-folder") as HTMLDivElement).style.display = "none";
-    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
-}
-
-function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string)
-{
-    const currentPath: string = functions.panelsPaths[filesPanelID];
-    if (currentPath !== "")
-    {
-        const folderNameInput = btn.parentNode!.querySelector("input") as HTMLInputElement;
-        const folderName = folderNameInput.value.trim();
-        if (!folderName)
-        {
-            alert("A folder has no name.");
-            return;
-        }
-
-        btn.style.display = "none";
-
-        // const lastSlash = currentPath.lastIndexOf("/") + 1;
-        // const basePath = lastSlash !== 0 ? currentPath.substring(0, lastSlash) : currentPath.concat("/");
-        // const targetPath = currentPath.substring(lastSlash, currentPath.length).concat("/", folderName);
-        //console.debug(currentPath, basePath, targetPath);
-
-        const params: functions.rcRequest = {
-            "fs": currentPath,
-            "remote": folderName
-        };
-        sendRequestToRclone("/operations/mkdir", params, function()//function(rez)
-        {
-            btn.style.display = "block";
-            // if (rez === null)
-            // {
-            //     console.error("Request returned a null value, looks like there is something wrong with the request");
-            //     return;
-            // }
-            // else
-            {
-                folderNameInput.value = "";
-                hideCreateFolder(btn);
-                refreshClicked(filesPanelID);
-            }
-        });
-    }
-    else
-    {
-        alert("Cannot create a folder in nowhere. Choose a remote first.");
-        return;
-    }
-}
-
-function showSearch(btn: HTMLButtonElement, filesPanelID: string)
-{
-    if (functions.panelsPaths[filesPanelID] === "")
-    {
-        alert("Nothing to search in, choose a remote first.");
-        return;
-    }
-
-    const panelDiv = btn.parentNode!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
-
-    const searchBlock = panelDiv.querySelector(".input-query.search") as HTMLDivElement;
-    searchBlock.style.display = "flex";
-    (searchBlock.querySelector("input") as HTMLInputElement).focus();
-}
-
-function hideSearch(btn: HTMLButtonElement | HTMLInputElement, filesPanelID: string)
-{
-    let panelDiv = btn!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".input-query.search") as HTMLDivElement).style.display = "none";
-    (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
-
-    clearSearch(filesPanelID);
-}
-
-function clearSearch(filesPanelID: string)
-{
-    const fileLines: HTMLDivElement[] = Array.from(
-        (document.getElementById(filesPanelID) as HTMLDivElement)
-            .querySelectorAll(".file-list-item > .fileLine")
-    );
-    for (let i = 0; i < fileLines.length; i++)
-    {
-        (fileLines[i].parentNode as HTMLDivElement).style.display = "flex";
-    }
-}
-
-const searchQueryChanged = functions.debounce(
-    (searchTerm: string, filesPanelID: string) =>
-    {
-        clearSearch(filesPanelID);
-
-        // don't start search until there are at least 3 symbols
-        if (searchTerm.length < 3)
-        {
-            if (searchTerm.length !== 0) { console.warn("The search query is too short"); }
-            return;
-        }
-
-        //console.debug(`Searching for [${searchTerm}]...`);
-
-        const fileLines: HTMLDivElement[] = Array.from(
-            (document.getElementById(filesPanelID) as HTMLDivElement)
-                .querySelectorAll(".file-list-item > .fileLine")
-        );
-        for (let i = 0; i < fileLines.length; i++)
-        {
-            if (
-                !(fileLines[i].querySelector("p") as HTMLParagraphElement)
-                    .textContent!.toLowerCase().includes(
-                        searchTerm.toLowerCase()
-                    )
-            )
-            {
-                (fileLines[i].parentNode as HTMLDivElement).style.display = "none";
-            }
-        }
-    },
-    200
-);

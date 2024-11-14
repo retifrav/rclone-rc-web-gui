@@ -1,3 +1,5 @@
+import { rcloneSettings, asyncOperations } from "./settings.js";
+
 export const panelsPaths: {[key: string]: string} = {
     "leftPanelFiles": "",
     "rightPanelFiles": ""
@@ -80,6 +82,72 @@ export type rcStats = {
     transferTime: number,
     transfers: number,
     transferring: rcTransfer[]
+}
+
+export function sendRequestToRclone(query: string, params: rcRequest | null, fn: Function)
+{
+    let url = rcloneSettings.host.concat(query);
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    if (rcloneSettings.loginToken !== null)
+    {
+        xhr.setRequestHeader(
+            "Authorization",
+            `Basic ${rcloneSettings.loginToken}`
+        );
+    }
+    else if (rcloneSettings.user !== null && rcloneSettings.pass !== null)
+    {
+        xhr.setRequestHeader(
+            "Authorization",
+            `Basic ${btoa(rcloneSettings.user.concat(":", rcloneSettings.pass))}`
+        );
+    }
+
+    // console.group("Command:", query);
+    // console.debug("URL:", url);
+    if (params === null) { xhr.send(); }
+    else
+    {
+        if (asyncOperations.includes(query))
+        {
+            params["_async"] = true;
+        }
+        // console.debug("Parameters: ", params);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify(params));
+    }
+    // console.groupEnd();
+
+    xhr.onload = function()
+    {
+        if (xhr.status != 200)
+        {
+            console.group("Request has failed");
+            console.error("Error, HTTP status code:", xhr.status);
+            if (xhr.status === 500)
+            {
+                let rezError = JSON.parse(xhr.response)["error"];
+                if (rezError !== undefined && rezError !== null)
+                {
+                    console.error(rezError);
+                    //alert("rclone reported an error. Check console for more details");
+                }
+            }
+            console.groupEnd();
+            fn(null);
+        }
+        else
+        {
+            //console.debug(xhr.response);
+            fn(JSON.parse(xhr.response));
+        }
+    };
+
+    xhr.onerror = function()
+    {
+        console.error("Couldn't send the request");
+    };
 }
 
 export const debounce = <F extends (...args: any[]) => any>
