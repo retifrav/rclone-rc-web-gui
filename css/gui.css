@@ -91,6 +91,11 @@ td > progress {
     min-width: 50%;
 }
 
+#completedTransfersBody > tr > td:first-child {
+/*#completedTransfersBody > tr > td:last-child {*/
+    font-family: "Courier New", Courier, monospace;
+}
+
 #completedTransfers > table,
 #completedTransfers > table td:nth-last-child(2) {
     width: 100%;

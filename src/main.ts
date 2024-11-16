@@ -822,6 +822,10 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransfer[])
 
         const spanOK: string = "<span style='color:green;'>OK</span>";
         const spanFAIL: string = "<span style='color:red;'>error</span>";
+        // one would like to user a proper ISO date and time format,
+        // such as `.toISOString().slice(0,19).replace("T", " ")`,
+        // but unfortunately that would be in UTC, so one would also need
+        // to convert the timezone, so fuck it, `toLocaleString()` will have to do
         const tr: string = `<tr>
             <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
             <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
