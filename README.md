@@ -119,7 +119,7 @@ By default `rclone` will generate a random password and will also compose a Base
 
 The GUI URL will be auto-openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are that your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
 
-In case of launching it on a remote server, you obviously won't get a web-browser auto-openned with provided credentials, so add `--rc-web-gui-no-open-browser` to the CLI, and then it will print the URL with credentials to the `stdout`.
+In case of launching it on a remote server, you obviously won't get a web-browser auto-openned with provided credentials, so replace `--rc-web-gui` with `--rc-web-gui-no-open-browser` in the CLI, and then it will print the URL with credentials to the `stdout`.
 
 If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values will be overwritten on the next GUI update.
 
@@ -174,7 +174,7 @@ or:
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
-Also note that without `--rc-web-gui-no-open-browser` provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
+Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*) provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
 
 #### An example deployment on a GNU/Linux server
 
