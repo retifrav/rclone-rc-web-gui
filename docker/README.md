@@ -22,7 +22,7 @@ $ tsc
 $ ls -L1 ./js
 
 $ cd ./docker
-$ tar -cvf contents.tar \
+$ COPYFILE_DISABLE=1 tar -cvf contents.tar \
     ../css/ \
     ../images/ \
     ../js/ \
@@ -46,6 +46,8 @@ rclone-rc-web-gui   latest                    94468b279531   14 minutes ago   92
 rclone-rc-web-gui   rclone_1.68.1-gui_0.5.0   94468b279531   14 minutes ago   92.4MB
 alpine              latest                    511a44083d3a   2 months ago     8.83MB
 ```
+
+If you are building on an ARM-based host but will need to use the image on a x64-based host (*or the other way around*), then you might want to add `--platform linux/amd64` to the `docker build` command.
 
 ## Running a container
 
@@ -90,6 +92,16 @@ $ docker run -it -p 5572:5572 \
     --rm \
     94468b279531
 ```
+
+You might also want to override some of the environment variables (*with `-e SOME=THING`*):
+
+- `RCLONE_ALLOW_ORIGIN_SCHEME`;
+- `RCLONE_ALLOW_ORIGIN_HOST`;
+- `RCLONE_ALLOW_ORIGIN_PORT`;
+- `RCLONE_USER`;
+- `RCLONE_PASS`.
+
+You can take a look at a set of example values [below](#synology-dsm).
 
 ### Synology DSM
 

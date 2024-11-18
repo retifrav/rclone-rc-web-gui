@@ -2,22 +2,32 @@
 # (and probably should)
 FROM alpine:latest
 
-ARG PATH_TO_WEB_GUI="/var/www/rclone-rc-web-gui"
 # RCLONE_VERSION seems to be used by rclone, so it's better not to export it,
 # although it is not(?) an environment variable here, so it wouldn't hurt anyway
 ARG RCLONE_VERSION_VALUE="v1.68.1"
-# don't rely on it, as the port is still hardcoded in ENTRYPOINT
-ARG RCLONE_PORT="5572"
+# not sure, but looks like these can't really be exposed as ENV for user to override
+ARG USER="rclone"
+ARG GROUPNAME="$USER"
+ARG UID="1000"
+ARG GID="1000"
 
 # environment variables cannot be before FROM, because there it is still the "global scope"
-ENV USER="rclone"
-ENV GROUPNAME="$USER"
-ENV UID="1000"
-ENV GID="1000"
+#
+# - these should be ARG, but for ENTRYPOINT script they are ENV (and aren't meant to be overridden)
+#
+ENV PATH_TO_WEB_GUI="/var/www/rclone-rc-web-gui"
+ENV RCLONE_PORT="5572"
+#
+# - these are for overriding
+#
 # had to split it into scheme and address because of sed stumbling upon `//`
 ENV RCLONE_ALLOW_ORIGIN_SCHEME="http"
-ENV RCLONE_ALLOW_ORIGIN="localhost:$RCLONE_PORT"
-#
+ENV RCLONE_ALLOW_ORIGIN_HOST="localhost"
+# the `RCLONE_PORT` is for `rclone rcd` inside the container,
+# and `RCLONE_ALLOW_ORIGIN_PORT` is for whichever port will be
+# mapped on the host at the public interface, as they are likely
+# to be different and only the public one matters for CORS
+ENV RCLONE_ALLOW_ORIGIN_PORT="5572"
 ENV RCLONE_USER="rclone"
 ENV RCLONE_PASS="enolcr"
 
@@ -26,16 +36,10 @@ ENV RCLONE_PASS="enolcr"
 
 RUN mkdir -p $PATH_TO_WEB_GUI
 ADD contents.tar $PATH_TO_WEB_GUI/
-RUN sed -i "s/host: \"http:\/\/127.0.0.1:5572\",/host: \"$RCLONE_ALLOW_ORIGIN_SCHEME:\/\/$RCLONE_ALLOW_ORIGIN\",/g" $PATH_TO_WEB_GUI/js/settings.js
-RUN sed -i "s/user: null,/user: \"$RCLONE_USER\",/g" $PATH_TO_WEB_GUI/js/settings.js
-RUN sed -i "s/pass: null,/pass: \"$RCLONE_PASS\",/g" $PATH_TO_WEB_GUI/js/settings.js
-RUN sed -i 's/someExampleRemote/disk/g' $PATH_TO_WEB_GUI/js/settings.js
-RUN sed -i 's/"startingFolder": "path\/to\/some\/path\/there"/"startingFolder": ""/g' $PATH_TO_WEB_GUI/js/settings.js
-RUN sed -i 's/"pathToQueryDisk": ""/"pathToQueryDisk": "\/"/g' $PATH_TO_WEB_GUI/js/settings.js
-# retarded workaround for impossibility to map/mount a single existing file from container to host
-RUN mkdir $PATH_TO_WEB_GUI/js/settings
-RUN mv $PATH_TO_WEB_GUI/js/settings.js $PATH_TO_WEB_GUI/js/settings/
-RUN find $PATH_TO_WEB_GUI -type f -exec sed -i 's/\/settings.js/\/settings\/settings.js/g' {} \;
+
+# only by utilizing a script in ENTRYPOINT one can use the ENV variables
+# to let user override those values
+COPY entrypoint.sh /
 
 RUN mkdir /data
 
@@ -54,6 +58,7 @@ RUN addgroup \
         --uid $UID \
         $USER
 RUN chown -R $USER:$GROUPNAME $PATH_TO_WEB_GUI /data
+
 USER $USER
 
 # not needed really, but it is useful to explicitly check
@@ -64,14 +69,4 @@ RUN printf "[disk]\ntype = alias\nremote = /data\n" > ~/.config/rclone/rclone.co
 
 EXPOSE $RCLONE_PORT
 
-# the `--rc-addr` has to be exactly `:5572` (or whichever port is chosen),
-# as it won't work with `localhost:5572` or `127.0.0.1:5572`
-# (unless you are using `host` network for this container, which you shouldn't)
-#
-# also `--rc-addr` does not accept an ARG here (probably because of the starting `:`,
-# or I don't know what the fuck), so the port can not be customized with $RCLONE_PORT here
-ENTRYPOINT [ "sh", "-c", "rclone rcd --rc-web-gui-no-open-browser --rc-addr :5572 --rc-allow-origin $RCLONE_ALLOW_ORIGIN_SCHEME://$RCLONE_ALLOW_ORIGIN --rc-user $RCLONE_USER --rc-pass $RCLONE_PASS --transfers 1 /var/www/rclone-rc-web-gui/" ]
-# would probably be nicer to split arguments between ENTRYPOINT and CMD, so users could override those,
-# but this shit cannot work with variables - https://github.com/moby/moby/issues/5509 - so everything
-# has to go to ENTRYPOINT with a `sh -c` workaround
-#CMD [ "--rc-allow-origin", "http://localhost:5572", "--rc-no-auth" ]
+ENTRYPOINT [ "/bin/sh", "/entrypoint.sh" ]
