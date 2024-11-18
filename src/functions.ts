@@ -1,4 +1,13 @@
-import { rcloneSettings, asyncOperations } from "./settings.js";
+import { rcloneSettings } from "./settings.js";
+
+export const asyncOperations: string[] = [
+    "/sync/copy",
+    "/sync/move",
+    "/operations/purge",
+    "/operations/copyfile",
+    "/operations/movefile",
+    "/operations/deletefile"
+]
 
 export const panelsPaths: {[key: string]: string} = {
     "leftPanelFiles": "",

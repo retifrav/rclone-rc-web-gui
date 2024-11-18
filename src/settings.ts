@@ -17,15 +17,6 @@ export const rcloneSettings: RcloneSettings = {
     loginToken: null
 }
 
-export const asyncOperations: string[] = [
-    "/sync/copy",
-    "/sync/move",
-    "/operations/purge",
-    "/operations/copyfile",
-    "/operations/movefile",
-    "/operations/deletefile"
-]
-
 type Remote = {
     startingFolder: string,
     canQueryDisk: boolean,
