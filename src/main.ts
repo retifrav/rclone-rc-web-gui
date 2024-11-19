@@ -3,6 +3,8 @@ import * as functions from "./functions.js";
 import * as folder from "./folder.js";
 import * as search from "./search.js";
 
+const guiVersion: string = "0.5.0";
+
 type QueueItem = {
     "dtAdded": Date,
     "operationType": string,
@@ -21,7 +23,7 @@ const rcloneOS: HTMLSpanElement =
     document.getElementById("rcloneOS") as HTMLSpanElement;
 const rcloneVersion: HTMLSpanElement =
     document.getElementById("rcloneVersion") as HTMLSpanElement;
-const guiVersion: HTMLSpanElement =
+const guiVersionSpan: HTMLSpanElement =
     document.getElementById("guiVersion") as HTMLSpanElement;
 
 const btnSettings: HTMLButtonElement =
@@ -130,7 +132,7 @@ window.onload = () =>
         {
             rcloneOS.textContent = rez["os"].concat(" (", rez["arch"], ")");
             rcloneVersion.textContent = rez["version"];
-            guiVersion.textContent = settings.guiVersion;
+            guiVersionSpan.textContent = guiVersion;
         }
     );
 

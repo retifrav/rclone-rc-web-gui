@@ -1,5 +1,3 @@
-export const guiVersion: string = "0.4.0";
-
 type RcloneSettings = {
     host: string,
     user: string | null,
