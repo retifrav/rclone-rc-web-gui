@@ -15,26 +15,12 @@ How to build an image and run a container from it.
 
 ``` sh
 $ cd /path/to/rclone-rc-web-gui
-
-$ tsc --version
-Version 5.3.3
-$ tsc
-$ ls -L1 ./js
-
-$ cd ./docker
-$ COPYFILE_DISABLE=1 tar -cvf contents.tar \
-    ../css/ \
-    ../images/ \
-    ../js/ \
-    ../favicon.png \
-    ../index.html
+$ ./docker/prepare-for-building-the-image.sh
 
 $ export IMAGE_NAME="rclone-rc-web-gui"
 $ export RCLONE_VER="1.68.1"
 $ export GUI_VER="0.5.0"
 
-$ docker --version
-Docker version 27.3.1, build ce12230
 $ docker build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
     --tag $IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
@@ -53,42 +39,32 @@ If you are building on an ARM-based host but will need to use the image on a x64
 
 ### Generic host with Docker
 
-First create folders and named volumes for data persistency (*can't just use `-v`, because it will obscure/override the content inside the image*):
+First create folders for data and GUI settings and also a named volume for rclone config. This is generally needed for data persistency between container runs, and a named volume specifically is required because one can not just use `-v`, as it will obscure/override the content inside the image.
+
+So:
 
 ``` sh
 $ mkdir -p /path/to/dckr/{data,config,settings}
 
 $ docker volume create --driver local \
     -o o=bind -o type=none \
-    -o device="/path/to/dckr/data" \
-    rclone-data
-
-$ docker volume create --driver local \
-    -o o=bind -o type=none \
     -o device="/path/to/dckr/config" \
     rclone-config
 
-$ docker volume create --driver local \
-    -o o=bind -o type=none \
-    -o device="/path/to/dckr/settings" \
-    rclone-settings
-
 $ docker volume list
 DRIVER    VOLUME NAME
-local     rclone-data
 local     rclone-config
-local     rclone-settings
 ```
 
-Why three named volumes instead of just one? Because apparently one can not simply do `rclone/data` on mapping a named volume with `-v`.
+If you will need more named volumes for some reason, then remember that it can't do "sub-volumes", so you will need to create a volume per folder.
 
-And then create and run a container with those mapped volumes:
+When folders and volumes are ready, you can create and run a container like this:
 
 ``` sh
 $ docker run -it -p 5572:5572 \
-    -v rclone-data:/data \
+    -v /path/to/dckr/data:/data \
+    -v /path/to/dckr/settings:/var/www/rclone-rc-web-gui/js/settings \
     -v rclone-config:/home/rclone/.config/rclone \
-    -v rclone-settings:/var/www/rclone-rc-web-gui/js/settings \
     --rm \
     94468b279531
 ```
