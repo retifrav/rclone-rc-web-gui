@@ -10,16 +10,17 @@
 - [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launching](#launching)
-        - [Docker](#docker)
         - [With --rc-web-gui](#with---rc-web-gui)
             - [Authentication](#authentication)
         - [From local path](#from-local-path)
-        - [Possible issues](#possible-issues)
-            - [Wrong username/password](#wrong-usernamepassword)
-            - [CORS header does not match](#cors-header-does-not-match)
-        - [An example deployment on a GNU/Linux server](#an-example-deployment-on-a-gnulinux-server)
+    - [Possible issues](#possible-issues)
+        - [Wrong username/password](#wrong-usernamepassword)
+        - [CORS header does not match](#cors-header-does-not-match)
     - [Configuration](#configuration)
     - [Queue](#queue)
+- [Deployment](#deployment)
+    - [Docker](#docker)
+    - [Generic GNU/Linux server](#generic-gnulinux-server)
 - [Support](#support)
 - [3rd-party](#3rd-party)
     - [Dependencies](#dependencies)
@@ -101,10 +102,6 @@ Before launching the GUI, you need to have your remotes configured in `~/.config
 
 ### Launching
 
-#### Docker
-
-There is a [Docker image](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md), which might be the easiest way of running/deploying the project. But if you'd prefer to launch/deploy it yourself, read the instructions below.
-
 #### With --rc-web-gui
 
 The easiest would be to let `rclone` handle [downloading and serving](https://rclone.org/gui/) the latest release:
@@ -156,15 +153,15 @@ $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-
 
 You might also want to [create a service](#an-example-deployment-on-a-gnulinux-server) for running `rclone` daemon.
 
-#### Possible issues
+### Possible issues
 
-##### Wrong username/password
+#### Wrong username/password
 
 If you get `401`/`403` errors for all/some of the requests, then check that the values you've provided in `--rc-user` and `--rc-pass` match the `rcloneSettings.user` and `rcloneSettings.pass` values in your `settings.js`.
 
 If you didn't intend to use authentication, then make sure that you launched `rclone rcd` with `--rc-no-auth` flag and that `rcloneSettings.user`, `rcloneSettings.pass` (*and `rcloneSettings.loginToken`*) are set to `null`.
 
-##### CORS header does not match
+#### CORS header does not match
 
 In certain situations you might get [different origins](https://decovar.dev/blog/2019/10/10/the-fuck-is-this-cors/) between server and client, mostly when serving web GUI from a remote host, but that can also happen while testing it on your local host.
 
@@ -180,11 +177,55 @@ check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` opt
 
 Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*) provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
 
-#### An example deployment on a GNU/Linux server
+### Configuration
 
-- `rclone rcd` is run as a systemd service
-- NGINX is used as a reverse proxy
-- web GUI is available via custom base URL such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`
+There are several settings available for you to configure in `./js/settings.js`.
+
+Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
+
+``` js
+var remotes = {
+    "disk": {
+        "startingFolder": "media/somedisk/downloads",
+        "canQueryDisk": true,
+        "pathToQueryDisk": "media/somedisk"
+    },
+    "seedbox": {
+        "startingFolder": "files",
+        "canQueryDisk": false,
+        "pathToQueryDisk": ""
+    }
+}
+```
+
+Here:
+
+- we have 2 remotes: `disk` and `seedbox`;
+- both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel;
+- `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
+  - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
+
+### Queue
+
+All operations go to the queue and processed one at a time.
+
+Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
+
+That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
+
+## Deployment
+
+### Docker
+
+There is a [Docker image](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md), which might be the easiest way of running/deploying the project. But if you'd prefer to launch/deploy it yourself, read the instructions below.
+
+### Generic GNU/Linux server
+
+TLDR:
+
+- `rclone rcd` is run as a systemd service;
+- NGINX is used as a reverse proxy;
+- web GUI is available via custom base URL such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`.
 
 Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*):
 
@@ -282,42 +323,6 @@ $ rclone config
 ```
 
 Now you should be able to access the web GUI on <http://IP-ADDRESS-OR-DOMAIN/rclone/>.
-
-### Configuration
-
-There are several settings available for you to configure in `./js/settings.js`.
-
-Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
-
-``` js
-var remotes = {
-    "disk": {
-        "startingFolder": "media/somedisk/downloads",
-        "canQueryDisk": true,
-        "pathToQueryDisk": "media/somedisk"
-    },
-    "seedbox": {
-        "startingFolder": "files",
-        "canQueryDisk": false,
-        "pathToQueryDisk": ""
-    }
-}
-```
-
-Here:
-
-- we have 2 remotes: `disk` and `seedbox`;
-- both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel;
-- `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
-  - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
-
-### Queue
-
-All operations go to the queue and processed one at a time.
-
-Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
-
-That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
 
 ## Support
 
