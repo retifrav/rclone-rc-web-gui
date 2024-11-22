@@ -10,6 +10,7 @@
 - [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launching](#launching)
+        - [Docker](#docker)
         - [With --rc-web-gui](#with---rc-web-gui)
             - [Authentication](#authentication)
         - [From local path](#from-local-path)
@@ -19,7 +20,6 @@
         - [An example deployment on a GNU/Linux server](#an-example-deployment-on-a-gnulinux-server)
     - [Configuration](#configuration)
     - [Queue](#queue)
-    - [Search](#search)
 - [Support](#support)
 - [3rd-party](#3rd-party)
     - [Dependencies](#dependencies)
@@ -100,6 +100,10 @@ Resulting JavaScript files will be put to `./js` folder. After that you can use 
 Before launching the GUI, you need to have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
 
 ### Launching
+
+#### Docker
+
+There is a [Docker image](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md), which might be the easiest way of running/deploying the project. But if you'd prefer to launch/deploy it yourself, read the instructions below.
 
 #### With --rc-web-gui
 
@@ -313,11 +317,7 @@ All operations go to the queue and processed one at a time.
 
 Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
 
-That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` ([_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)).
-
-### Search
-
-Having a long list of files, one would like to be able to quickly find a file of interest. But as web-browser's own search (`CTRL/CMD + F`) already works fine, I see no point in implementing my own search.
+That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
 
 ## Support
 

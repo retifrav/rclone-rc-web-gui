@@ -4,12 +4,17 @@ How to build an image and run a container from it.
 
 <!-- MarkdownTOC -->
 
+- [Using a pre-built image](#using-a-pre-built-image)
 - [Building an image](#building-an-image)
 - [Running a container](#running-a-container)
     - [Generic host with Docker](#generic-host-with-docker)
-    - [Synology DSM](#synology-dsm)
+    - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
 
 <!-- /MarkdownTOC -->
+
+## Using a pre-built image
+
+There is a pre-built image published at [Docker Hub](https://hub.docker.com/r/decovar/rclone-rc-web-gui).
 
 ## Building an image
 
@@ -79,6 +84,7 @@ You might also want to override some of the environment variables (*with `-e SOM
 
 You can take a look at a set of example values [below](#synology-dsm).
 
-### Synology DSM
+### Synology DSM with Container Manager
 
-Here will be specific instructions for Synology's [Container Manager](https://synology.com/en-global/dsm/feature/docker).
+Here's also an example of using this image to run a container in Synology DSM [Container Manager](https://synology.com/en-global/dsm/feature/docker).
+

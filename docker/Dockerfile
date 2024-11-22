@@ -13,7 +13,7 @@ ARG GID="1000"
 
 # environment variables cannot be before FROM, because there it is still the "global scope"
 #
-# - these should be ARG, but for ENTRYPOINT script they are ENV (and aren't meant to be overridden)
+# - these should be ARG, but for ENTRYPOINT script they have(?) to be ENV (and aren't meant to be overridden)
 #
 ENV PATH_TO_WEB_GUI="/var/www/rclone-rc-web-gui"
 ENV RCLONE_PORT="5572"
