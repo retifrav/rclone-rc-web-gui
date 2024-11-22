@@ -4,19 +4,22 @@ How to build an image and run a container from it.
 
 <!-- MarkdownTOC -->
 
-- [Using a pre-built image](#using-a-pre-built-image)
-- [Building an image](#building-an-image)
+- [Getting an image](#getting-an-image)
+  - [Pre-built](#pre-built)
+  - [Building](#building)
 - [Running a container](#running-a-container)
-    - [Generic host with Docker](#generic-host-with-docker)
-    - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
+  - [Generic host with Docker](#generic-host-with-docker)
+  - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
 
 <!-- /MarkdownTOC -->
 
-## Using a pre-built image
+## Getting an image
+
+### Pre-built
 
 There is a pre-built image published at [Docker Hub](https://hub.docker.com/r/decovar/rclone-rc-web-gui).
 
-## Building an image
+### Building
 
 ``` sh
 $ cd /path/to/rclone-rc-web-gui
