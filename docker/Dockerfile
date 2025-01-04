@@ -2,9 +2,11 @@
 # (and probably should)
 FROM alpine:latest
 
+RUN apk add --no-cache tzdata
+
 # RCLONE_VERSION seems to be used by rclone, so it's better not to export it,
 # although it is not(?) an environment variable here, so it wouldn't hurt anyway
-ARG RCLONE_VERSION_VALUE="v1.68.1"
+ARG RCLONE_VERSION_VALUE="v1.68.2"
 # not sure, but looks like these can't really be exposed as ENV for user to override
 ARG USER="rclone"
 ARG GROUPNAME="$USER"

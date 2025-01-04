@@ -25,9 +25,10 @@ There is a pre-built image published at [Docker Hub](https://hub.docker.com/r/de
 $ cd /path/to/rclone-rc-web-gui
 $ ./docker/prepare-for-building-the-image.sh
 
-$ export IMAGE_NAME="rclone-rc-web-gui"
-$ export RCLONE_VER="1.68.1"
-$ export GUI_VER="0.5.0"
+$ cd ./docker
+$ export IMAGE_NAME='rclone-rc-web-gui'
+$ export RCLONE_VER='1.68.2'
+$ export GUI_VER='0.5.0'
 
 $ docker build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
@@ -73,6 +74,7 @@ $ docker run -it -p 5572:5572 \
     -v /path/to/dckr/data:/data \
     -v /path/to/dckr/settings:/var/www/rclone-rc-web-gui/js/settings \
     -v rclone-config:/home/rclone/.config/rclone \
+    -e TZ=Europe/Amsterdam \
     --rm \
     94468b279531
 ```
@@ -132,6 +134,7 @@ services:
     container_name: rclone-rc-web-gui
     restart: unless-stopped
     environment:
+      - TZ=Europe/Amsterdam
       # my DSM serves the web content via HTTPS
       - RCLONE_ALLOW_ORIGIN_SCHEME=https
       # that is the IP address of my Synology NAS host in my home network
