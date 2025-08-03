@@ -493,7 +493,7 @@ function openPath(path: string, filesPanelID: string)
         document.createElement("img"),
         {
             className: "icon",
-            src: "./images/file.svg"
+            src: "./images/arrow-90deg-up.svg"
         }
     );
     divFileLine.appendChild(img);
