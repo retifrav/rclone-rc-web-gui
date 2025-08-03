@@ -17,7 +17,7 @@ else
 fi
 echo
 
-echo 'Checking for sed'
+echo 'Checking for sed...'
 which $sedCommand
 if [ $? -ne 0 ]; then
     echo "[ERROR] Did not find $sedCommand" >&2
@@ -26,7 +26,7 @@ fi
 echo
 
 # compile TypeScript sources into JavaScript
-echo 'Checking for tsc'
+echo 'Checking for tsc...'
 which tsc
 if [ $? -ne 0 ]; then
     echo "[ERROR] Did not find tsc (TypeScript compiler)" >&2
@@ -34,11 +34,17 @@ if [ $? -ne 0 ]; then
 fi
 echo
 
-# --- save uncommitted changes, if any, before making Docker-related changes
-git stash
+echo 'Compiling TypeScript into JavaScript...'
+tsc
 echo
 
-tsc
+# save uncommitted changes, if any, before making Docker-related changes
+hasChanges=0
+if [[ `git status --porcelain` ]]; then
+    hasChanges=1
+    git stash
+    echo
+fi
 
 # retarded workaround for impossibility to map/mount a single existing file from container to host
 [ -d ./js/settings/ ] || mkdir ./js/settings/
@@ -49,7 +55,7 @@ s/\.\/js\/settings.js/\.\/js\/settings\/settings.js/g
 s/\.\/settings.js/\.\/settings\/settings.js/g
 " {} \;
 
-echo 'Packing everything for deployment with ADD'
+echo 'Packing everything for deployment with ADD...'
 cd ./docker
 contentsArchive=contents.tar
 [ -f ./$contentsArchive ] && rm ./$contentsArchive
@@ -63,5 +69,9 @@ COPYFILE_DISABLE=1 tar -cvf $contentsArchive \
 cd ..
 rm -r ./js/*
 
-# --- revert Docker-related changes
-git checkout -- . && echo && git stash pop
+# revert Docker-related changes
+git checkout -- .
+# and restore from stash
+if [[ $hasChanges == 1 ]]; then
+    git stash pop
+fi
