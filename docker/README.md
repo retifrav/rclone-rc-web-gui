@@ -87,6 +87,8 @@ You might also want to override some of the environment variables (*with `-e SOM
 - `RCLONE_USER`;
 - `RCLONE_PASS`.
 
+If you are going to add SFTP remotes with SSH keys based authentication, then you will probably want to map the `~/.ssh` folder too, for example with `-v /path/to/dckr/ssh:/home/rclone/.ssh`.
+
 You can take a look at a set of example values [below](#synology-dsm-with-container-manager).
 
 ### Synology DSM with Container Manager
@@ -159,6 +161,8 @@ services:
       # named after that file, which is what caused that retarded workaround
       # with moving the `settings.js` file into a subfolder
       - /volume1/docker/rclone-rc-web-gui/settings:/var/www/rclone-rc-web-gui/js/settings
+      # SSH keys
+      - /volume1/docker/rclone-rc-web-gui/ssh:/home/rclone/.ssh
       # the config with remotes already exists inside container, and I want to expose it to the host
       - rclone-config:/home/rclone/.config/rclone
 ```

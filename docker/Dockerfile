@@ -63,6 +63,8 @@ RUN chown -R $USER:$GROUPNAME $PATH_TO_WEB_GUI /data
 
 USER $USER
 
+RUN mkdir ~/.ssh
+
 # not needed really, but it is useful to explicitly check
 # that rclone can run at all
 RUN rclone --version
