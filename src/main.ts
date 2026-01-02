@@ -3,7 +3,7 @@ import * as functions from "./functions.js";
 import * as folder from "./folder.js";
 import * as search from "./search.js";
 
-const guiVersion: string = "0.5.0";
+const guiVersion: string = "2026.1.2";
 
 type QueueItem = {
     "dtAdded": Date,

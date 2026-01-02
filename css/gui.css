@@ -1,6 +1,7 @@
 html {
     box-sizing: border-box;
     background-color: #e5e5e5;
+    /* font-size: 100%; */
 }
 *,
 *:before,
@@ -13,19 +14,19 @@ body {
     max-width: 1280px;
     min-height: 100vh;
     margin: 0 auto;
-    font-family: Verdana,Geneva,Tahoma,sans-serif;
-    font-size: 16px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 0.9em;
     color: #000;
     background-color: #fff;
     box-shadow: 0 0 15px -5px #000;
 }
 
-h1 { font-size: 2em; }
-h2 { font-size: 1.5em; }
-h3 { font-size: 1.3em; }
-h4 { font-size: 1em; }
-h5 { font-size: 0.8em; }
-h6 { font-size: 0.7em; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.3rem; }
+h4 { font-size: 1rem; }
+h5 { font-size: 0.8rem; }
+h6 { font-size: 0.7rem; }
 
 .body-block {
     padding: 15px 20px;
@@ -38,6 +39,7 @@ h6 { font-size: 0.7em; }
 }
 .header, .footer {
     background-color: #ebebeb;
+    font-size: 1rem;
 }
 .header {
     display: flex;
@@ -137,12 +139,12 @@ td > img {
     height: 1.2em;
 }
 .icon {
-    width: 1.5em;
-    height: 1.5em;
+    width: 1.2em;
+    height: 1.2em;
 }
 .header > .icon {
-    width: 2em;
-    height: 2em;
+    width: 2rem;
+    height: 2rem;
 }
 
 div.controls button,
@@ -240,7 +242,7 @@ pre {
 .filesPanelHeader > div {
     padding-top: 2px;
     padding-right: 6px;
-    font-size: 80%;
+    font-size: 0.8rem;
     color: #555;
 }
 .filesCount {
@@ -308,7 +310,7 @@ pre {
     color: #4c4c4c;
 }
 #settings *:not(h1, h2, h3, h4, h5, h6) {
-    font-size: 0.9em;
+    font-size: 0.85rem;
 }
 
 .settings-item {
@@ -317,8 +319,8 @@ pre {
     margin-top: 10px;
 }
 .settings-item > input[type="checkbox"] {
-    width: 1.25em;
-    height: 1.25em;
+    width: 1rem;
+    height: 1rem;
 }
 .settings-item > * {
     margin-left: 4px;

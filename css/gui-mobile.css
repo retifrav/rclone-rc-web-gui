@@ -1,10 +1,14 @@
 @media only screen and (max-width: 720px) {
-    h1 { font-size: 1.5em; }
-    h2 { font-size: 1.3em; }
-    h3 { font-size: 1.15em; }
-    h4 { font-size: 1em; }
-    h5 { font-size: 0.8em; }
-    h6 { font-size: 0.7em; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.15rem; }
+    h4 { font-size: 1rem; }
+    h5 { font-size: 0.8rem; }
+    h6 { font-size: 0.7rem; }
+
+    .header, .footer {
+        font-size: 0.9rem;
+    }
 
     .body-block {
         padding: 10px;
@@ -13,16 +17,16 @@
     #completedTransfers,
     #currentTransfers,
     .filesList {
-        font-size: 0.9rem;
+        font-size: 0.9em;
     }
 
     .icon {
-        width: 1em;
-        height: 1em;
+        width: 1.1em;
+        height: 1.1em;
     }
     .header > .icon {
-        width: 1.5em;
-        height: 1.5em;
+        width: 1.5rem;
+        height: 1.5rem;
     }
 
     .controls,
