@@ -17,9 +17,23 @@ How to build an image and run a container from it.
 
 ### Pre-built
 
-There is a pre-built image published at [Docker Hub](https://hub.docker.com/r/decovar/rclone-rc-web-gui).
+There is a pre-built image published at [Docker Hub](https://hub.docker.com/r/decovar/rclone-rc-web-gui), so you can pull it:
+
+``` sh
+$ docker pull decovar/rclone-rc-web-gui
+```
+
+If you are on an ARM host, then pulling might fail like this:
+
+```
+no matching manifest for linux/arm64/v8 in the manifest list entries
+```
+
+so then you'd need to specify the platform by adding `--platform linux/amd64`.
 
 ### Building
+
+Or you can build your own image:
 
 ``` sh
 $ cd /path/to/rclone-rc-web-gui
@@ -70,6 +84,12 @@ If you will need more named volumes for some reason, then remember that it can't
 When folders and volumes are ready, you can create and run a container like this:
 
 ``` sh
+$ docker images
+REPOSITORY          TAG                       IMAGE ID       CREATED          SIZE
+rclone-rc-web-gui   latest                    94468b279531   14 minutes ago   92.4MB
+rclone-rc-web-gui   rclone_1.68.1-gui_0.5.0   94468b279531   14 minutes ago   92.4MB
+alpine              latest                    511a44083d3a   2 months ago     8.83MB
+
 $ docker run -it -p 5572:5572 \
     -v /path/to/dckr/data:/data \
     -v /path/to/dckr/settings:/var/www/rclone-rc-web-gui/js/settings \
