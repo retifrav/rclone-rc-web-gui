@@ -42,12 +42,14 @@
         <div id="currentTransfers">
             <table>
                 <thead>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Size</th>
-                    <th>Speed</th>
-                    <th>Progress</th>
-                    <th></th>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Speed</th>
+                        <th>Progress</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody id="currentTransfersBody">
                     <tr>
@@ -196,10 +198,12 @@
         <div id="completedTransfers">
             <table>
                 <thead>
-                    <th>Started at</th>
-                    <th>Status</th>
-                    <th>Name</th>
-                    <th>Size</th>
+                    <tr>
+                        <th>Started at</th>
+                        <th>Status</th>
+                        <th>Name</th>
+                        <th>Size</th>
+                    </tr>
                 </thead>
                 <tbody id="completedTransfersBody">
                     <tr>
@@ -216,7 +220,7 @@
     <div class="body-block footer">
         <div>
             <b>rclone</b> <span id="rcloneVersion"><i>unknown</i></span>
-            <b>on</b> <span id="rcloneOS"><i>unknown</i></span></li>
+            <b>on</b> <span id="rcloneOS"><i>unknown</i></span>
         </div>
         <div>
             <b>gui</b> v<span id="guiVersion"><i>unknown</i></span>
