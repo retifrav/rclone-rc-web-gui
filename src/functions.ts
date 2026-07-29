@@ -20,22 +20,46 @@ export type rcListItem =
     Name: string,
     Size: number,
     MimeType: string,
-    ModTime: Date,
+    ModTime: string, // ISO-8601 string, not a `Date`, as `JSON.parse()` cannot produce one
     IsDir: boolean
 }
 
-export type rcTransfer =
+// `/core/stats` → `transferring[]` and `/core/transferred` → `transferred[]` look alike
+// but are not the same object: an in-flight transfer has progress and no outcome yet,
+// while a finished one has an outcome and no progress. Declaring the union of both as a single type
+// was not correct, as every field seemed to be always available, so they have been split
+// into separate types with only common fields in the common base type
+export type rcTransferCommon =
 {
-    error: string,
     name: string,
     size: number,
     bytes: number,
-    checked: boolean,
-    started_at: Date,
-    completed_at: Date,
-    group: string,
+    group: string
+}
+
+// `/core/stats` → `transferring[]`
+export type rcTransferring = rcTransferCommon &
+{
     speed: number,
     percentage: number
+    //eta:
+    //speedAvg:
+    //srcFs:
+    //dstFs:
+}
+
+// `/core/transferred` → `transferred[]`
+//
+// the `*_at` timestamps are ISO-8601 strings, so they need(?) `new Date()` before formatting
+export type rcTransferred = rcTransferCommon &
+{
+    error: string,
+    checked: boolean,
+    started_at: string,
+    completed_at: string
+    //what:
+    //srcFs:
+    //dstFs:
 }
 
 export type rcVersion = {
@@ -62,6 +86,7 @@ export type rcRemotes = {
 
 export type rcRequest = {
     _async?: boolean,
+    blocks?: string,
     remote?: string,
     jobid?: string,
     fs?: string,
@@ -72,6 +97,13 @@ export type rcRequest = {
     deleteEmptySrcDirs?: boolean
 }
 
+// only the `main` block is asked for, and only the values used here are declared
+export type rcOptions = {
+    main: {
+        Transfers: number
+    }
+}
+
 export type rcStats = {
     bytes: number,
     checks: number,
@@ -79,9 +111,9 @@ export type rcStats = {
     deletes: number,
     elapsedTime: number,
     errors: number,
-    eta: number,
+    eta: number | null, // `null`, not 0 (when there is nothing to estimate)
     fatalError: boolean,
-    lastError: string,
+    lastError?: string, // only sent once something has actually failed
     renames: number,
     retryError: boolean,
     speed: number,
@@ -90,7 +122,8 @@ export type rcStats = {
     totalTransfers: number,
     transferTime: number,
     transfers: number,
-    transferring: rcTransfer[]
+    // is not part of the response when nothing is transferring
+    transferring?: rcTransferring[]
 }
 
 export function sendRequestToRclone(query: string, params: rcRequest | null, fn: Function)
@@ -237,7 +270,8 @@ export function getHumanReadableValue(sizeInBytes: number, metric: string) : str
 }
 
 // TODO: sort jobs with the same group (items from a folder transfer are sorted in the "wrong" order)
-export function sortJobs(a: rcTransfer, b: rcTransfer) : number
+// called on both `transferring[]` and `transferred[]`, so it may only touch the common fields
+export function sortJobs(a: rcTransferCommon, b: rcTransferCommon) : number
 {
     if (a.group === undefined || b.group === undefined) { return 0; }
 

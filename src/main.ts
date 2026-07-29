@@ -124,21 +124,26 @@ window.onload = () =>
     ).get("login_token");
     //console.debug(settings.rcloneSettings.loginToken);
 
+    guiVersionSpan.textContent = guiVersion;
+
     // get versions
     functions.sendRequestToRclone(
         "/core/version",
         null,
-        function(rez: functions.rcVersion)
+        function(rez: functions.rcVersion | null)
         {
+            if (rez === null) { return; }
+
             rcloneOS.textContent = rez["os"].concat(" (", rez["arch"], ")");
             rcloneVersion.textContent = rez["version"];
-            guiVersionSpan.textContent = guiVersion;
         }
     );
 
     // get remotes
-    functions.sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes)
+    functions.sendRequestToRclone("/config/listremotes", null, function(rez: functions.rcRemotes | null)
     {
+        if (rez === null) { return; }
+
         updateRemotesSelects(leftPanelRemote, "leftPanelFiles", rez);
         updateRemotesSelects(rightPanelRemote, "rightPanelFiles", rez);
     });
@@ -411,8 +416,17 @@ function updateRemotesSelects(
             const params: functions.rcRequest = {
                 "fs": remote.concat(":/", settings.remotes[remote]["pathToQueryDisk"])
             };
-            functions.sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout)
+            functions.sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout | null)
             {
+                // the disk query is a nice-to-have, not required, so if it fails, adding the remote
+                // to the list should not fail along with it - instead it should just "lose" the suffix
+                // and get added to the list anyway
+                if (rez === null)
+                {
+                    newSelectObj.options.add(new Option(remoteText, remote));
+                    return;
+                }
+
                 availableDiskSpace = functions.getHumanReadableValue(rez["free"], "");
                 remoteText = remoteText.concat(` (${availableDiskSpace} left)`);
                 newSelectObj.options.add(new Option(remoteText, remote));
@@ -521,7 +535,7 @@ function openPath(path: string, filesPanelID: string)
         "fs": basePath,
         "remote": nextPath
     };
-    functions.sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]})
+    functions.sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]} | null)
     {
         ((filesPanel.parentNode!.parentNode as HTMLDivElement)
             .getElementsByClassName("loadingAnimation")[0] as HTMLDivElement
@@ -631,7 +645,8 @@ function openPath(path: string, filesPanelID: string)
     });
 }
 
-function updateCurrentTransfers(currentTransfers: functions.rcTransfer[])
+// `undefined` is expected here, because `/core/stats` has no `transferring` when idle
+function updateCurrentTransfers(currentTransfers: functions.rcTransferring[] | undefined)
 {
     //console.table(currentTransfers);
     while (currentTransfersBody.firstChild)
@@ -653,7 +668,14 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransfer[])
         else { addQueueElementsOnly = true; }
     }
 
-    if (!addQueueElementsOnly) // add items from current transfers list
+    if (
+        // add items from current transfers list
+        !addQueueElementsOnly
+        &&
+        // the `undefined` check is redundant at runtime — `addQueueElementsOnly` is only left `false`
+        // when the guard above found a non-empty array — but the flag hides that from the compiler
+        currentTransfers !== undefined
+    )
     {
         currentTransfersCount.textContent = currentTransfers.length.toString();
         currentTransfers.sort(functions.sortJobs);
@@ -796,7 +818,7 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransfer[])
     currentTransfersBlock.style.display = "block";
 }
 
-function updateCompletedTransfers(completedTransfers: functions.rcTransfer[])
+function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
 {
     while (completedTransfersBody.firstChild)
     {
@@ -849,16 +871,22 @@ function refreshView()
 
 function getCurrentTransfers()
 {
-    functions.sendRequestToRclone("/core/stats", null, function(rez: functions.rcStats)
+    functions.sendRequestToRclone("/core/stats", null, function(rez: functions.rcStats | null)
     {
+        // no logging needed, `sendRequestToRclone` has already reported the failure
+        if (rez === null) { return; }
+
         updateCurrentTransfers(rez["transferring"]);
     });
 }
 
 function getCompletedTransfers()
 {
-    functions.sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransfer[]})
+    functions.sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransferred[]} | null)
     {
+        // no logging needed, `sendRequestToRclone` has already reported the failure
+        if (rez === null) { return; }
+
         //console.table(rez["transferred"]);
         updateCompletedTransfers(rez["transferred"]);
     });
