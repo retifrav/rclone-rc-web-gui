@@ -2,22 +2,18 @@
   "compilerOptions": {
     "noEmitOnError": true,
     "target": "ES6",
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
+    "strict": true,
     "removeComments": false,
-    "strictPropertyInitialization": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    //"preserveConstEnums": true
-    //"sourceMap": true
+    //"preserveConstEnums": true,
+    //"sourceMap": true,
     "lib": [
       "DOM",
       "DOM.Iterable",
-      "ES6",
-      "ES2017",
-      "ES2018.Promise"
+      "ES2017"
     ],
+    "rootDir": "./src",
     "outDir": "./js"
   },
   "include": [
