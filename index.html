@@ -30,7 +30,8 @@
         </div>
         <div id="inputRefresh" class="settings-item">
             <label for="input-refresh-view">View is refreshed every</label>
-            <input id="input-refresh-view" type="number" min="1" max="120" step="1" value="2">
+            <input id="input-refresh-view" type="range" min="1" max="120" step="1" value="2">
+            <output id="output-refresh-view-value" for="input-refresh-view">2</output>
             <label for="input-refresh-view">seconds</label>
         </div>
         <div id="manualRefresh" class="settings-item" style="display:none;">
@@ -40,10 +41,11 @@
         <h5>[ rclone ]</h5>
         <div class="settings-item">
             <label for="input-maximum-allowed-transfers">Allowed to do</label>
-            <input id="input-maximum-allowed-transfers" type="number" min="1" max="20" step="1" value="1">
+            <input id="input-maximum-allowed-transfers" type="range" min="1" max="20" step="1" value="1">
+            <output id="output-maximum-allowed-transfers-value" for="input-maximum-allowed-transfers">1</output>
             <label for="input-maximum-allowed-transfers">transfers at a time</label>
             <img class="icon info-badge" src="./images/info-square.svg"
-                title="How many simultaneous transfers rclone is allowed to do. Changing this value does not apply to the current job(s) that is already in progress.">
+                title="How many simultaneous transfers rclone is allowed to do. Note that changing this value does not apply to the current job(s) that is already in progress.">
         </div>
     </div>
 

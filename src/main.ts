@@ -65,10 +65,14 @@ const indicatorGuiFrozen: HTMLImageElement =
     document.getElementById("indicator-gui-frozen") as HTMLImageElement;
 const inputRefreshView: HTMLInputElement =
     document.getElementById("input-refresh-view") as HTMLInputElement;
+const outputRefreshViewValue: HTMLOutputElement =
+    document.getElementById("output-refresh-view-value") as HTMLOutputElement;
 const inputRefresh: HTMLDivElement =
     document.getElementById("inputRefresh") as HTMLDivElement;
 const inputMaximumAllowedTransfers: HTMLInputElement =
     document.getElementById("input-maximum-allowed-transfers") as HTMLInputElement;
+const outputMaximumAllowedTransfersValue: HTMLOutputElement =
+    document.getElementById("output-maximum-allowed-transfers-value") as HTMLOutputElement;
 
 const currentTransfersBlock: HTMLDivElement =
     document.getElementById("currentTransfers") as HTMLDivElement;
@@ -144,6 +148,7 @@ window.onload = () =>
 {
     settingsChbxPolling.checked = settings.userSettings.timerRefreshEnabled;
     inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
+    updateRefreshViewHeat();
 
     // check if there is login_token query parameter present
     settings.rcloneSettings.loginToken = new URLSearchParams(
@@ -226,27 +231,17 @@ window.onload = () =>
         }
     );
 
+    // the span with current value and slider heat colour follow the knob,
+    // but the timer itself is only restarted on `change`
+    inputRefreshView.addEventListener(
+        "input",
+        updateRefreshViewHeat
+    );
     inputRefreshView.addEventListener(
         "change",
         function()
         {
-            const val = parseInt(this.value);
-
-            if(Number.isNaN(val))
-            {
-                alert("This value must be a number.");
-                inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
-                return;
-            }
-
-            if(val < 1 || val > 120)
-            {
-                alert("This value can't be less than 1 or greater than 120.");
-                inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
-                return;
-            }
-
-            settings.userSettings.timerRefreshView = val;
+            settings.userSettings.timerRefreshView = parseInt(this.value);
 
             window.clearInterval(settings.userSettings.timerRefreshViewInterval);
             settings.userSettings.timerRefreshViewInterval = window.setInterval(
@@ -267,37 +262,23 @@ window.onload = () =>
         settings.userSettings.timerProcessQueue * 1000
     );
 
+    // the span with current value and slider heat colour follow the knob,
+    // but the actual request to rclone is only sent on `change`
+    inputMaximumAllowedTransfers.addEventListener(
+        "input",
+        updateMaximumAllowedTransfersHeat
+    );
     inputMaximumAllowedTransfers.addEventListener(
         "change",
         function()
         {
-            const val = parseInt(this.value);
+            // rclone holds the value, so there is no point in storing it
+            // in `settings.userSettings`
+            setMaximumAllowedRcloneTransfers(parseInt(this.value));
 
-            // rclone seems to force < 1 values to 1, so there is no need to check for that,
-            // and the input value is set to whatever rclone currently has, so there is no point
-            // in making this part of `settings.userSettings`
-            if(Number.isNaN(val))
-            {
-                alert("This value must be a number.");
-                getMaximumAllowedRcloneTransfers();
-                return;
-            }
-
-            if(val < 1 || val > 20)
-            {
-                alert("This value can't be less than 1 or greater than 20.");
-                getMaximumAllowedRcloneTransfers();
-                return;
-            }
-
-            // `parseInt()` should have already dropped the fractional part,
-            // but the input would still be showing it
-            this.value = val.toString();
-
-            setMaximumAllowedRcloneTransfers(val);
-
-            // anything that was queued when only a single transfer was allowed
-            // did not get counted, but now it needs to be
+            // items that were queued when just a single transfer was allowed
+            // did not get counted then, but now (when there is more than one
+            // transfer allowed) they needs to be counted
             countQueuedFolderFiles();
         }
     );
@@ -959,6 +940,60 @@ function getCurrentTransfers()
     });
 }
 
+// heatmap-coloring the slider for UI auto-refresh frequency:
+// 1 - red (every second, too frequent)
+// 2 - green (every two seconds, recommended)
+// 3..120 - gradually going into dark blue (less and less frequent updates)
+function updateRefreshViewHeat()
+{
+    const value: number = parseInt(inputRefreshView.value);
+
+    let hue: number = 0;
+    let lightness: number = 42;
+
+    if (value === 2) { hue = 120; }
+    else if (value > 2)
+    {
+        // heatmap-coloring starts at 3, because 1 and 2 are fixed colors
+        const rampEnd: number = parseInt(inputRefreshView.max);
+        const fraction: number = (value - 3) / (rampEnd - 3);
+
+        // hue stops at blue (240) halfway, so the second half of the range
+        // has only the lightness left to say anything with
+        hue = 120 + 120 * Math.min(fraction * 2, 1);
+        if (fraction > 0.5) { lightness = 42 - 22 * (fraction - 0.5) * 2; }
+    }
+
+    inputRefreshView.style.accentColor = "hsl("
+        .concat(
+            Math.round(hue).toString(),
+            " 75% ",
+            Math.round(lightness).toString(),
+            "%)"
+        );
+
+    outputRefreshViewValue.textContent = inputRefreshView.value;
+}
+
+// heatmap-coloring the slider for the number of maximum allowed transfers,
+// from 1 (gree) to 20 (red), also taking into account that user might have
+// launched rclone with `--transfers` being set to a higher value than 20
+function updateMaximumAllowedTransfersHeat()
+{
+    const min: number = parseInt(inputMaximumAllowedTransfers.min);
+    const max: number = parseInt(inputMaximumAllowedTransfers.max);
+
+    const fraction: number = (parseInt(inputMaximumAllowedTransfers.value) - min) / (max - min);
+
+    // hue 120 (green) -> 0 (red), the short way round through yellow
+    inputMaximumAllowedTransfers.style.accentColor =
+        // replacing `(1 - fraction)` with `Math.pow(1 - fraction, 1.6)` will put
+        // amber at the midpoint and thus reach red faster
+        "hsl(".concat(Math.round(120 * (1 - fraction)).toString(), " 75% 42%)");
+
+    outputMaximumAllowedTransfersValue.textContent = inputMaximumAllowedTransfers.value;
+}
+
 // this is not a part of `refreshView()` because it only changes when rclone itself is restarted
 // with a different `--transfers` value or when `/options/set` is called
 function getMaximumAllowedRcloneTransfers()
@@ -968,7 +1003,19 @@ function getMaximumAllowedRcloneTransfers()
     {
         if (rez === null) { return; }
 
-        inputMaximumAllowedTransfers.value = rez["main"]["Transfers"].toString();
+        const transfers: number = rez["main"]["Transfers"];
+
+        // user might have launched rclone with `--transfers` value higher than the slider's maximum,
+        // while the range input would just clamp to its `max`, which would be incorrect and also
+        // would make `getActiveQueueSlots()` allocate less slots than actually allowed,
+        // so the slider gets wider to fit the real value instead
+        if (transfers > parseInt(inputMaximumAllowedTransfers.max))
+        {
+            inputMaximumAllowedTransfers.max = transfers.toString();
+        }
+
+        inputMaximumAllowedTransfers.value = transfers.toString();
+        updateMaximumAllowedTransfersHeat();
     });
 }
 
@@ -986,14 +1033,18 @@ function setMaximumAllowedRcloneTransfers(transfers: number)
 
 function getCompletedTransfers()
 {
-    functions.sendRequestToRclone("/core/transferred", null, function(rez: {transferred: functions.rcTransferred[]} | null)
-    {
-        // no logging needed, `sendRequestToRclone` has already reported the failure
-        if (rez === null) { return; }
+    functions.sendRequestToRclone(
+        "/core/transferred",
+        null,
+        function(rez: {transferred: functions.rcTransferred[]} | null)
+        {
+            // no logging needed, `sendRequestToRclone` has already reported the failure
+            if (rez === null) { return; }
 
-        //console.table(rez["transferred"]);
-        updateCompletedTransfers(rez["transferred"]);
-    });
+            //console.table(rez["transferred"]);
+            updateCompletedTransfers(rez["transferred"]);
+        }
+    );
 }
 
 function refreshFilesListing()
@@ -1148,9 +1199,10 @@ function countQueuedFolderFiles()
 }
 
 // how many transfers may be in flight at the same time. The number of allowed transfers
-// lives in rclone and is only mirrored in the settings input, so in case anything wrong there
-// (the field is empty during an edit, or the HTML default is still showing because
-// `/options/get` failed) fallbacks to `1`
+// lives in rclone and is only mirrored in the settings slider, so in case anything is wrong
+// there (HTML default is still showing because `/options/get` failed) it will fallback to `1`.
+// A range input can not be left blank or non-numeric the way the number input before it could,
+// so the `NaN` half of the guard is only there to keep the fallback total
 function getActiveQueueSlots() : number
 {
     let allowedTransfers: number = parseInt(inputMaximumAllowedTransfers.value);
