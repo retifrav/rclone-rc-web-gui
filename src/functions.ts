@@ -24,7 +24,7 @@ export type rcListItem =
     IsDir: boolean
 }
 
-// `/core/stats` → `transferring[]` and `/core/transferred` → `transferred[]` look alike
+// `/core/stats` → `transferring[]` and `/core/transferred` → `transferred[]` look similar
 // but are not the same object: an in-flight transfer has progress and no outcome yet,
 // while a finished one has an outcome and no progress. Declaring the union of both as a single type
 // was not correct, as every field seemed to be always available, so they have been split
@@ -33,15 +33,22 @@ export type rcTransferCommon =
 {
     name: string,
     size: number,
-    bytes: number,
     group: string
 }
 
 // `/core/stats` → `transferring[]`
+//
+// `bytes`, `speed` and `percentage` are optional because rclone only has them while an accounting
+// object exists for the transfer: `transferMap.rcStats()` starts each entry with the name and
+// size and later adds the progress. A transfer that is registered but not yet actually transferring
+// the data (opening the source, hashing, waiting for a transfer slot) has no such accounting object,
+// so its entry has only the name, size and group. Assigning the missing `percentage` straight to
+// `<progress>.value` is a `TypeError`, so these values are all read later via an `undefined` check
 export type rcTransferring = rcTransferCommon &
 {
-    speed: number,
-    percentage: number
+    bytes?: number,
+    speed?: number,
+    percentage?: number
     //eta:
     //speedAvg:
     //srcFs:
@@ -53,6 +60,7 @@ export type rcTransferring = rcTransferCommon &
 // the `*_at` timestamps are ISO-8601 strings, so they need(?) `new Date()` before formatting
 export type rcTransferred = rcTransferCommon &
 {
+    bytes: number, // finished transfer always has the size, so here it is not `?`
     error: string,
     checked: boolean,
     started_at: string,
@@ -87,6 +95,7 @@ export type rcRemotes = {
 export type rcRequest = {
     _async?: boolean,
     blocks?: string,
+    group?: string, // `/core/stats` narrowed down to one job's group (such as `job/12`)
     remote?: string,
     jobid?: string,
     fs?: string,
@@ -94,10 +103,20 @@ export type rcRequest = {
     srcRemote?: string,
     dstFs?: string,
     dstRemote?: string,
-    deleteEmptySrcDirs?: boolean
+    deleteEmptySrcDirs?: boolean,
+    // per-job settings, which rclone applies to that job alone and to nothing else, here it is used
+    // to allocate a number of allowed transfers to a folder operation
+    _config?: {
+        Transfers: number
+    },
+    // `/options/set` takes the option block name as the key
+    main?: {
+        // it really is `Transfers` with a capital `T`
+        Transfers: number
+    }
 }
 
-// only the `main` block is asked for, and only the values used here are declared
+// only the `main` block is asked for, and only the values listed here are going to be used
 export type rcOptions = {
     main: {
         Transfers: number
@@ -124,6 +143,30 @@ export type rcStats = {
     transfers: number,
     // is not part of the response when nothing is transferring
     transferring?: rcTransferring[]
+}
+
+// `/operations/size` counts (recursively) what is under the single `fs` path
+// (it also can send `sizeless` when some of the files have unknown size)
+export type rcSize = {
+    count: number,
+    bytes: number
+}
+
+// we are mostly interested in `runningIds`, while `jobids` lists the jobs that have already finished,
+// and it needs to be intersected with the IDs that we submitted instead of just counting,
+// because every API call over HTTP itself gets a job record too (the response always includes
+// the `/job/list` request)
+export type rcJobList = {
+    executeId: string, // ID of the current rclone launch, which is different on every restart
+    jobids: number[],
+    runningIds: number[],
+    finishedIds: number[]
+}
+
+// `jobid` is a number here, unlike the string in `/job/stop`
+export type rcJobSubmission = {
+    jobid: number,
+    executeId: string
 }
 
 export function sendRequestToRclone(query: string, params: rcRequest | null, fn: Function)
@@ -166,7 +209,7 @@ export function sendRequestToRclone(query: string, params: rcRequest | null, fn:
         if (xhr.status != 200)
         {
             console.group("Request has failed");
-            console.error("Error, HTTP status code:", xhr.status);
+            console.error(`Error, HTTP status code: ${xhr.status}`);
             if (xhr.status === 500)
             {
                 let rezError = JSON.parse(xhr.response)["error"];

@@ -21,19 +21,29 @@
     </div>
 
     <div id="settings">
-        <h4 style="margin:0 0 15px 0;">Settings</h4>
+        <h4>Settings</h4>
 
+        <h5>[ UI ]</h5>
         <div class="settings-item">
             <input id="chbx-polling" type="checkbox">
             <label for="chbx-polling">auto-refreshing the view</label>
         </div>
         <div id="inputRefresh" class="settings-item">
             <label for="input-refresh-view">View is refreshed every</label>
-            <input id="input-refresh-view" type="number" min="1" max="120" value="2" step="1" style="width:5em; text-align:center;">
+            <input id="input-refresh-view" type="number" min="1" max="120" step="1" value="2">
             <label for="input-refresh-view">seconds</label>
         </div>
         <div id="manualRefresh" class="settings-item" style="display:none;">
             <button id="btn-manualRefresh" type="button">Refresh the view manually</button>
+        </div>
+
+        <h5>[ rclone ]</h5>
+        <div class="settings-item">
+            <label for="input-maximum-allowed-transfers">Allowed to do</label>
+            <input id="input-maximum-allowed-transfers" type="number" min="1" max="20" step="1" value="1">
+            <label for="input-maximum-allowed-transfers">transfers at a time</label>
+            <img class="icon info-badge" src="./images/info-square.svg"
+                title="How many simultaneous transfers rclone is allowed to do. Changing this value does not apply to the current job(s) that is already in progress.">
         </div>
     </div>
 

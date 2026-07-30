@@ -313,17 +313,27 @@ pre {
     font-size: 0.85rem;
 }
 
+#settings > h4 {
+    margin: 0 0 16px 0;
+}
+
+#settings > h5 {
+    margin: 14px 0 10px 0;
+}
+
 .settings-item {
     display: flex;
     align-items: center;
-    margin-top: 10px;
+    gap: 6px;
+    margin-top: 8px;
+}
+.settings-item > input[type="number"] {
+    width: 4.5em;
+    text-align: center;
 }
 .settings-item > input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
-}
-.settings-item > * {
-    margin-left: 4px;
 }
 .settings-item > *:first-child {
     margin-left: 0;
@@ -332,3 +342,7 @@ pre {
     padding: 4px 8px;
 }
 
+.info-badge {
+    cursor: help;
+    opacity: 0.7;
+}

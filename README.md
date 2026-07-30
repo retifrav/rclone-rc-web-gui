@@ -17,6 +17,7 @@
         - [Wrong username/password](#wrong-usernamepassword)
         - [CORS header does not match](#cors-header-does-not-match)
     - [Configuration](#configuration)
+        - [Settings](#settings)
     - [Queue](#queue)
 - [Deployment](#deployment)
     - [Docker](#docker)
@@ -205,13 +206,21 @@ Here:
 - `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
   - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
 
+#### Settings
+
+There is also a settings section right in the UI - it shows up when you click on the gear icon in the top-right corner of the header.
+
+The UI settings are not persistent and will reset back to the default/configured values on the next page refresh. The rclone settings survive page reloads as it's rclone who is holding them (*while it keeps runing*).
+
 ### Queue
 
-All operations go to the queue and processed one at a time.
+Originally, the intention was to support just one operation at a time, so all the transfers were supposed to go to the queue and get processed strictly one by one. In addition to rclone's own [--transfers](https://rclone.org/docs/#transfers-int) option, this is controlled by a queue mechanism in the UI.
 
-Obviously, since the queue is implemented on the client side, it's only your browser who knows about it, so if you add more operations from a different host, browser, or even a different tab in the same browser - all of them will go in parallel.
+Later, however, support for parallel transfers was added as well - mainly for situations when one needs to deal with lots of small files (*so the original philosophy of maximizing the transfer speed per single big file still stands*). To increase the number "active" queue slots you can either pass the desired number in `--transfers` for the initial `rclone rcd` launch or change it dynamically in the UI [settings](#settings).
 
-That also means that once you close the browser or just this tab, the queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
+It is probably worth to mention that since this queue is client-side, it is only your browser who knows about it, so if you will add more operations from a different host, browser, or even a different tab in the same browser - all of them can still go in parallel.
+
+The queue being client-side also means that once you close the browser/tab where the UI is running, its queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
 
 ## Deployment
 
