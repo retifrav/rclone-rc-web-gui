@@ -42,6 +42,24 @@ type ActiveQueueJob = {
 }
 const activeQueueJobs: Array<ActiveQueueJob> = []
 
+// which `openPath()` call owns the panel listing. Since this function can be called once more
+// while its `/operations/list` is still in flight (a folder clicked twice on a slow remote,
+// refresh button clicked again, `createFolderClicked()` refreshing after a creating a new folder)
+// and every callback renders into the same panel, then the older response will append its rows next
+// to the newer response and will overwrite the items count with its own. To prevent that, each call
+// takes the next number and only the holder of the panel's current one is allowed to render
+//
+// this is a counter and not a comparison of the captured `path` versus `functions.panelsPaths[filesPanelID]`
+// because a refresh (or the same folder clicked twice) re-opens the same path, so both callbacks would
+// find their path to still be current, and so both of them will render (which is what we are trying
+// to fix here in the first place)
+//
+// counters are per panel, so that the two panels can list at the same time without invalidating each other
+const panelsListingGeneration: {[key: string]: number} = {
+    "leftPanelFiles": 0,
+    "rightPanelFiles": 0
+}
+
 let settingsOpen: boolean = false;
 
 const rcloneOS: HTMLSpanElement =
@@ -533,6 +551,15 @@ function openPath(path: string, filesPanelID: string)
     (filesPanel.parentNode!.parentNode! as HTMLDivElement)
         .getElementsByClassName("filesCount")[0].textContent = "-";
 
+    // the search query filters the rows that are already rendered, which does not apply when
+    // they are replaced by another directory listing. Leaving the search query as it was
+    // would then look confusing, because the listing will not be actually filtered,
+    // so the query gets emptied (but the search input stays open)
+    const searchQuery: HTMLInputElement = filesPanelID === "leftPanelFiles"
+        ? leftPanelSearchQuery
+        : rightPanelSearchQuery;
+    searchQuery.value = "";
+
     //const firstSlash = path.indexOf("/") + 1;
     const lastSlash = path.lastIndexOf("/") + 1;
     const basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
@@ -550,6 +577,8 @@ function openPath(path: string, filesPanelID: string)
     //console.groupEnd();
 
     functions.panelsPaths[filesPanelID] = path;
+
+    const generation: number = ++panelsListingGeneration[filesPanelID];
 
     const divFileLine: HTMLDivElement = Object.assign(
         document.createElement("div"),
@@ -619,6 +648,14 @@ function openPath(path: string, filesPanelID: string)
             );
             return;
         }
+
+        // a newer `openPath()` has taken this panel over since this request went out, so the rows
+        // below belong to a directory the panel is no longer showing, and so rendering them would
+        // mix two listings together, while the items counter would be correct only for one of them
+        //
+        // it is checked here and not at the top of the callback so that a failing remote would still
+        // get reported even if its failed listing has been already superseded by a newer one
+        if (generation !== panelsListingGeneration[filesPanelID]) { return; }
 
         const listOfFilesAndFolders: functions.rcListItem[] = rez["list"];
         listOfFilesAndFolders.sort(functions.sortFilesAndFolders);

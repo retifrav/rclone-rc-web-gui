@@ -19,7 +19,12 @@ export function showSearch(btn: HTMLButtonElement, filesPanelID: string)
 export function hideSearch(btn: HTMLButtonElement | HTMLInputElement, filesPanelID: string)
 {
     let panelDiv = btn!.parentNode!.parentNode!;
-    (panelDiv.querySelector(".input-query.search") as HTMLDivElement).style.display = "none";
+    const searchBlock = panelDiv.querySelector(".input-query.search") as HTMLDivElement;
+    searchBlock.style.display = "none";
+    // the query has to go with the block, or reopening the search would show a filter
+    // that is not being applied to anything - `clearSearch()` below has just made every row
+    // visible again. `createFolderClicked()` empties its input for the same reason
+    (searchBlock.querySelector("input") as HTMLInputElement).value = "";
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 
     clearSearch(filesPanelID);
