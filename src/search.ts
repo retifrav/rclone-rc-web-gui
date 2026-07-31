@@ -12,7 +12,7 @@ export function showSearch(btn: HTMLButtonElement, filesPanelID: string)
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "none";
 
     const searchBlock = panelDiv.querySelector(".input-query.search") as HTMLDivElement;
-    searchBlock.style.display = "flex";
+    searchBlock.style.display = "grid";
     (searchBlock.querySelector("input") as HTMLInputElement).focus();
 }
 
@@ -21,9 +21,9 @@ export function hideSearch(btn: HTMLButtonElement | HTMLInputElement, filesPanel
     let panelDiv = btn!.parentNode!.parentNode!;
     const searchBlock = panelDiv.querySelector(".input-query.search") as HTMLDivElement;
     searchBlock.style.display = "none";
-    // the query has to go with the block, or reopening the search would show a filter
-    // that is not being applied to anything - `clearSearch()` below has just made every row
-    // visible again. `createFolderClicked()` empties its input for the same reason
+    // the search query needs to be emptied with the block, otherwise reopening the search panel
+    // will show a query that is not being applied to anything, since `clearSearch()` has just
+    // made the entire listing unfiltered again (same with `createFolderClicked()`)
     (searchBlock.querySelector("input") as HTMLInputElement).value = "";
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 
@@ -47,10 +47,10 @@ export const searchQueryChanged = debounce(
     {
         clearSearch(filesPanelID);
 
-        // don't start search until there are at least 3 symbols
+        // don't start search until there are at least 3 symbols entered
         if (searchTerm.length < 3)
         {
-            if (searchTerm.length !== 0) { console.warn("The search query is too short"); }
+            //console.warn("The search query is too short");
             return;
         }
 

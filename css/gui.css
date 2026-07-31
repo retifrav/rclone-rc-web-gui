@@ -280,9 +280,47 @@ pre {
 .input-query {
     display: none;
 }
-.input-query > input {
+/* the search input parent is a grid */
+.input-query:not(.search) > input {
     flex-grow: 1;
 }
+
+/*
+    using grid here so that the warning hint could share the input's cell in order to
+    right-align to the input's end. Going with `position: absolute` would anchor to
+    the entire row, which includes the Cancel button
+*/
+.input-query.search {
+    grid-template-columns: 1fr auto;
+}
+.input-query.search > input {
+    grid-area: 1 / 1;
+}
+.input-query.search > button {
+    grid-area: 1 / 2;
+}
+.input-query.search > input,
+.input-query.search > .search-hint {
+    font: inherit;
+    font-size: 0.85rem;
+}
+.input-query.search > input:invalid {
+    background-color: hsl(45 100% 94%);
+}
+.search-hint {
+    grid-area: 1 / 1;
+    justify-self: end;
+    align-self: center;
+    margin-right: 10px;
+    color: hsl(38 95% 27%);
+    /* clicking on the hint should fall through to the underlying input field */
+    pointer-events: none;
+    visibility: hidden;
+}
+.input-query.search > input:invalid ~ .search-hint {
+    visibility: visible;
+}
+
 .lastButtons {
     display: flex;
     margin-left: auto;

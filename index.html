@@ -121,7 +121,11 @@
                     <button id="leftPanelCommandHideCreateFolder" type="button">Cancel</button>
                 </div>
                 <div class="input-query search">
-                    <input id="leftPanelSearchQuery" type="text" placeholder="Filter files/folders by name">
+                    <input id="leftPanelSearchQuery" type="text" minlength="3"
+                        aria-describedby="leftPanelSearchHint"
+                        placeholder="Filter listing by name">
+                    <output id="leftPanelSearchHint" class="search-hint"
+                        for="leftPanelSearchQuery">min.&nbsp;3&nbsp;chars</output>
                     <button id="leftPanelCommandHideSearch" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
@@ -182,7 +186,11 @@
                     <button id="rightPanelCommandHideCreateFolder" type="button">Cancel</button>
                 </div>
                 <div class="input-query search">
-                    <input id="rightPanelSearchQuery" type="text" placeholder="Filter files/folders by name">
+                    <input id="rightPanelSearchQuery" type="text" minlength="3"
+                        aria-describedby="rightPanelSearchHint"
+                        placeholder="Filter listing by name">
+                    <output id="rightPanelSearchHint" class="search-hint"
+                        for="rightPanelSearchQuery">min.&nbsp;3&nbsp;chars</output>
                     <button id="rightPanelCommandHideSearch" type="button">Cancel</button>
                 </div>
                 <div class="filesPanel">
