@@ -1075,21 +1075,31 @@ function updateRefreshViewHeat()
     outputRefreshViewValue.textContent = inputRefreshView.value;
 }
 
-// heatmap-coloring the slider for the number of maximum allowed transfers,
-// from 1 (gree) to 20 (red), also taking into account that user might have
-// launched rclone with `--transfers` being set to a higher value than 20
+const transfersHeatYellowAt: number = 4;
+const transfersHeatRedAt: number = 8;
+
+// heatmap-coloring the slider for the number of maximum allowed transfers:
+// 1 - green (a single transfer at a time is always good)
+// 4 - yellow (not too many transfers at once are still more or less okay)
+// 8..max - red (a lot of parallel transfers is a really bad idea)
 function updateMaximumAllowedTransfersHeat()
 {
     const min: number = parseInt(inputMaximumAllowedTransfers.min);
-    const max: number = parseInt(inputMaximumAllowedTransfers.max);
+    const value: number = parseInt(inputMaximumAllowedTransfers.value);
 
-    const fraction: number = (parseInt(inputMaximumAllowedTransfers.value) - min) / (max - min);
+    let hue: number = 0;
 
-    // hue 120 (green) -> 0 (red), the short way round through yellow
+    if (value < transfersHeatYellowAt)
+    {
+        hue = 120 - 60 * (value - min) / (transfersHeatYellowAt - min);
+    }
+    else if (value < transfersHeatRedAt)
+    {
+        hue = 60 - 60 * (value - transfersHeatYellowAt) / (transfersHeatRedAt - transfersHeatYellowAt);
+    }
+
     inputMaximumAllowedTransfers.style.accentColor =
-        // replacing `(1 - fraction)` with `Math.pow(1 - fraction, 1.6)` will put
-        // amber at the midpoint and thus reach red faster
-        "hsl(".concat(Math.round(120 * (1 - fraction)).toString(), " 75% 42%)");
+        "hsl(".concat(Math.round(hue).toString(), " 75% 42%)");
 
     outputMaximumAllowedTransfersValue.textContent = inputMaximumAllowedTransfers.value;
 }
