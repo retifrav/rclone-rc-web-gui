@@ -51,6 +51,12 @@ export const searchQueryChanged = debounce(
 
         //console.debug(`Searching for [${searchTerm}]...`);
 
+        // both sides are normalized, because a name can arrive decomposed (NFD, "e" + U+0301),
+        // which is what a remote fed from macOS tends to hold, and it would never match
+        // the same name typed as composed NFC. Worth to mention that this is a display-side
+        // filter only — the transfer itself always uses the byte-exact name that rclone gave us
+        const needle = searchTerm.normalize("NFC").toLowerCase();
+
         const fileLines: HTMLDivElement[] = Array.from(
             (document.getElementById(filesPanelID) as HTMLDivElement)
                 .querySelectorAll(".file-list-item > .fileLine")
@@ -59,9 +65,10 @@ export const searchQueryChanged = debounce(
         {
             if (
                 !(fileLines[i].querySelector("p") as HTMLParagraphElement)
-                    .textContent!.toLowerCase().includes(
-                        searchTerm.toLowerCase()
-                    )
+                    .textContent!
+                    .normalize("NFC")
+                    .toLowerCase()
+                    .includes(needle)
             )
             {
                 (fileLines[i].parentNode as HTMLDivElement).style.display = "none";

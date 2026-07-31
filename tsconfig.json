@@ -1,18 +1,13 @@
 {
   "compilerOptions": {
     "noEmitOnError": true,
-    "target": "ES6",
+    "target": "ES2022",
     "strict": true,
     "removeComments": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     //"preserveConstEnums": true,
     //"sourceMap": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2017"
-    ],
     "rootDir": "./src",
     "outDir": "./js"
   },

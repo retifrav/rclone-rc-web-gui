@@ -3,7 +3,7 @@ import * as functions from "./functions.js";
 import * as folder from "./folder.js";
 import * as search from "./search.js";
 
-const guiVersion: string = "2026.6.28";
+const guiVersion: string = "2026.7.31";
 
 type QueueItem = {
     "dtAdded": Date,
@@ -383,46 +383,43 @@ window.onload = () =>
         "click",
         function() { search.showSearch(this, "rightPanelFiles"); }
     );
+    // `keyup` is only for ESC (and `input` does not react to ESC). Everything that
+    // actually changes the query goes through `input`, which (unlike a `keyCode` test)
+    // covers digits, punctuation, non-Latin input, IME composition, paste and clearing
     leftPanelSearchQuery.addEventListener(
         "keyup",
         function(e)
         {
-            switch (e.key)
-            {
-                case "Escape":
-                    search.hideSearch(this, "leftPanelFiles");
-                    break;
-                default:
-                    if (functions.acceptableKeyEventForSearch(e))
-                    {
-                        search.searchQueryChanged(
-                            leftPanelSearchQuery.value,
-                            "leftPanelFiles"
-                        );
-                    }
-                    break;
-            }
+            if (e.key !== "Escape") { return; }
+            search.hideSearch(this, "leftPanelFiles");
+        }
+    );
+    leftPanelSearchQuery.addEventListener(
+        "input",
+        function()
+        {
+            search.searchQueryChanged(
+                leftPanelSearchQuery.value,
+                "leftPanelFiles"
+            );
         }
     );
     rightPanelSearchQuery.addEventListener(
         "keyup",
         function(e)
         {
-            switch (e.key)
-            {
-                case "Escape":
-                    search.hideSearch(this, "rightPanelFiles");
-                    break;
-                default:
-                    if (functions.acceptableKeyEventForSearch(e))
-                    {
-                        search.searchQueryChanged(
-                            rightPanelSearchQuery.value,
-                            "rightPanelFiles"
-                        );
-                    }
-                    break;
-            }
+            if (e.key !== "Escape") { return; }
+            search.hideSearch(this, "rightPanelFiles");
+        }
+    );
+    rightPanelSearchQuery.addEventListener(
+        "input",
+        function()
+        {
+            search.searchQueryChanged(
+                rightPanelSearchQuery.value,
+                "rightPanelFiles"
+            );
         }
     );
     leftPanelCommandHideSearch.addEventListener(
@@ -457,11 +454,19 @@ function updateRemotesSelects(
         let remoteText = remote;
 
         let availableDiskSpace = undefined;
+        // using `Object.hasOwn` instead of a bare `!== undefined`, because a remote can be named
+        // using a "reserved" Object member name (`toString`, `valueOf`, `constructor`, etc)
+        const remoteSettings = Object.hasOwn(settings.remotes, remote)
+            ? settings.remotes[remote]
+            : undefined;
         // try to get available disk space
-        if (settings.remotes[remote] !== undefined && settings.remotes[remote]["canQueryDisk"] === true)
+        if (remoteSettings !== undefined && remoteSettings["canQueryDisk"] === true)
         {
+            const pathToQueryDisk: string = remoteSettings["pathToQueryDisk"] === undefined
+                ? ""
+                : remoteSettings["pathToQueryDisk"];
             const params: functions.rcRequest = {
-                "fs": remote.concat(":/", settings.remotes[remote]["pathToQueryDisk"])
+                "fs": remote.concat(":/", pathToQueryDisk)
             };
             functions.sendRequestToRclone("/operations/about", params, function(rez: functions.rcAbout | null)
             {
@@ -497,11 +502,21 @@ function remoteChanged(remotesList: HTMLSelectElement, filesPanelID: string)
     if (remote === "") { return; }
 
     //console.debug(remotes[remote]);
+
+    // the `Object.hasOwn` is for the same reason as in `updateRemotesSelects()`
+    //
+    // checking every field because `js/settings.js` is edited by a user and is not
+    // checked for types, so `startingFolder` might be missing, making a literal
+    // "undefined" string being added to the path (`remote:/undefined`)
+    const remoteSettings = Object.hasOwn(settings.remotes, remote)
+        ? settings.remotes[remote]
+        : undefined;
+    const startingFolder: string =
+        remoteSettings === undefined || remoteSettings["startingFolder"] === undefined
+            ? ""
+            : remoteSettings["startingFolder"];
     openPath(
-        remote.concat(
-            ":/",
-            settings.remotes[remote] === undefined ? "" : settings.remotes[remote]["startingFolder"]
-        ),
+        remote.concat(":/", startingFolder),
         filesPanelID
     );
 }
@@ -523,8 +538,8 @@ function openPath(path: string, filesPanelID: string)
     const basePath = lastSlash !== 0 ? path.substring(0, lastSlash) : path.concat("/");
     //const currentPath = path.substring(firstSlash, path.length);
     const nextPath = lastSlash !== 0 ? path.substring(lastSlash, path.length) : "";
-    const oneLevelUpPath = basePath.substring(0, lastSlash - 1).replace(/'/g, "\\'");
-    const pathHint = path.replace(/^.*:/, "");
+    const oneLevelUpPath = basePath.substring(0, lastSlash - 1);
+    const pathHint = path.replace(/^[^:]*:/, "");
 
     //console.group("Paths");
     // console.debug("Last slash", lastSlash);
@@ -590,7 +605,9 @@ function openPath(path: string, filesPanelID: string)
 
         if (rez === null)
         {
-            console.error("Request returned a null value, looks like there is something wrong with the request");
+            console.error(
+                "Request returned a null value, looks like there is something wrong with the request"
+            );
             return;
         }
 
@@ -598,13 +615,12 @@ function openPath(path: string, filesPanelID: string)
         listOfFilesAndFolders.sort(functions.sortFilesAndFolders);
         //console.table(listOfFilesAndFolders);
         (filesPanel.parentNode!.parentNode as HTMLDivElement)
-            .getElementsByClassName("filesCount")[0].textContent = listOfFilesAndFolders.length.toString();
+            .getElementsByClassName("filesCount")[0].textContent =
+                listOfFilesAndFolders.length.toString();
         for (let r in listOfFilesAndFolders)
         {
             let fileName = listOfFilesAndFolders[r]["Name"];
-            let fileNamePath = functions.panelsPaths[filesPanelID].concat("/", fileName);
-
-            let folderNamePath = basePath.concat(listOfFilesAndFolders[r]["Path"]);
+            let itemPath = basePath.concat(listOfFilesAndFolders[r]["Path"]);
 
             const divFileList: HTMLDivElement = document.createElement("div");
             divFileList.classList.add("file-list-item");
@@ -629,11 +645,11 @@ function openPath(path: string, filesPanelID: string)
                     document.createElement("div"),
                     {
                         className: "fileLine folderLine"
-                        //dataset: { type: "folder", path: folderNamePath } // readonly, can't assign
+                        //dataset: { type: "folder", path: itemPath } // readonly, can't assign
                     }
                 );
                 // not very convenient
-                // const dataset: {[key: string]: string} = { type: "folder", path: folderNamePath };
+                // const dataset: {[key: string]: string} = { type: "folder", path: itemPath };
                 // for (const d in dataset) {
                 //     divFileListItem.setAttribute(`data-${d}`, dataset[d]);
                 // }
@@ -642,14 +658,14 @@ function openPath(path: string, filesPanelID: string)
                     divFileListItem.dataset,
                     {
                         type: "folder",
-                        path: folderNamePath
+                        path: itemPath
                     }
                 );
                 divFileListItem.addEventListener(
                     "click",
                     () =>
                     {
-                        openPath(folderNamePath.replace(/'/g, "\\'"), filesPanelID);
+                        openPath(itemPath, filesPanelID);
                     }
                 );
             }
@@ -665,7 +681,7 @@ function openPath(path: string, filesPanelID: string)
                     divFileListItem.dataset,
                     {
                         type: "file",
-                        path: fileNamePath
+                        path: itemPath
                     }
                 );
             }
@@ -904,19 +920,59 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
 
         completedTransfersCnt++;
 
-        const spanOK: string = "<span style='color:green;'>OK</span>";
-        const spanFAIL: string = "<span style='color:red;'>error</span>";
-        // one would like to user a proper ISO date and time format,
-        // such as `.toISOString().slice(0,19).replace("T", " ")`,
-        // but unfortunately that would be in UTC, so one would also need
-        // to convert the timezone, so fuck it, `toLocaleString()` will have to do
-        const tr: string = `<tr>
-            <td>${new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")}</td>
-            <td>${completedTransfers[t]["error"] === "" ? spanOK : spanFAIL}</td>
-            <td class="canBeLong">${completedTransfers[t]["name"]}</td>
-            <td>${functions.getHumanReadableValue(completedTransfers[t]["size"], "")}</td>
-            </tr>`;
-        completedTransfersBody.appendChild(functions.htmlToElement(tr));
+        const spanOutcome: HTMLSpanElement = document.createElement("span");
+        spanOutcome.appendChild(
+            document.createTextNode(completedTransfers[t]["error"] === "" ? "OK" : "error")
+        );
+        spanOutcome.style.color = completedTransfers[t]["error"] === "" ? "green" : "red";
+
+        const tr: HTMLTableRowElement = document.createElement("tr");
+        // date and time, for which one would certainly like to user a proper ISO format,
+        // such as `.toISOString().slice(0,19).replace("T", " ")`, but unfortunately
+        // that would be in UTC, so one would also need to convert the timezone,
+        // so fuck it, `toLocaleString()` will have to do
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td")
+            )
+        ).appendChild(
+            Object.assign(
+                document.createTextNode(
+                    new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")
+                )
+            )
+        );
+        // outcome
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td")
+            )
+        ).appendChild(spanOutcome);
+        // name
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td"),
+                {
+                    className: "canBeLong"
+                }
+            )
+        ).appendChild(
+            Object.assign(
+                document.createTextNode(completedTransfers[t]["name"])
+            )
+        );
+        // size
+        tr.appendChild(
+            Object.assign(
+                document.createElement("td")
+            )
+        ).appendChild(
+            Object.assign(
+                document.createTextNode(functions.getHumanReadableValue(completedTransfers[t]["size"], ""))
+            )
+        );
+
+        completedTransfersBody.appendChild(tr);
     }
     completedTransfersCount.textContent = completedTransfersCnt.toString();
     completedTransfersBlock.style.display = "block";
@@ -1147,6 +1203,11 @@ function addToQueue(operationType: string, filesPanelID: string)
 
         const dataType = checkedBox.dataset.type!;
 
+        const destinationPath = functions.getDestinationPath(filesPanelID);
+        const destinationBase = destinationPath.endsWith("/")
+            ? destinationPath
+            : destinationPath.concat("/");
+
         const queueItem: QueueItem = {
             "dtAdded": new Date(),
             "operationType": operationType,
@@ -1155,8 +1216,8 @@ function addToQueue(operationType: string, filesPanelID: string)
             "sourcePath": sourcePath,
             "targetPath": targetPath,
             "dstFS": dataType === "folder"
-                ? functions.getDestinationPath(filesPanelID).concat("/", targetPath)
-                : functions.getDestinationPath(filesPanelID).concat("/"),
+                ? destinationBase.concat(targetPath)
+                : destinationBase,
             "filesPanelID": filesPanelID,
             "submitFailures": 0,
             "fileCount": -1

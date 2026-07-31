@@ -15,12 +15,15 @@ export const rcloneSettings: RcloneSettings = {
     loginToken: null
 }
 
+// every field is optional, this file is compiled once and then edited by a user
+// in `js/settings.js` after deployment, so there will be no type checks for that,
+// and it might end up missing a field in an entry (or no entries at all)
 type Remote = {
-    startingFolder: string,
-    canQueryDisk: boolean,
-    pathToQueryDisk: string
+    startingFolder?: string,
+    canQueryDisk?: boolean,
+    pathToQueryDisk?: string
 }
-export const remotes: {[key: string]: Remote} = {
+export const remotes: {[key: string]: Remote | undefined} = {
     "someExampleRemote": {
         "startingFolder": "path/to/some/path/there",
         "canQueryDisk": true,

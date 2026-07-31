@@ -30,10 +30,24 @@ export function createFolderClicked(btn: HTMLButtonElement, filesPanelID: string
     if (currentPath !== "")
     {
         const folderNameInput = btn.parentNode!.querySelector("input") as HTMLInputElement;
+        // leading/trailing whitespace in a name is almost always undesired, many backends reject
+        // or rewrite it anyway, rclone itself has a `RightSpace` encoding exactly for that
         const folderName = folderNameInput.value.trim();
         if (!folderName)
         {
-            alert("A folder has no name.");
+            alert("A folder needs a name.");
+            return;
+        }
+        // rclone takes `remote` as a literal path relative to `fs` and does not(?) check it,
+        // so a path separator or/and dots can resolve somewhere outside of `fs`
+        if (folderName.includes("/") || folderName.includes("\\"))
+        {
+            alert("A folder name cannot contain \"/\" or \"\\\".");
+            return;
+        }
+        if (folderName === "." || folderName === "..")
+        {
+            alert("A folder name cannot be \".\" or \"..\".");
             return;
         }
 

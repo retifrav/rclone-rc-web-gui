@@ -386,16 +386,3 @@ export function getFileOperation(operationType: string) : string
     }
 }
 
-export function acceptableKeyEventForSearch(ke: KeyboardEvent) : boolean
-{
-    if (
-        (ke.keyCode > 64 && ke.keyCode < 91)
-        ||
-        (ke.keyCode > 96 && ke.keyCode < 123)
-        ||
-        (ke.keyCode === 8 || (ke.keyCode === 8 && ke.ctrlKey)) // backspace // the `(ke.keyCode === 8 && ke.metaKey)` works only with `keydown`, and also `metaKey` doesn't seem to be a modifier?
-        ||
-        (ke.keyCode === 46 || (ke.keyCode === 46 && ke.ctrlKey)) // delete // the `(ke.keyCode === 46 && ke.metaKey)` works only with `keydown`, and also `metaKey` doesn't seem to be a modifier?
-    )
-    { return true; } else { return false; }
-}
