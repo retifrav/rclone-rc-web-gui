@@ -591,7 +591,13 @@ function openPath(path: string, filesPanelID: string)
 
     filesPanel.appendChild(divFileLine);
 
-    filesPanel.appendChild(functions.htmlToElement("<div class='loadingAnimation'></div>"));
+    const loadingAnimation: HTMLDivElement = Object.assign(
+        document.createElement("div"),
+        {
+            className: "loadingAnimation"
+        }
+    );
+    filesPanel.appendChild(loadingAnimation);
 
     let params: functions.rcRequest = {
         "fs": basePath,
@@ -599,9 +605,12 @@ function openPath(path: string, filesPanelID: string)
     };
     functions.sendRequestToRclone("/operations/list", params, function(rez: {list: functions.rcListItem[]} | null)
     {
-        ((filesPanel.parentNode!.parentNode as HTMLDivElement)
-            .getElementsByClassName("loadingAnimation")[0] as HTMLDivElement
-        ).style.display = "none";
+        // removing instead of just hiding, because this animation is built anew on every call
+        // and is never shown again, so a `display:none` leftover would remain in the panel
+        // until the next call cleans it, and then `nth-child` rule would still count it,
+        // which will mess up a CSS rule for zebra-striping the rows (if we'll decide to add
+        // such a rule going forward)
+        loadingAnimation.remove();
 
         if (rez === null)
         {
@@ -903,8 +912,6 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
 
     if (completedTransfers === undefined || !completedTransfers.length)
     {
-        // let tr = "<tr><td>-</td><td>-</td><td>-</td></tr>";
-        // completedTransfersBody.appendChild(functions.htmlToElement(tr));
         completedTransfersBlock.style.display = "none";
         completedTransfersCount.textContent = "0";
         return;

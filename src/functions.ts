@@ -246,13 +246,6 @@ export const debounce = <F extends (...args: any[]) => any>
         });
 }
 
-export function htmlToElement(html: string) : HTMLElement
-{
-    let template: HTMLTemplateElement = document.createElement("template");
-    template.innerHTML = html.trim();
-    return template.content.firstChild as HTMLElement;
-}
-
 export function getIconType(mimeType: string) : string
 {
     switch (mimeType)
