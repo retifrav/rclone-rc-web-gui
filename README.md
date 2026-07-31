@@ -65,22 +65,30 @@ More details about the use-case are in [this article](https://decovar.dev/blog/2
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react), which provides a very good and nice-looking GUI - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several inconveniences:
+This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react) - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several things I didn't like:
 
 - no queue, so all the transfers go in parallel;
-- no way to cancel a transfer;
+- ~~no way to cancel a transfer~~ (*although that turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) of `rclone` itself*);
 - the GUI feels a bit overloaded and has several non-functioning controls;
 - transfers list has no sorting, so its elements "jump" one position to another on every view update.
 
-So my goal was to improve these points. ~~Although cancelling a transfer turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) that originates in the `rclone` itself.~~
+So I wanted to improve these points.
 
-Having a fancy GUI was the least important thing for me, so expect the GUI to be very basic. Although perhaps one could say not basic but clean and simple.
+Having a fancy UI was the least important thing for me, so expect it to be very basic.
 
 ## Building
 
 Skip this section, if you have downloaded a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page, because the scripts there are already in JavaScript, so it is ready to be used out-of-the-box.
 
-Otherwise, the project scripts sources are in TypeScript (*starting with `v0.3.0`*), and so they need to be compiled to JavaScript. For that you'll need to have [tsc](https://typescriptlang.org/download) tool, which is installed with `npm`, which is installed with [Node.js](https://nodejs.org/en/download/). Yes, we all hate Node.js, but that's the easiest way I know for installing TypeScript compiler:
+Otherwise, the project scripts sources are in TypeScript (*starting with `v0.3.0`*), and so they need to be compiled to JavaScript. For that you'll need to have [tsc](https://typescriptlang.org/download) tool, which is installed with `npm`, which is installed with [Node.js](https://nodejs.org/en/download/). Yes, we all hate Node.js, but that's the easiest way I know for installing TypeScript compiler.
+
+Actually, on Mac OS (*and Linux?*) you can install TypeScript with Homebrew:
+
+``` sh
+$ brew install typescript
+```
+
+but in other environments you'll have to go with Node.js:
 
 ``` sh
 $ npm install -g typescript@latest
