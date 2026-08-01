@@ -287,21 +287,48 @@ export function getIconType(mimeType: string) : string
     }
 }
 
+// 1048575 bytes is 1023.9990 KB, which `.toFixed(2)` will render as `1024.00`,
+// but `1024.00 KB` should become `1 MB`
+function fitsInRank(valueInRank: number) : boolean
+{
+    return Math.round(valueInRank * 100) < 1024 * 100;
+}
+
+// dropping trailing zeros
+function getRankValue(valueInRank: number) : string
+{
+    return Number(valueInRank.toFixed(2)).toString();
+}
+
 export function getHumanReadableValue(sizeInBytes: number, metric: string) : string
 {
     let rez: string = "0";
-    let metricRank: string = "MB";
-    let sizeInMB: number = sizeInBytes / 1024 / 1024;
+    let metricRank: string = "GB";
+
+    let sizeInKB: number = sizeInBytes / 1024;
+    let sizeInMB: number = sizeInKB / 1024;
     let sizeInGB: number = sizeInMB / 1024;
-    if (sizeInGB < 1)
+
+    if (Math.round(sizeInBytes) < 1024)
     {
-        rez = sizeInMB.toFixed(2);
+        metricRank = "B";
+        rez = Math.round(sizeInBytes).toString();
+    }
+    else if (fitsInRank(sizeInKB))
+    {
+        metricRank = "KB";
+        rez = getRankValue(sizeInKB);
+    }
+    else if (fitsInRank(sizeInMB))
+    {
+        metricRank = "MB";
+        rez = getRankValue(sizeInMB);
     }
     else
     {
-        metricRank = "GB";
-        rez = sizeInGB.toFixed(2);
+        rez = getRankValue(sizeInGB);
     }
+
     return `${rez} ${metricRank}${metric}`;
 }
 

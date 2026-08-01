@@ -69,7 +69,7 @@ export const searchQueryChanged = debounce(
         for (let i = 0; i < fileLines.length; i++)
         {
             if (
-                !(fileLines[i].querySelector("p") as HTMLParagraphElement)
+                !(fileLines[i].querySelector(".file-name") as HTMLParagraphElement)
                     .textContent!
                     .normalize("NFC")
                     .toLowerCase()

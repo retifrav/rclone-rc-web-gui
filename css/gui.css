@@ -224,14 +224,26 @@ pre {
 .fileLine > .icon {
     flex-shrink: 0;
 }
-.fileLine > p {
+.fileLine > .file-name {
     margin: 0 0 0 10px;
+    /* a name with no break opportunity will overflow the panel */
+    overflow-wrap: anywhere;
+}
+.fileLine > .file-size {
+    margin-left: auto;
+    padding-left: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-family: "Courier New", Courier, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9em;
+    color: #757575;
 }
 .folderLine:hover {
     background-color: #ebebeb;
     cursor: pointer;
 }
-.fileLine > p > span.path-hint {
+.fileLine > .file-name > span.path-hint {
     color: gray;
 }
 
@@ -286,9 +298,9 @@ pre {
 }
 
 /*
-    using grid here so that the warning hint could share the input's cell in order to
-    right-align to the input's end. Going with `position: absolute` would anchor to
-    the entire row, which includes the Cancel button
+    using grid here so that the warning hint could share the input's cell in order
+    to right-align to the input's end. Going with `position: absolute` would anchor
+    to the entire row, which includes the Cancel button
 */
 .input-query.search {
     grid-template-columns: 1fr auto;

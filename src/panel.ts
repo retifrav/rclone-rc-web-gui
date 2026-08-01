@@ -386,7 +386,12 @@ function openPath(path: string, filesPanelID: string)
     );
     divFileLine.appendChild(img);
 
-    const p: HTMLParagraphElement = document.createElement("p");
+    const p: HTMLParagraphElement = Object.assign(
+        document.createElement("p"),
+        {
+            className: "file-name"
+        }
+    );
     const span: HTMLSpanElement = Object.assign(
         document.createElement("span"),
         {
@@ -526,9 +531,32 @@ function openPath(path: string, filesPanelID: string)
             );
 
             const pFileNameContent: Text = document.createTextNode(fileName);
-            const pFileName: HTMLParagraphElement = document.createElement("p");
+            const pFileName: HTMLParagraphElement = Object.assign(
+                document.createElement("p"),
+                {
+                    className: "file-name"
+                }
+            );
             pFileName.appendChild(pFileNameContent);
             divFileListItem.appendChild(pFileName);
+
+            const itemSize: number = listOfFilesAndFolders[r]["Size"];
+            // the size is for files only, rclone lies about folder's size even on locals,
+            // and actual folder size can be obtained only with (recursive?) `/operations/size`,
+            // which we don't want to do for a mere listing operation
+            if (listOfFilesAndFolders[r]["IsDir"] === false && itemSize >= 0)
+            {
+                const spanFileSize: HTMLSpanElement = Object.assign(
+                    document.createElement("span"),
+                    {
+                        className: "file-size"
+                    }
+                );
+                spanFileSize.appendChild(
+                    document.createTextNode(functions.getHumanReadableValue(itemSize, ""))
+                );
+                divFileListItem.appendChild(spanFileSize);
+            }
 
             divFileList.appendChild(divFileListItem);
 

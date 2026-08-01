@@ -20,6 +20,11 @@
         font-size: 0.9em;
     }
 
+    /* not much space left to show the files size */
+    .fileLine > .file-size {
+        display: none;
+    }
+
     .icon {
         width: 1.1em;
         height: 1.1em;
