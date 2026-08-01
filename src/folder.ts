@@ -1,5 +1,5 @@
 import { sendRequestToRclone, rcRequest, panelsPaths } from "./functions.js";
-import { refreshClicked } from "./main.js";
+import { refreshClicked } from "./panel.js";
 
 export function showCreateFolder(btn: HTMLButtonElement, filesPanelID: string)
 {
