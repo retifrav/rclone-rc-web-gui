@@ -246,45 +246,66 @@ export const debounce = <F extends (...args: any[]) => any>
         });
 }
 
-export function getIconType(mimeType: string) : string
+export const videoFileExtensions: string[] = [
+    "asf",
+    "avi",
+    "divx",
+    "f4v",
+    "flv",
+    "m2ts",
+    "m2v",
+    "m4v",
+    "mkv",
+    "mov",
+    "mp4",
+    "mpeg",
+    "mpg",
+    "vob",
+    "webm",
+    "wmv"
+]
+
+// rclone has no MIME table itself, it queries local MIME database of the host via Go
+// and fallbacks to `application/octet-stream`, so then we resort to file extensions
+export function getIconType(mimeType: string, fileName: string) : string
 {
-    switch (mimeType)
+    // a MIME type can have parameters, for example `text/plain; charset=utf-8`,
+    // so let's drop it right away
+    const type: string = mimeType.split(";")[0].trim();
+
+    if (type === "inode/directory") { return "folder.svg"; }
+    if (type.startsWith("video/")) { return "film.svg"; }
+    if (type.startsWith("audio/")) { return "music-note-beamed.svg"; }
+    if (type.startsWith("image/")) { return "image.svg"; }
+
+    switch (type)
     {
-        case "inode/directory":
-            return "folder.svg";
-        case "video/x-matroska":
-        case "video/mp4":
-        case "video/webm":
-            return "film.svg";
-        case "audio/aac":
-        case "audio/mpeg":
-        case "audio/ac3":
-        case "audio/flac":
-            return "music-note-beamed.svg";
-        case "image/jpeg":
-        case "image/png":
-        case "image/svg+xml":
-            return "image.svg";
-        case "text/srt; charset=utf-8":
+        case "text/srt":
         case "text/plain":
-        case "text/plain; charset=utf-8":
             return "file-text.svg";
         case "application/pdf":
             return "file-richtext.svg";
         case "application/json":
         case "application/javascript":
+        case "text/javascript":
         case "text/css":
-        case "text/css; charset=utf-8":
         case "text/html":
-        case "text/html; charset=utf-8":
             return "file-code.svg";
         case "application/zip":
         case "application/x-7z-compressed":
         case "application/gzip":
             return "file-zip.svg";
-        default:
-            return "file-earmark.svg";
     }
+
+    const dotPosition: number = fileName.lastIndexOf(".");
+    if (dotPosition < 1) { return "file-earmark.svg"; }
+
+    if (videoFileExtensions.includes(fileName.slice(dotPosition + 1).toLowerCase()))
+    {
+        return "film.svg";
+    }
+
+    return "file-earmark.svg";
 }
 
 // 1048575 bytes is 1023.9990 KB, which `.toFixed(2)` will render as `1024.00`,

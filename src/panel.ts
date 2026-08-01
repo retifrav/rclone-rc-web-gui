@@ -525,7 +525,7 @@ function openPath(path: string, filesPanelID: string)
                     document.createElement("img"),
                     {
                         classList: [ "icon" ],
-                        src: `./images/${functions.getIconType(listOfFilesAndFolders[r]["MimeType"])}`
+                        src: `./images/${functions.getIconType(listOfFilesAndFolders[r]["MimeType"], fileName)}`
                     }
                 )
             );
