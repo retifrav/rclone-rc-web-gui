@@ -1,4 +1,5 @@
 import { panelsPaths, debounce } from "./functions.js";
+import { updateFilesCount } from "./panel.js";
 
 export function showSearch(btn: HTMLButtonElement, filesPanelID: string)
 {
@@ -40,6 +41,8 @@ function clearSearch(filesPanelID: string)
     {
         (fileLines[i].parentNode as HTMLDivElement).style.display = "flex";
     }
+
+    updateFilesCount(filesPanelID);
 }
 
 export const searchQueryChanged = debounce(
@@ -79,6 +82,8 @@ export const searchQueryChanged = debounce(
                 (fileLines[i].parentNode as HTMLDivElement).style.display = "none";
             }
         }
+
+        updateFilesCount(filesPanelID);
     },
     200
 );

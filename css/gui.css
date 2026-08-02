@@ -251,7 +251,9 @@ pre {
     display: flex;
     justify-content: space-between;
 }
-.filesPanelHeader > div {
+.filesCountGroup {
+    display: flex;
+    align-items: center;
     padding-top: 2px;
     padding-right: 6px;
     font-size: 0.8rem;
@@ -259,6 +261,9 @@ pre {
 }
 .filesCount {
     font-weight: bold;
+}
+.select-all {
+    margin: 0 6px 0 0;
 }
 
 .loadingAnimation {

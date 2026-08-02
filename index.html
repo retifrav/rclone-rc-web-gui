@@ -133,7 +133,12 @@
                         <select id="leftPanelRemote">
                             <option value="">- choose a remote -</option>
                         </select>
-                        <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                        <div class="filesCountGroup">
+                            <input id="leftPanelSelectAll" type="checkbox" class="select-all"
+                                title="Select or deselect all listed items"
+                                aria-label="Select or deselect all listed items">
+                            Items:&nbsp;<span id="leftPanelFilesCount" class="filesCount">-</span>
+                        </div>
                     </div>
                     <div class="panelFilesContainer">
                         <div id="leftPanelFiles" class="filesList">
@@ -198,7 +203,12 @@
                         <select id="rightPanelRemote">
                             <option value="">- choose a remote -</option>
                         </select>
-                        <div>Items:&nbsp;<span class="filesCount">-</span></div>
+                        <div class="filesCountGroup">
+                            <input id="rightPanelSelectAll" type="checkbox" class="select-all"
+                                title="Select or deselect all listed items"
+                                aria-label="Select or deselect all listed items">
+                            Items:&nbsp;<span id="rightPanelFilesCount" class="filesCount">-</span>
+                        </div>
                     </div>
                     <div class="panelFilesContainer">
                         <div id="rightPanelFiles" class="filesList">
