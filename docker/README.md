@@ -5,11 +5,12 @@ How to build an image and run a container from it.
 <!-- MarkdownTOC -->
 
 - [Getting an image](#getting-an-image)
-  - [Pre-built](#pre-built)
-  - [Building](#building)
+    - [Pre-built](#pre-built)
+    - [Building](#building)
 - [Running a container](#running-a-container)
-  - [Generic host with Docker](#generic-host-with-docker)
-  - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
+    - [Upgrading from an older image](#upgrading-from-an-older-image)
+    - [Generic host with Docker](#generic-host-with-docker)
+    - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
 
 <!-- /MarkdownTOC -->
 
@@ -41,8 +42,8 @@ $ ./docker/prepare-for-building-the-image.sh
 
 $ cd ./docker
 $ export IMAGE_NAME='rclone-rc-web-gui'
-$ export RCLONE_VER='1.68.2'
-$ export GUI_VER='0.5.0'
+$ export RCLONE_VER='1.75.0'
+$ export GUI_VER='2026.8.2'
 
 $ docker build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
@@ -56,32 +57,55 @@ rclone-rc-web-gui   rclone_1.68.1-gui_0.5.0   94468b279531   14 minutes ago   92
 alpine              latest                    511a44083d3a   2 months ago     8.83MB
 ```
 
-If you are building on an ARM-based host but will need to use the image on a x64-based host (*or the other way around*), then you might want to add `--platform linux/amd64` to the `docker build` command.
+The build requires [BuildKit](https://docs.docker.com/build/buildkit/), which is what `docker build` uses by default since Docker [v23](https://docs.docker.com/engine/release-notes/23.0/). You can disable it with `DOCKER_BUILDKIT=0`, but then the build will fail, because `TARGETARCH` will become unset and that will fail the rclone download.
+
+If you are building on an ARM-based host but will use the image on a x64-based host (*or the other way around*), then add `--platform linux/amd64` to the `docker build` command. To get a single multi-platform image, use `buildx` and push it straight to a registry (*because multi-platform images can not(?) be loaded into the local image store*):
+
+``` sh
+$ docker buildx build . \
+    --platform linux/amd64,linux/arm64 \
+    --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
+    --tag $IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
+    --push
+```
 
 ## Running a container
 
+### Upgrading from an older image
+
+If you haven't used this image before, just skip to the next section. Otherwise, if you are upgrading from a version before [2026.8.2](https://github.com/retifrav/rclone-rc-web-gui/releases/tag/v2026.8.2), be aware that rclone config has been moved from `/home/rclone/.config/rclone/rclone.conf` to `/config/rclone.conf`, and also that container no longer needs a named volume for it. Good news is that the only thing you need to change is that one mount, because your `rclone.conf` is likely to be located in that host folder already:
+
+``` diff
+- -v rclone-config:/home/rclone/.config/rclone
++ -v /path/to/dckr/config:/config
+```
+
+And also delete the whole top-level `volumes:` block with `driver_opts` in your `docker-compose.yaml` (*if you have it at all*).
+
 ### Generic host with Docker
 
-First create folders for data and GUI settings and also a named volume for rclone config. This is generally needed for data persistency between container runs, and a named volume specifically is required because one can not just use `-v`, as it will obscure/override the content inside the image.
-
-So:
+First create the folders for rclone config, data and web UI settings - those are your persistent data (*what will survive between container restarts*):
 
 ``` sh
 $ mkdir -p /path/to/dckr/{data,config,settings}
-
-$ docker volume create --driver local \
-    -o o=bind -o type=none \
-    -o device="/path/to/dckr/config" \
-    rclone-config
-
-$ docker volume list
-DRIVER    VOLUME NAME
-local     rclone-config
 ```
 
-If you will need more named volumes for some reason, then remember that it can't do "sub-volumes", so you will need to create a volume per folder.
+The container accesses those folders as user `rclone` with UID `1000`, so they have to be owned by that UID:
 
-When folders and volumes are ready, you can create and run a container like this:
+``` sh
+$ chown -R 1000:1000 /path/to/dckr/{data,config,settings}
+```
+
+If you can't or don't want to change those folders ownership, then run the container as whoever owns them instead:
+
+- `--user 1027:100` for `docker run`;
+- or `user: "1027:100"` in `docker-compose.yaml`.
+
+One thing to keep in mind if you choose to do that: a UID that the image doesn't have in its `/etc/passwd` will get `HOME=/`, so rclone will no longer find SSH keys in `~/.ssh`, unless you also add `-e HOME=/home/rclone` or set `key_file` explicitly in the remote's config.
+
+If you already have an `rclone.conf`, simply put it into the `config` folder before starting the container, and rclone will pick it up.
+
+To create and run a container:
 
 ``` sh
 $ docker images
@@ -92,20 +116,22 @@ alpine              latest                    511a44083d3a   2 months ago     8.
 
 $ docker run -it -p 5572:5572 \
     -v /path/to/dckr/data:/data \
+    -v /path/to/dckr/config:/config \
     -v /path/to/dckr/settings:/var/www/rclone-rc-web-gui/js/settings \
-    -v rclone-config:/home/rclone/.config/rclone \
     -e TZ=Europe/Amsterdam \
+    -e RCLONE_USER=rclone \
+    -e RCLONE_PASS=s0m3pa55w0rd \
     --rm \
     94468b279531
 ```
 
-You might also want to override some of the environment variables (*with `-e SOME=THING`*):
+Important to note that credentials (*`RCLONE_USER` and `RCLONE_PASS`*) must be set, otherwise container will refuse to start.
+
+You might also want to override some of these variables (*with `-e SOME=THING`*):
 
 - `RCLONE_ALLOW_ORIGIN_SCHEME`;
 - `RCLONE_ALLOW_ORIGIN_HOST`;
-- `RCLONE_ALLOW_ORIGIN_PORT`;
-- `RCLONE_USER`;
-- `RCLONE_PASS`.
+- `RCLONE_ALLOW_ORIGIN_PORT`.
 
 If you are going to add SFTP remotes with SSH keys based authentication, then you will probably want to map the `~/.ssh` folder too, for example with `-v /path/to/dckr/ssh:/home/rclone/.ssh`.
 
@@ -128,6 +154,8 @@ First, create a folder for storing the container data - what needs to "survive" 
 
 ![](./images/synology-dsm-docker-data-folder.png)
 
+Once again about the UIDs: container accesses those folders as `rclone` user with UID `1000`, while a DSM system user like this `docker` above gets whatever UID the DSM has assigned to it, which is most likely not `1000`. So either `chown -R 1000:1000` those folders, or keep them owned by `docker` and tell the container to run as that user by adding `user: "UID:GID"`. If the UID can't write, the container won't start (*it should exit with an explicit error*).
+
 Open Container Manager and create a new project:
 
 ![](./images/synology-dsm-container-manager-create.png)
@@ -140,15 +168,6 @@ version: "3"
 networks:
   hub:
     external: true
-
-# that is the only(?) way to expose an existing data from container to a mapped folder on host
-volumes:
-  rclone-config:
-    driver: local
-    driver_opts:
-      o: "bind"
-      type: "none"
-      device: "/volume1/docker/rclone-rc-web-gui/config"
 
 services:
   server:
@@ -176,15 +195,16 @@ services:
     volumes:
       # default local remote path, which doesn't even have to be mapped, if you don't intend to use it
       - /volume1/docker/rclone-rc-web-gui/data:/data
-      # although GUI settings are stored in just one file, its entire parent folder
+      # if the user config with remotes is not in that folder already,
+      # container will create it on the first ever start
+      - /volume1/docker/rclone-rc-web-gui/config:/config
+      # although web UI settings are stored in just one file, its entire parent folder
       # has to be mapped instead, otherwise Docker will create an empty folder
       # named after that file, which is what caused that retarded workaround
       # with moving the `settings.js` file into a subfolder
       - /volume1/docker/rclone-rc-web-gui/settings:/var/www/rclone-rc-web-gui/js/settings
       # SSH keys
       - /volume1/docker/rclone-rc-web-gui/ssh:/home/rclone/.ssh
-      # the config with remotes already exists inside container, and I want to expose it to the host
-      - rclone-config:/home/rclone/.config/rclone
 ```
 
 On the next step, don't set-up a web portal for it, just click Next till the end.

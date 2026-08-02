@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 currentDir="$(basename "$PWD")"
 if [ "$currentDir" != "rclone-rc-web-gui" ]; then
@@ -59,12 +59,20 @@ echo 'Packing everything for deployment with ADD...'
 cd ./docker
 contentsArchive=contents.tar
 [ -f ./$contentsArchive ] && rm ./$contentsArchive
-COPYFILE_DISABLE=1 tar -cvf $contentsArchive \
-    ../css/ \
-    ../images/ \
-    ../js/ \
-    ../favicon.png \
-    ../index.html
+# `-C ..` instead of `../` prefixes on every item, because whether that prefix ends up
+# in the archived member names depends on the tar: GNU tar strips it while creating
+# the archive, macOS libarchive keeps it, and an archive whose members are `../css/...`
+# is one that GNU tar then refuses to unpack at all. Docker's `ADD` sanitizes the paths
+# itself either way, so this is about being able to inspect and test `contents.tar` locally
+#
+# also `--no-xattrs`, because bsdtar on Mac OS archives extended attributes, so files carry
+# `com.apple.quarantine`, `com.apple.provenance` and others into the image layer
+COPYFILE_DISABLE=1 tar -cvf $contentsArchive --no-xattrs -C .. \
+    css \
+    images \
+    js \
+    favicon.png \
+    index.html
 
 cd ..
 rm -r ./js/*
