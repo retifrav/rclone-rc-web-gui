@@ -90,7 +90,7 @@ First create the folders for rclone config, data and web UI settings - those are
 $ mkdir -p /path/to/dckr/{data,config,settings}
 ```
 
-The container accesses those folders as user `rclone` with UID `1000`, so they have to be owned by that UID:
+The container works with those folders as user `rclone` with UID `1000`, so they have to be owned by that UID:
 
 ``` sh
 $ chown -R 1000:1000 /path/to/dckr/{data,config,settings}
@@ -101,7 +101,7 @@ If you can't or don't want to change those folders ownership, then run the conta
 - `--user 1027:100` for `docker run`;
 - or `user: "1027:100"` in `docker-compose.yaml`.
 
-One thing to keep in mind if you choose to do that: a UID that the image doesn't have in its `/etc/passwd` will get `HOME=/`, so rclone will no longer find SSH keys in `~/.ssh`, unless you also add `-e HOME=/home/rclone` or set `key_file` explicitly in the remote's config.
+What you should keep in mind that if you choose to do that instead of chown'ing: a user with UID that is not in image's `/etc/passwd` will get `HOME=/`, and so rclone will no longer be able to find SSH keys via `~/.ssh`, so you will also need to add `-e HOME=/home/rclone` (*or explicitly set `key_file` for every SFTP remote in the config*).
 
 If you already have an `rclone.conf`, simply put it into the `config` folder before starting the container, and rclone will pick it up.
 
@@ -143,37 +143,36 @@ Here's also an example of using this image to run a container in Synology DSM [C
 
 Being tailored to my needs, this particular setup has certain specifics, which you might not necessaryly want to have in yours, namely:
 
-- the container data folders are owned by a specially created `docker` system user, which has no access rights to anywhere but that one dedicated `/volume1/docker/` folder;
+- the container data folders are owned by a specially created `docker:dockers` system user, which has no access rights to anywhere but that one dedicated `/volume1/docker/` folder (*not sure if that actually makes any difference*);
 - the container port `5572` isn't mapped to the host, as instead there is also an NGINX container running, who serves as a reverse-proxy for it (*and other containers in that particular Docker network*);
 - that NGINX container is in turn also not mapping its ports to host - instead it's Synology DSM Login Portal who exposes NGINX container ports via the [Reverse Proxy](https://kb.synology.com/vi-vn/DSM/help/DSM/AdminCenter/system_login_portal_advanced?version=7#b_5) feature;
     - this intermediate step of having NGINX container might seem redundant, and you can actually reverse-proxy the containers "directly", but in that case you won't be able to access them by names, so instead of having one static IP address of just the NGINX container, you will have to use static IP addresses of every single container, which is less convenient.
 
 ...so if your setup is different, you will need to adjust the following instructions accordingly.
 
-First, create a folder for storing the container data - what needs to "survive" between container restarts/rebuilds. I've put mine into `/volume1/docker/rclone-rc-web-gui/`. Inside that path create folders for `data`, `settings` and `config`. Then make `docker` user to be the owner of those folders (*that part I am not sure about, but I thought it wouldn't hurt to have a dedicated "unprivileged" user as the owner*):
+First, create a folder for storing the container data - what needs to survive between container restarts/rebuilds. I've put mine into `/volume1/docker/rclone-rc-web-gui/`. Inside that path create folders for `data`, `settings` and `config`. Then make `docker` user to be the owner of those folders:
 
 ![](./images/synology-dsm-docker-data-folder.png)
 
-Once again about the UIDs: container accesses those folders as `rclone` user with UID `1000`, while a DSM system user like this `docker` above gets whatever UID the DSM has assigned to it, which is most likely not `1000`. So either `chown -R 1000:1000` those folders, or keep them owned by `docker` and tell the container to run as that user by adding `user: "UID:GID"`. If the UID can't write, the container won't start (*it should exit with an explicit error*).
+Once again about the UIDs: container works with those folders as `rclone` user with UID `1000`, while a DSM system user (*`docker` in my case*) gets whatever UID the DSM has assigned to it, which is most likely not `1000`. So either do `chown -R 1000:1000` on those folders (*which on Synology DSM can only be done via SSH*) or keep them owned by `docker` and tell the container to run as that user by adding `user: "UID:GID"`. If you fail to do either, the container won't start with an explicit error about that.
 
-Open Container Manager and create a new project:
+If you are ready, open Container Manager and create a new project (*that part of `docker-compose.yaml` on the screenshot is obsolete now*):
 
 ![](./images/synology-dsm-container-manager-create.png)
 
 Here's the full `docker-compose.yaml` contents:
 
 ``` yaml
-version: "3"
-
 networks:
   hub:
     external: true
 
 services:
   server:
-    image: decovar/rclone-rc-web-gui:latest
+    image: decovar/rclone-rc-web-gui:rclone_1.75.0-gui_2026.8.2
     container_name: rclone-rc-web-gui
     restart: unless-stopped
+    user: "YOUR-DOCKER-USER-UID:YOUR-DOCKERS-GROUP-GID"
     environment:
       - TZ=Europe/Amsterdam
       # my DSM serves the web content via HTTPS
@@ -186,6 +185,8 @@ services:
       - RCLONE_USER=rclone
       # password for Basic authentication
       - RCLONE_PASS=s0m3pa55w0rd
+      # since we have specified `user`, this is required now for rclone to find `.ssh`
+      - HOME=/home/rclone
     networks:
       hub:
         # static IP address for the container, which isn't really needed for this one,
