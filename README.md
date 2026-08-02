@@ -7,6 +7,7 @@
         - [Sync command isn't supported](#sync-command-isnt-supported)
     - [An example use-case](#an-example-use-case)
     - [Comparison with rclone-webui-react](#comparison-with-rclone-webui-react)
+    - [There is an official GUI too](#there-is-an-official-gui-too)
 - [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launching](#launching)
@@ -37,6 +38,8 @@ Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozi
 
 ![rclone rc UI](/screenshot.png?raw=true)
 
+Having a fancy UI was the least important thing for me, so as you can see it is very basic.
+
 ### Supported rc API commands
 
 - listing files and directories
@@ -61,7 +64,7 @@ Comparing to moving/deleting, the syncing operation is a weapon of mass destruct
 
 ### An example use-case
 
-I have a remote seedbox and a local media server (*running on Raspberry Pi*), and I need to transfer files from seedbox to media server (*via SFTP*). And `rclone` is perfect for that, thanks to its `rc` mode, it only needs to have some remote GUI, so I could conveniently control it from my computers/tablets/smartphones.
+I have a remote seedbox (*accessable via SFTP*) and a local NAS, and I need to transfer files from seedbox to NAS. Thanks to its `rc` mode, `rclone` is a perfect tool for that scenario, it only needs to have some remote GUI, so I could control it from my computers/tablets/smartphones.
 
 More details about the use-case are in [this article](https://decovar.dev/blog/2019/12/26/appletv-kodi-network-share/#downloading-new-files).
 
@@ -76,7 +79,15 @@ This project is inspired by another web-based UI for `rclone rc` - [rclone-webui
 
 So I wanted to improve these points.
 
-Having a fancy UI was the least important thing for me, so expect it to be very basic.
+### There is an official GUI too
+
+I should have probably started with that, but if memory serves me well this did not exist back in 2020. Anyway, nowadays rclone has its own [official web GUI](https://rclone.org/gui/), which is available right out of the box:
+
+``` sh
+$ rclone gui
+```
+
+So you should probably use that one. Or at least take a look at it, before proceeding with mine.
 
 ## Building
 
