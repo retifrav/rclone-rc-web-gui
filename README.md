@@ -1,4 +1,4 @@
-# Web GUI for rclone rc
+# Web UI for rclone rc
 
 <!-- MarkdownTOC -->
 
@@ -31,11 +31,11 @@
 
 ## About
 
-A web-based GUI for [rclone rcd](https://rclone.org/commands/rclone_rcd/) (*remote control daemon*), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
+A web-based UI for [rclone rcd](https://rclone.org/commands/rclone_rcd/) (*remote control daemon*), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
 
 Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)), which are sent to a running `rclone rcd` using [rc API](https://rclone.org/rc/).
 
-![rclone rc GUI](/screenshot.png?raw=true)
+![rclone rc UI](/screenshot.png?raw=true)
 
 ### Supported rc API commands
 
@@ -55,7 +55,9 @@ Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozi
 
 #### Sync command isn't supported
 
-The [sync/sync](https://rclone.org/rc/#sync-sync) command support isn't implemented, and [that is intentional](https://github.com/retifrav/rclone-rc-web-gui/issues/10). Comparing to moving/deleting, the syncing operation is a weapon of mass destruction and can cause severe data loss, so I decided not to have it available in the GUI. Adding support for it is likely to be very trivial, so you most probably will be able to do it yourself, but don't send it as a pull request to this repository as it will be rejected.
+The [sync/sync](https://rclone.org/rc/#sync-sync) command support isn't implemented, and [that is intentional](https://github.com/retifrav/rclone-rc-web-gui/issues/10).
+
+Comparing to moving/deleting, the syncing operation is a weapon of mass destruction and can cause severe data loss, so I decided not to have it available in the UI. Adding support for it is likely to be very trivial, so you most probably will be able to do it yourself, but don't send it as a pull request to this repository as it will be rejected.
 
 ### An example use-case
 
@@ -65,11 +67,11 @@ More details about the use-case are in [this article](https://decovar.dev/blog/2
 
 ### Comparison with rclone-webui-react
 
-This project is inspired by another web-based GUI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react) - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several things I didn't like:
+This project is inspired by another web-based UI for `rclone rc` - [rclone-webui-react](https://github.com/rclone/rclone-webui-react) - big thanks to its creator. But I was not entirely happy with it, as it has (*or at least had back in March 2020*) several things I didn't like:
 
 - no queue, so all the transfers go in parallel;
 - ~~no way to cancel a transfer~~ (*although that turned out to be the [issue](https://github.com/retifrav/rclone-rc-web-gui/issues/4) of `rclone` itself*);
-- the GUI feels a bit overloaded and has several non-functioning controls;
+- the UI feels a bit overloaded and has several non-functioning controls;
 - transfers list has no sorting, so its elements "jump" one position to another on every view update.
 
 So I wanted to improve these points.
@@ -103,11 +105,11 @@ $ cd /path/to/rclone-rc-web-gui
 $ tsc
 ```
 
-Resulting JavaScript files will be put to `./js` folder. After that you can use the GUI.
+Resulting JavaScript files will be put to `./js` folder. After that you can use the UI.
 
 ## How to use it
 
-Before launching the GUI, you need to have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
+Before launching the UI, you need to have your remotes configured in `~/.config/rclone/rclone.conf` on the host where you will be running `rclone rcd`.
 
 ### Launching
 
@@ -121,17 +123,17 @@ $ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 \
     --rc-web-fetch-url https://api.github.com/repos/retifrav/rclone-rc-web-gui/releases/latest
 ```
 
-If you have used this functionality before, then you might have a different web GUI already downloaded in your system (*for example, on Mac OS it would be here: `~/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
+If you have used this functionality before, then you might have a different web UI already downloaded in your system (*for example, on Mac OS it would be here: `~/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
 
 ##### Authentication
 
 By default `rclone` will generate a random password and will also compose a Base64-encoded authentication token for the `Authorization` header. That token will be also set as an URL query parameter (*`?login_token=HERE-GOES-THE-VALUE`*), which is how the code will be able to get it.
 
-The GUI URL will be auto-openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are that your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
+The UI URL will be auto-openned in your web-browser with prepended `gui:AUTO-GENERATED-PASSWORD@` for passing through initial authentication prompt, but if you'll stop `rclone rcd` and launch it again, chances are that your browser (*Firefox in my case*) will still show the authentication prompt, despite having `gui:AUTO-GENERATED-PASSWORD@` in the URL.
 
 In case of launching it on a remote server, you obviously won't get a web-browser auto-openned with provided credentials, so replace `--rc-web-gui` with `--rc-web-gui-no-open-browser` in the CLI, and then it will print the URL with credentials to the `stdout`.
 
-If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values will be overwritten on the next GUI update.
+If you'd like to set your own username/password, then you need to explicitly set `--rc-user`/`--rc-pass` and edit `settings.js` in the `rclone`'s cache directory (*on Mac OS it would be here: `~/Library/Caches/rclone/webgui/current/build/js/settings.js`*). But of course those values will be overwritten on the next UI update.
 
 Or you can just set `--rc-no-auth` to disable authentication, which is not recommended.
 
@@ -139,7 +141,7 @@ Or you can just set `--rc-no-auth` to disable authentication, which is not recom
 
 Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*). Set your `rclone rcd` host, port, username and password in `./js/settings.js`.
 
-Launch `rclone rcd` and point it to the folder with web GUI:
+Launch `rclone rcd` and point it to the folder with web UI:
 
 ``` sh
 $ cd /path/to/rclone-rc-web-gui
@@ -154,7 +156,7 @@ $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD /path
 
 I personally prefer to have only 1 ongoing transfer at a time, hence `--transfers 1`. Of course, that only applies to directory operations, as daemon allows to span as many operations as you want (*for which I implemented the [queue](#queue) functionality*).
 
-If you want to serve web GUI files with a web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
+If you want to serve web UI files with a web-server, then launch `rclone` daemon and allow the origin that you'll have with that server:
 
 ``` sh
 $ rclone rcd --transfers 1 --rc-user YOUR-USERNAME --rc-pass YOUR-PASSWORD --rc-allow-origin http://127.0.0.1:5572 /path/to/web/gui
@@ -184,7 +186,7 @@ or:
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
-Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*) provided for `rclone rcd` it will automatically open the web GUI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
+Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*) provided for `rclone rcd` it will automatically open the web UI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
 
 ### Configuration
 
@@ -242,7 +244,7 @@ TLDR:
 
 - `rclone rcd` is run as a systemd service;
 - NGINX is used as a reverse proxy;
-- web GUI is available via custom base URL such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`.
+- web UI is available via custom base URL such as `http://IP-ADDRESS-OR-DOMAIN/rclone/`.
 
 Get a package from [Releases](https://github.com/retifrav/rclone-rc-web-gui/releases) page (*or [build it](#building) from sources*):
 
@@ -261,7 +263,7 @@ $ sudo nano /etc/systemd/system/rclone-gui.service
 ```
 ``` ini
 [Unit]
-Description=rclone web GUI
+Description=rclone web UI
 
 [Service]
 WorkingDirectory=/media/
@@ -312,7 +314,7 @@ server {
         try_files $uri $uri/ =404;
     }
 
-    # rclone rc web GUI, will open on http://IP-ADDRESS-OR-DOMAIN/rclone/
+    # rclone rc web UI, will open on http://IP-ADDRESS-OR-DOMAIN/rclone/
     location /rclone/ {
         proxy_pass http://localhost:8004/;
     }
@@ -339,13 +341,13 @@ Add some remotes to rclone config, if you haven't yet:
 $ rclone config
 ```
 
-Now you should be able to access the web GUI on <http://IP-ADDRESS-OR-DOMAIN/rclone/>.
+Now you should be able to access the web UI on <http://IP-ADDRESS-OR-DOMAIN/rclone/>.
 
 ## Support
 
-I've created this project mostly for myself. So it's better to state right away that there is basically no support and that I am not responsible for any possible data loss you might get from using this project. In fact, I don't recommend you to rely on it for anything important, and certainly don't use it on servers with valuable data.
+I've created this project mostly for myself. So it's better to state right away that there is basically no support and that I am not responsible for any possible data loss you might get from using this project. In fact, I do not recommend you to rely on it for anything important, and you certainly should not use it on servers with valuable data.
 
-Also note, that since I use Mozilla Firefox as my main web-browser, that's where I did all the testing, and I've spent very little to none effort on maintaining cross-browser-ability.
+Also note that since I use Mozilla Firefox as my main web-browser, that is where I did all the testing and I've spent very little to none effort on maintaining cross-browser-ability.
 
 If you discover any issues/bugs, report them [here](https://github.com/retifrav/rclone-rc-web-gui/issues).
 
@@ -353,7 +355,7 @@ If you discover any issues/bugs, report them [here](https://github.com/retifrav/
 
 ### Dependencies
 
-The project doesn't use any external libraries/frameworks, it's just plain HTML/CSS/JS. Well actually, now it's not JavaScript but TypeScript, so there is a requirement to have `tsc` tool for compiling TypeScript sources to JavaScript.
+The project doesn't use any external libraries/frameworks, it is just plain HTML/CSS/JS. Well, actually now it is not JavaScript but TypeScript, so there is a requirement to have `tsc` tool for compiling TypeScript sources to JavaScript.
 
 ### Resources
 
