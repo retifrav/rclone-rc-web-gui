@@ -14,7 +14,13 @@
 <body>
     <div class="body-block header">
         <h1 style="flex-grow:1;">rclone rc GUI</h1>
-        <img id="indicator-gui-frozen" class="icon" src="./images/snow2.svg"
+        <img id="indicator-rclone-transfers-yellow" class="icon"
+            src="./images/lightning-charge-fill-yellow.svg"
+            title="Allowed to do several transfers at a time">
+        <img id="indicator-rclone-transfers-red" class="icon"
+            src="./images/lightning-charge-fill-red.svg"
+            title="Allowed to do a lot of transfers at a time">
+        <img id="indicator-gui-frozen" class="icon" src="./images/snow2-blue.svg"
             title="The GUI is frozen in time and isn't updating">
         <input id="btn-settings" type="image" class="icon"
             src="./images/gear-wide-connected.svg" title="Show/hide settings">

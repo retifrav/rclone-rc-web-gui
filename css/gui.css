@@ -347,6 +347,8 @@ pre {
     cursor: pointer;
 }
 
+#indicator-rclone-transfers-yellow,
+#indicator-rclone-transfers-red,
 #indicator-gui-frozen {
     display: none;
     cursor: help;
@@ -383,22 +385,22 @@ pre {
     margin-top: 8px;
 }
 .settings-item > input[type="range"] {
-    width: 10em;
+    width: 12em;
     accent-color: hsl(120 75% 42%);
 }
 #input-refresh-view {
-    width: 14em;
+    width: 16em;
 }
 #output-refresh-view-value,
 #output-maximum-allowed-transfers-value {
     text-align: center;
     font-weight: bold;
 }
-#output-maximum-allowed-transfers-value {
-    /* prevents the rest of the line from jumping on 1, 11, 111 */
-    width: 1.5em;
-}
 #output-refresh-view-value {
+    /* prevents the rest of the line from jumping on 1, 11, 111 */
+    width: 2em;
+}
+#output-maximum-allowed-transfers-value {
     /* prevents the rest of the line from jumping on 1, 11, 111 */
     width: 2em;
 }

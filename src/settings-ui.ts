@@ -23,9 +23,13 @@ const outputRefreshViewValue: HTMLOutputElement =
     document.getElementById("output-refresh-view-value") as HTMLOutputElement;
 const inputRefresh: HTMLDivElement =
     document.getElementById("inputRefresh") as HTMLDivElement;
-// exported because `queue.getActiveQueueSlots()` reads the allowance straight off this slider:
-// the number of allowed transfers lives in rclone and this input is what `/options/get`
-// and `/options/set` keep in sync with it, so it is not mirrored in `settings.userSettings`
+const indicatorRcloneTransfersYellow: HTMLImageElement =
+    document.getElementById("indicator-rclone-transfers-yellow") as HTMLImageElement;
+const indicatorRcloneTransfersRed: HTMLImageElement =
+    document.getElementById("indicator-rclone-transfers-red") as HTMLImageElement;
+
+// these are exported because `queue.getActiveQueueSlots()` reads the allowance from the slider
+// (actual number of allowed transfers lives in rclone, so it is not mirrored in `settings.userSettings`)
 export const inputMaximumAllowedTransfers: HTMLInputElement =
     document.getElementById("input-maximum-allowed-transfers") as HTMLInputElement;
 const outputMaximumAllowedTransfersValue: HTMLOutputElement =
@@ -120,9 +124,10 @@ export function initSettingsUI()
         "change",
         function()
         {
-            // rclone holds the value, so there is no point in storing it
-            // in `settings.userSettings`
+            // this value lives in rclone, no point in storing it in `settings.userSettings`
             setMaximumAllowedRcloneTransfers(parseInt(this.value));
+
+            updateRcloneTransfersIndicators();
 
             // items that were queued when just a single transfer was allowed
             // did not get counted then, but now (when there is more than one
@@ -167,13 +172,12 @@ function updateRefreshViewHeat()
     outputRefreshViewValue.textContent = inputRefreshView.value;
 }
 
-const transfersHeatYellowAt: number = 4;
-const transfersHeatRedAt: number = 8;
-
+const transfersHeatYellowAt: number = 3;
+const transfersHeatRedAt: number = 6;
 // heatmap-coloring the slider for the number of maximum allowed transfers:
 // 1 - green (a single transfer at a time is always good)
-// 4 - yellow (not too many transfers at once are still more or less okay)
-// 8..max - red (a lot of parallel transfers is a really bad idea)
+// 3 - yellow (not too many transfers at once are still more or less okay)
+// 6..max - red (a lot of parallel transfers is a really bad idea)
 function updateMaximumAllowedTransfersHeat()
 {
     const min: number = parseInt(inputMaximumAllowedTransfers.min);
@@ -196,8 +200,18 @@ function updateMaximumAllowedTransfersHeat()
     outputMaximumAllowedTransfersValue.textContent = inputMaximumAllowedTransfers.value;
 }
 
-// this is not a part of `refreshView()` because it only changes when rclone itself is restarted
-// with a different `--transfers` value or when `/options/set` is called
+function updateRcloneTransfersIndicators()
+{
+    const value: number = parseInt(inputMaximumAllowedTransfers.value);
+
+    indicatorRcloneTransfersYellow.style.display =
+        (value > 1 && value < transfersHeatRedAt) ? "block" : "none";
+    indicatorRcloneTransfersRed.style.display =
+        (value >= transfersHeatRedAt) ? "block" : "none";
+}
+
+// this is not a part of `refreshView()` because it only changes when rclone itself
+// is restarted with a different `--transfers` value or when `/options/set` is called
 function getMaximumAllowedRcloneTransfers()
 {
     let params: functions.rcRequest = { "blocks": "main" };
@@ -215,9 +229,10 @@ function getMaximumAllowedRcloneTransfers()
         {
             inputMaximumAllowedTransfers.max = transfers.toString();
         }
-
         inputMaximumAllowedTransfers.value = transfers.toString();
+
         updateMaximumAllowedTransfersHeat();
+        updateRcloneTransfersIndicators();
     });
 }
 

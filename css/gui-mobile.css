@@ -59,4 +59,11 @@
     .settings-item {
         margin-top: 5px;
     }
+
+    .settings-item > input[type="range"] {
+        width: 8em;
+    }
+    #input-refresh-view {
+        width: 10em;
+    }
 }

@@ -5,7 +5,7 @@ import { initQueue } from "./queue.js";
 import { initSettingsUI } from "./settings-ui.js";
 import { refreshView } from "./transfers.js";
 
-const guiVersion: string = "2026.8.2";
+const guiVersion: string = "2026.8.3";
 
 const rcloneOS: HTMLSpanElement =
     document.getElementById("rcloneOS") as HTMLSpanElement;
