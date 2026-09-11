@@ -4,7 +4,6 @@ import { countQueuedFolderFiles } from "./queue.js";
 import { refreshView, timerRefreshViewFunction } from "./transfers.js";
 
 let settingsOpen: boolean = false;
-
 const btnSettings: HTMLButtonElement =
     document.getElementById("btn-settings") as HTMLButtonElement;
 const settingsBlock: HTMLDivElement =
@@ -27,6 +26,12 @@ const indicatorRcloneTransfersYellow: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-yellow") as HTMLImageElement;
 const indicatorRcloneTransfersRed: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-red") as HTMLImageElement;
+
+let donationOpen: boolean = false;
+const btnDonation: HTMLButtonElement =
+    document.getElementById("btn-donation") as HTMLButtonElement;
+const donationBlock: HTMLDivElement =
+    document.getElementById("donation") as HTMLDivElement;
 
 // these are exported because `queue.getActiveQueueSlots()` reads the allowance from the slider
 // (actual number of allowed transfers lives in rclone, so it is not mirrored in `settings.userSettings`)
@@ -63,6 +68,22 @@ export function initSettingsUI()
                 settingsBlock.style.display = "none";
             }
             settingsOpen = !settingsOpen;
+        }
+    );
+
+    btnDonation.addEventListener(
+        "click",
+        function()
+        {
+            if (donationOpen === false)
+            {
+                donationBlock.style.display = "block";
+            }
+            else
+            {
+                donationBlock.style.display = "none";
+            }
+            donationOpen = !donationOpen;
         }
     );
 

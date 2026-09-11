@@ -51,10 +51,11 @@ h6 { font-size: 0.7rem; }
     border-top: 1px solid gray;
 }
 .header > * {
-    margin-left: 10px;
+    margin-left: 12px;
 }
-.header > *:first-child {
-    margin: 0;
+.header > *:nth-child(1),
+.header > *:nth-child(2) {
+    margin-left: 0;
 }
 .footer {
     display: flex;
@@ -356,25 +357,25 @@ pre {
 
 /* --- settings panel --- */
 
-#settings {
+.panel {
     display: none;
     background-color: #f1f1f1;
     border-bottom: 1px solid gray;
     padding: 15px 20px;
 }
 
-#settings * {
+.panel * {
     color: #4c4c4c;
 }
-#settings *:not(h1, h2, h3, h4, h5, h6) {
+.panel *:not(h1, h2, h3, h4, h5, h6) {
     font-size: 0.85rem;
 }
 
-#settings > h4 {
+.panel > h4 {
     margin: 0 0 16px 0;
 }
 
-#settings > h5 {
+.panel > h5 {
     margin: 14px 0 10px 0;
 }
 
@@ -418,4 +419,36 @@ pre {
 .info-badge {
     cursor: help;
     opacity: 0.7;
+}
+
+/* --- donation panel --- */
+
+ul.cryptocurrency-wallets {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+
+    .cryptocurrency-wallet-information {
+        margin-top: 6px;
+
+        p {
+            margin: 0 0 2px 0;
+        }
+
+        span,
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        code {
+            padding: 6px;
+            background-color: #e2e2e2;
+            border-radius: 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            user-select: all;
+        }
+    }
+    .cryptocurrency-wallet-information:first-of-type {
+        margin-top: 0;
+    }
 }

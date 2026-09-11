@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="14px" viewBox="0 0 16 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Path</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="suit-heart-fill" transform="translate(0, -1)" fill="#FF0000" fill-rule="nonzero">
+            <path d="M4,1 C6.21,1 8,2.755 8,4.92 C8,2.755 9.79,1 12,1 C14.21,1 16,2.755 16,4.92 C16,8.183 12.766,9.334 8.392,14.528 C8.29452731,14.6434654 8.15110656,14.7100846 8,14.7100846 C7.84889344,14.7100846 7.70547269,14.6434654 7.608,14.528 C3.234,9.334 0,8.183 0,4.92 C0,2.755 1.79,1 4,1" id="Path"></path>
+        </g>
+    </g>
+</svg>

@@ -52,7 +52,7 @@
 
     /* --- settings panel --- */
 
-    #settings {
+    .panel {
         padding: 10px 15px;
     }
 
