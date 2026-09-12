@@ -27,6 +27,7 @@
 - [3rd-party](#3rd-party)
     - [Dependencies](#dependencies)
     - [Resources](#resources)
+- [License](#license)
 
 <!-- /MarkdownTOC -->
 
@@ -247,7 +248,7 @@ The queue being client-side also means that once you close the browser/tab where
 
 ### Docker
 
-There is a [Docker image](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md), which might be the easiest way of running/deploying the project. But if you'd prefer to launch/deploy it yourself, read the instructions below.
+There is a [Docker image](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md), which might be the easiest way of running/deploying the project, and the images published to Docker Hub are [signed](https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md#verifying-the-image). But if you'd prefer to launch/deploy it yourself, read the instructions below.
 
 ### Generic GNU/Linux server
 
@@ -372,3 +373,7 @@ The project doesn't use any external libraries/frameworks, it is just plain HTML
 
 - icons are from [Bootstrap Icons](https://icons.getbootstrap.com/)
 - favicon is from [rclone website](https://rclone.org/)
+
+## License
+
+This project is licensed under the GNU Affero General Public License, either version 3 of the license or any later version - that is the [AGPL-3.0-or-later](https://spdx.org/licenses/AGPL-3.0-or-later.html) SPDX identifier, which is also what the Docker image is labeled with. The full text of the license is in the [LICENSE](/LICENSE) file.

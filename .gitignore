@@ -1,3 +1,5 @@
 js
 
 *.sublime-workspace
+
+cosign.key

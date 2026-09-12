@@ -6,7 +6,9 @@ How to build an image and run a container from it.
 
 - [Getting an image](#getting-an-image)
     - [Pre-built](#pre-built)
+        - [Verifying the image](#verifying-the-image)
     - [Building](#building)
+        - [Signing the image](#signing-the-image)
 - [Running a container](#running-a-container)
     - [Upgrading from an older image](#upgrading-from-an-older-image)
     - [Generic host with Docker](#generic-host-with-docker)
@@ -31,6 +33,17 @@ no matching manifest for linux/arm64/v8 in the manifest list entries
 ```
 
 so then you'd need to specify the platform by adding `--platform linux/amd64`.
+
+#### Verifying the image
+
+Published images are signed with [cosign](https://github.com/sigstore/cosign), so you can check that an image on Docker Hub is made by the project author. What you need for that is the tool and the [public key](https://github.com/retifrav/rclone-rc-web-gui/blob/master/cosign.pub):
+
+``` sh
+$ curl -O https://raw.githubusercontent.com/retifrav/rclone-rc-web-gui/master/cosign.pub
+$ cosign verify --key cosign.pub decovar/rclone-rc-web-gui:rclone_1.75.1-gui_2026.9.12
+```
+
+Images that were published before the signing was introduced (*starting with `2026.9.12` version*) have no signature.
 
 ### Building
 
@@ -69,7 +82,7 @@ $ docker buildx build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
     --build-arg GUI_VERSION_VALUE="$GUI_VER" \
     --build-arg VCS_REF="$(git rev-parse --short HEAD)" \
-    --tag $IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
+    --tag YOUR-REGISTRY/$IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
     --push
 ```
 
@@ -81,13 +94,39 @@ $ docker image inspect $IMAGE_NAME:latest --format '{{ json .Config.Labels }}' |
   "dev.decovar.rclone-rc-web-gui.rclone-version": "v1.75.1",
   "org.opencontainers.image.description": "Two-panel web UI for rclone rcd",
   "org.opencontainers.image.documentation": "https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md",
-  "org.opencontainers.image.licenses": "AGPL-3.0-only",
+  "org.opencontainers.image.licenses": "AGPL-3.0-or-later",
   "org.opencontainers.image.revision": "8027ec7",
   "org.opencontainers.image.source": "https://github.com/retifrav/rclone-rc-web-gui",
   "org.opencontainers.image.title": "rclone-rc-web-gui",
   "org.opencontainers.image.url": "https://hub.docker.com/r/decovar/rclone-rc-web-gui",
   "org.opencontainers.image.version": "2026.9.12"
 }
+```
+
+#### Signing the image
+
+This part is only about publishing the image to Docker Hub, so if you are building an image for yourself, you can skip it.
+
+Signing is done after pushing, because a signature is made on the image digest, and that only exists once the image is in the registry. Add `--metadata-file` to the `buildx` command from above, which is the least awkward way of getting that digest:
+
+``` sh
+$ docker buildx build . \
+    --platform linux/amd64,linux/arm64 \
+    --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
+    --build-arg GUI_VERSION_VALUE="$GUI_VER" \
+    --build-arg VCS_REF="$(git rev-parse --short HEAD)" \
+    --tag decovar/$IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
+    --tag decovar/$IMAGE_NAME:"latest" \
+    --metadata-file /tmp/buildx-metadata.json \
+    --push
+```
+
+and then:
+
+``` sh
+$ export IMAGE_DIGEST=$(jq -r '."containerimage.digest"' /tmp/buildx-metadata.json)
+$ cosign sign --key ../cosign.key "decovar/$IMAGE_NAME@$IMAGE_DIGEST"
+$ cosign verify --key ../cosign.pub "decovar/$IMAGE_NAME@$IMAGE_DIGEST"
 ```
 
 ## Running a container

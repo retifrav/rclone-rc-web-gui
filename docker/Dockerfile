@@ -1,6 +1,6 @@
 # could have used https://rclone.org/install/#docker as the base image
 # (and probably should)
-FROM alpine:3.22
+FROM alpine:3.24
 
 # `amd64`, `arm64`, etc - is set by `buildx`, which means that the image requires
 # BuildKit, which is default for `docker build` since Docker v23, but it can be
