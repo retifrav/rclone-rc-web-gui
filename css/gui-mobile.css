@@ -33,6 +33,10 @@
         width: 1.5rem;
         height: 1.5rem;
     }
+    .header > input.icon {
+        width: calc(1.5rem + 8px);
+        height: calc(1.5rem + 8px);
+    }
 
     .controls,
     .lastButtons {
@@ -50,9 +54,9 @@
         display: block;
     }
 
-    /* --- settings panel --- */
+    /* --- header tabs --- */
 
-    .panel {
+    .header-tab {
         padding: 10px 15px;
     }
 

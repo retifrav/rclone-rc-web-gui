@@ -3,11 +3,6 @@ import * as functions from "./functions.js";
 import { countQueuedFolderFiles } from "./queue.js";
 import { refreshView, timerRefreshViewFunction } from "./transfers.js";
 
-let settingsOpen: boolean = false;
-const btnSettings: HTMLButtonElement =
-    document.getElementById("btn-settings") as HTMLButtonElement;
-const settingsBlock: HTMLDivElement =
-    document.getElementById("settings") as HTMLDivElement;
 const settingsChbxPolling: HTMLInputElement =
     document.getElementById("chbx-polling") as HTMLInputElement;
 const manualRefresh: HTMLDivElement =
@@ -26,12 +21,6 @@ const indicatorRcloneTransfersYellow: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-yellow") as HTMLImageElement;
 const indicatorRcloneTransfersRed: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-red") as HTMLImageElement;
-
-let donationOpen: boolean = false;
-const btnDonation: HTMLButtonElement =
-    document.getElementById("btn-donation") as HTMLButtonElement;
-const donationBlock: HTMLDivElement =
-    document.getElementById("donation") as HTMLDivElement;
 
 // these are exported because `queue.getActiveQueueSlots()` reads the allowance from the slider
 // (actual number of allowed transfers lives in rclone, so it is not mirrored in `settings.userSettings`)
@@ -52,40 +41,6 @@ export function initSettingsUI()
     }
 
     getMaximumAllowedRcloneTransfers();
-
-    btnSettings.addEventListener(
-        "click",
-        function()
-        {
-            if (settingsOpen === false)
-            {
-                // in case it has been changed with `/options/set` in the meantime
-                getMaximumAllowedRcloneTransfers();
-                settingsBlock.style.display = "block";
-            }
-            else
-            {
-                settingsBlock.style.display = "none";
-            }
-            settingsOpen = !settingsOpen;
-        }
-    );
-
-    btnDonation.addEventListener(
-        "click",
-        function()
-        {
-            if (donationOpen === false)
-            {
-                donationBlock.style.display = "block";
-            }
-            else
-            {
-                donationBlock.style.display = "none";
-            }
-            donationOpen = !donationOpen;
-        }
-    );
 
     settingsChbxPolling.addEventListener(
         "change",
@@ -233,7 +188,10 @@ function updateRcloneTransfersIndicators()
 
 // this is not a part of `refreshView()` because it only changes when rclone itself
 // is restarted with a different `--transfers` value or when `/options/set` is called
-function getMaximumAllowedRcloneTransfers()
+//
+// exported because `tabs.ts` calls it every time the settings tab is opened,
+// which includes switching to it from another tab (not via close and open)
+export function getMaximumAllowedRcloneTransfers()
 {
     let params: functions.rcRequest = { "blocks": "main" };
     functions.sendRequestToRclone("/options/get", params, function(rez: functions.rcOptions | null)

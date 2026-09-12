@@ -3,6 +3,7 @@ import * as functions from "./functions.js";
 import { initPanels } from "./panel.js";
 import { initQueue } from "./queue.js";
 import { initSettingsUI } from "./settings-ui.js";
+import { initTabs } from "./tabs.js";
 import { refreshView } from "./transfers.js";
 
 const guiVersion: string = "2026.8.3";
@@ -44,6 +45,7 @@ window.onload = () =>
     initPanels();
     initQueue();
     initSettingsUI();
+    initTabs();
 
     refreshView();
 }

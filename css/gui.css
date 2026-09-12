@@ -50,12 +50,11 @@ h6 { font-size: 0.7rem; }
 .footer {
     border-top: 1px solid gray;
 }
-.header > * {
-    margin-left: 12px;
+.header > *:not(h1) {
+    margin-right: 12px;
 }
-.header > *:nth-child(1),
-.header > *:nth-child(2) {
-    margin-left: 0;
+.header > *:last-child {
+    margin-right: 0;
 }
 .footer {
     display: flex;
@@ -146,6 +145,21 @@ td > img {
 .header > .icon {
     width: 2rem;
     height: 2rem;
+}
+.header > input.icon {
+    width: calc(2rem + 8px);
+    height: calc(2rem + 8px);
+    padding: 3px;
+    border: 1px solid transparent;
+    border-radius: 0.25em;
+    cursor: pointer;
+}
+.header > input.icon[aria-expanded="false"]:hover {
+    background-color: #e0e0e0;
+}
+.header > input.icon[aria-expanded="true"] {
+    background-color: #cbe8f6;
+    border-color: #02699C;
 }
 
 div.controls button,
@@ -355,27 +369,27 @@ pre {
     cursor: help;
 }
 
-/* --- settings panel --- */
+/* --- header tabs --- */
 
-.panel {
+.header-tab {
     display: none;
     background-color: #f1f1f1;
     border-bottom: 1px solid gray;
     padding: 15px 20px;
 }
 
-.panel * {
+.header-tab * {
     color: #4c4c4c;
 }
-.panel *:not(h1, h2, h3, h4, h5, h6) {
+.header-tab *:not(h1, h2, h3, h4, h5, h6) {
     font-size: 0.85rem;
 }
 
-.panel > h4 {
+.header-tab > h4 {
     margin: 0 0 16px 0;
 }
 
-.panel > h5 {
+.header-tab > h5 {
     margin: 14px 0 10px 0;
 }
 
@@ -421,7 +435,7 @@ pre {
     opacity: 0.7;
 }
 
-/* --- donation panel --- */
+/* --- donation tab --- */
 
 ul.cryptocurrency-wallets {
     margin: 0.5em 0;
