@@ -21,6 +21,8 @@ const indicatorRcloneTransfersYellow: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-yellow") as HTMLImageElement;
 const indicatorRcloneTransfersRed: HTMLImageElement =
     document.getElementById("indicator-rclone-transfers-red") as HTMLImageElement;
+const separatorIndicators: HTMLSpanElement =
+    document.getElementById("separator-indicators") as HTMLSpanElement;
 
 // these are exported because `queue.getActiveQueueSlots()` reads the allowance from the slider
 // (actual number of allowed transfers lives in rclone, so it is not mirrored in `settings.userSettings`)
@@ -38,6 +40,7 @@ export function initSettingsUI()
     if (settings.userSettings.timerRefreshEnabled === false)
     {
         indicatorGuiFrozen.style.display = "block";
+        updateSeparatorIndicators();
     }
 
     getMaximumAllowedRcloneTransfers();
@@ -60,6 +63,8 @@ export function initSettingsUI()
                 inputRefresh.style.display = "none";
                 manualRefresh.style.display = "flex";
             }
+
+            updateSeparatorIndicators();
         }
     );
 
@@ -184,6 +189,19 @@ function updateRcloneTransfersIndicators()
         (value > 1 && value < transfersHeatRedAt) ? "block" : "none";
     indicatorRcloneTransfersRed.style.display =
         (value >= transfersHeatRedAt) ? "block" : "none";
+
+    updateSeparatorIndicators();
+}
+
+// the separator should only be visible when there is at least one visible status indicator
+function updateSeparatorIndicators()
+{
+    const anyIndicatorVisible: boolean =
+        indicatorRcloneTransfersYellow.style.display === "block"
+        || indicatorRcloneTransfersRed.style.display === "block"
+        || indicatorGuiFrozen.style.display === "block";
+
+    separatorIndicators.style.display = anyIndicatorVisible ? "block" : "none";
 }
 
 // this is not a part of `refreshView()` because it only changes when rclone itself

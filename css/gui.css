@@ -369,6 +369,10 @@ pre {
     cursor: help;
 }
 
+#separator-indicators {
+    display: none;
+}
+
 /* --- header tabs --- */
 
 .header-tab {
