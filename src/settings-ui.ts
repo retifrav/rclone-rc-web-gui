@@ -37,11 +37,7 @@ export function initSettingsUI()
     inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
     updateRefreshViewHeat();
 
-    if (settings.userSettings.timerRefreshEnabled === false)
-    {
-        indicatorGuiFrozen.style.display = "block";
-        updateSeparatorIndicators();
-    }
+    updateRefreshViewControls();
 
     getMaximumAllowedRcloneTransfers();
 
@@ -49,22 +45,9 @@ export function initSettingsUI()
         "change",
         function()
         {
-            if (this.checked === true)
-            {
-                settings.userSettings.timerRefreshEnabled = true;
-                indicatorGuiFrozen.style.display = "none";
-                manualRefresh.style.display = "none";
-                inputRefresh.style.display = "flex";
-            }
-            else
-            {
-                settings.userSettings.timerRefreshEnabled = false;
-                indicatorGuiFrozen.style.display = "block";
-                inputRefresh.style.display = "none";
-                manualRefresh.style.display = "flex";
-            }
+            settings.userSettings.timerRefreshEnabled = this.checked;
 
-            updateSeparatorIndicators();
+            updateRefreshViewControls();
         }
     );
 
@@ -151,6 +134,25 @@ function updateRefreshViewHeat()
         );
 
     outputRefreshViewValue.textContent = inputRefreshView.value;
+}
+
+// the only authority on how the GUI looks while auto-refreshing the view is ON or OFF
+//
+// it paints the initial state too, not just the changes, because `js/settings.js`
+// can be edited by user to disable UI auto-refreshing
+function updateRefreshViewControls()
+{
+    const refreshEnabled: boolean = settings.userSettings.timerRefreshEnabled === true;
+
+    // assigning `checked` does not trigger `change` event,
+    // so calling this from the checkbox's own listener does not(?) loop
+    settingsChbxPolling.checked = refreshEnabled;
+
+    indicatorGuiFrozen.style.display = refreshEnabled ? "none" : "block";
+    inputRefresh.style.display = refreshEnabled ? "flex" : "none";
+    manualRefresh.style.display = refreshEnabled ? "none" : "flex";
+
+    updateSeparatorIndicators();
 }
 
 const transfersHeatYellowAt: number = 3;
