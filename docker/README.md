@@ -42,11 +42,13 @@ $ ./docker/prepare-for-building-the-image.sh
 
 $ cd ./docker
 $ export IMAGE_NAME='rclone-rc-web-gui'
-$ export RCLONE_VER='1.75.0'
-$ export GUI_VER='2026.8.2'
+$ export RCLONE_VER='1.75.1'
+$ export GUI_VER='2026.9.12'
 
 $ docker build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
+    --build-arg GUI_VERSION_VALUE="$GUI_VER" \
+    --build-arg VCS_REF="$(git rev-parse --short HEAD)" \
     --tag $IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
     --tag $IMAGE_NAME:"latest"
 
@@ -65,8 +67,27 @@ If you are building on an ARM-based host but will use the image on a x64-based h
 $ docker buildx build . \
     --platform linux/amd64,linux/arm64 \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
+    --build-arg GUI_VERSION_VALUE="$GUI_VER" \
+    --build-arg VCS_REF="$(git rev-parse --short HEAD)" \
     --tag $IMAGE_NAME:"rclone_$RCLONE_VER-gui_$GUI_VER" \
     --push
+```
+
+The `GUI_VERSION_VALUE` and `VCS_REF` arguments are only used for the [OCI annotations](https://github.com/opencontainers/image-spec/blob/main/annotations.md) of the image, so omitting them will just leave the corresponding labels empty. To see the labels:
+
+``` sh
+$ docker image inspect $IMAGE_NAME:latest --format '{{ json .Config.Labels }}' | jq
+{
+  "dev.decovar.rclone-rc-web-gui.rclone-version": "v1.75.1",
+  "org.opencontainers.image.description": "Two-panel web UI for rclone rcd",
+  "org.opencontainers.image.documentation": "https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md",
+  "org.opencontainers.image.licenses": "AGPL-3.0-only",
+  "org.opencontainers.image.revision": "8027ec7",
+  "org.opencontainers.image.source": "https://github.com/retifrav/rclone-rc-web-gui",
+  "org.opencontainers.image.title": "rclone-rc-web-gui",
+  "org.opencontainers.image.url": "https://hub.docker.com/r/decovar/rclone-rc-web-gui",
+  "org.opencontainers.image.version": "2026.9.12"
+}
 ```
 
 ## Running a container

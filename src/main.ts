@@ -6,7 +6,7 @@ import { initSettingsUI } from "./settings-ui.js";
 import { initTabs } from "./tabs.js";
 import { refreshView } from "./transfers.js";
 
-const guiVersion: string = "2026.8.3";
+const guiVersion: string = "2026.9.12";
 
 const rcloneOS: HTMLSpanElement =
     document.getElementById("rcloneOS") as HTMLSpanElement;

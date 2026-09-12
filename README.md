@@ -32,7 +32,7 @@
 
 ## About
 
-A web-based UI for [rclone rcd](https://rclone.org/commands/rclone_rcd/) (*remote control daemon*), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
+Web UI for [rclone rcd](https://rclone.org/commands/rclone_rcd/) (*remote control daemon*), somewhat implementing a concept of a two-panel file manager like Norton Commander, Total Commander or Far Manager. It can be used for `rclone rcd` running either on a local machine or on a remote host.
 
 Commands are executed via HTTP requests ([XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)), which are sent to a running `rclone rcd` using [rc API](https://rclone.org/rc/).
 

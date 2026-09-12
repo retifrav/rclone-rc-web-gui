@@ -10,7 +10,15 @@ ARG TARGETARCH
 # if we ever need `linux-arm-v7`, `linux-arm-v6` and so on
 #ARG TARGETVARIANT
 
-ARG RCLONE_VERSION_VALUE="v1.75.0"
+ARG RCLONE_VERSION_VALUE="v1.75.1"
+
+# these arguments are only for the OCI annotations. They have no default values,
+# because web UI version lives in `src/main.ts`, and so a default value here would
+# drift from it, while the commit hash can only come from outside. At the same time,
+# it is no worries to have these empty here, as it only means that the corresponding
+# labels will be empty, which is okay
+ARG GUI_VERSION_VALUE=""
+ARG VCS_REF=""
 
 # not sure, but looks like these can't really be exposed as ENV for user to override
 ARG APPLICATION_USER="rclone"
@@ -94,6 +102,20 @@ USER $APPLICATION_USER
 WORKDIR /data
 
 EXPOSE $RCLONE_PORT
+
+# the standard OCI image annotations
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md
+#
+# labels don't add a filesystem layer, but `VCS_REF` changes with every commit
+LABEL org.opencontainers.image.title="rclone-rc-web-gui" \
+      org.opencontainers.image.description="Two-panel web UI for rclone rcd" \
+      org.opencontainers.image.version="$GUI_VERSION_VALUE" \
+      org.opencontainers.image.revision="$VCS_REF" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later" \
+      org.opencontainers.image.source="https://github.com/retifrav/rclone-rc-web-gui" \
+      org.opencontainers.image.url="https://hub.docker.com/r/decovar/rclone-rc-web-gui" \
+      org.opencontainers.image.documentation="https://github.com/retifrav/rclone-rc-web-gui/blob/master/docker/README.md" \
+      dev.decovar.rclone-rc-web-gui.rclone-version="$RCLONE_VERSION_VALUE"
 
 # entrypoint.sh finishes with `exec rclone rcd ...`, which replaces this shell,
 # so that rclone becomes PID 1 itself and receives the SIGTERM from `docker stop`
