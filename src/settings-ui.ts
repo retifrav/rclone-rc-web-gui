@@ -33,8 +33,23 @@ const outputMaximumAllowedTransfersValue: HTMLOutputElement =
 
 export function initSettingsUI()
 {
-    settingsChbxPolling.checked = settings.userSettings.timerRefreshEnabled;
+    // the slider is the only validation a user-edited `js/settings.js` gets. Range input
+    // clamps an assigned value to its own `min`/`max` and snaps it to `step`, so assigning
+    // the setting to it and then reading it back is not a pointless round-trip as it might
+    // look like:
+    //
+    // - `300` comes back as `120`;
+    // - `0` and `-5` come back as `1`;
+    // - `2.5` comes back as `3`;
+    // - anything that is not a number comes back falls back to the range's default
+    //   of `min + (max - min) / 2`, which is 60.5 here and snaps up to `61`. That fallback
+    //   is also why the read-back can never come back `NaN`.
+    //
+    // The interval is built from the value that came back, otherwise UI could show `120`
+    // while actually polling every `300` seconds, or show `1` while `setInterval(fn, 0)`
+    // would hammer rclone with several requests per second
     inputRefreshView.value = settings.userSettings.timerRefreshView.toString();
+    settings.userSettings.timerRefreshView = parseInt(inputRefreshView.value);
     updateRefreshViewHeat();
 
     updateRefreshViewControls();
