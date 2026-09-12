@@ -38,6 +38,10 @@
         height: calc(1.5rem + 8px);
     }
 
+    .header > *:not(h1) {
+        margin-right: 10px;
+    }
+
     .controls,
     .lastButtons {
         flex-direction: column;

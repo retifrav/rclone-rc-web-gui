@@ -1,4 +1,5 @@
 import { getMaximumAllowedRcloneTransfers } from "./settings-ui.js";
+import { hideDonationButton } from "./settings.js";
 
 type Tab = {
     "button": HTMLInputElement,
@@ -49,6 +50,11 @@ export function initTabs()
                 tabClicked(tab);
             }
         );
+    }
+
+    if (hideDonationButton === true)
+    {
+        btnDonation.style.display = "none";
     }
 }
 

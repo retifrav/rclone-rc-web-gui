@@ -45,3 +45,9 @@ export const userSettings: UserSettings = {
     timerProcessQueue: 5, // seconds
     timerProcessQueueInterval: undefined
 }
+
+// setting this to `true` will hide the donation (red heart) button :(
+//
+// on the other hand, if you already made a donation, it's only natural
+// that you might want to hide it
+export const hideDonationButton: boolean = false;
