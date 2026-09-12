@@ -24,9 +24,7 @@ const indicatorRcloneTransfersRed: HTMLImageElement =
 const separatorIndicators: HTMLSpanElement =
     document.getElementById("separator-indicators") as HTMLSpanElement;
 
-// these are exported because `queue.getActiveQueueSlots()` reads the allowance from the slider
-// (actual number of allowed transfers lives in rclone, so it is not mirrored in `settings.userSettings`)
-export const inputMaximumAllowedTransfers: HTMLInputElement =
+const inputMaximumAllowedTransfers: HTMLInputElement =
     document.getElementById("input-maximum-allowed-transfers") as HTMLInputElement;
 const outputMaximumAllowedTransfersValue: HTMLOutputElement =
     document.getElementById("output-maximum-allowed-transfers-value") as HTMLOutputElement;
@@ -103,15 +101,10 @@ export function initSettingsUI()
         "change",
         function()
         {
-            // this value lives in rclone, no point in storing it in `settings.userSettings`
+            // this value lives in rclone, no point in storing it in `settings.userSettings`,
+            // and nothing else happens here: everything that speaks for rclone rather than
+            // for the knob is done by the `/options/get` that follows the set
             setMaximumAllowedRcloneTransfers(parseInt(this.value));
-
-            updateRcloneTransfersIndicators();
-
-            // items that were queued when just a single transfer was allowed
-            // did not get counted then, but now (when there is more than one
-            // transfer allowed) they needs to be counted
-            countQueuedFolderFiles();
         }
     );
 }
@@ -170,6 +163,20 @@ function updateRefreshViewControls()
     updateSeparatorIndicators();
 }
 
+// the number of transfers that rclone has actually confirmed, which is not the same thing
+// as the slider's value: the slider follows the knob, while rclone is only told on `change`,
+// so during a drag (also while `/options/set` is in flight and forever after the one that failed)
+// the two disagree. Anything that claims something about rclone (queue's slot budget,
+// header indicators) has to read this and not the input, which is also why the input
+// is not exported anymore. It starts at `1` - the same value that the markup and the CSS show,
+// and it is written in exactly one place: the `/options/get` callback
+//
+// it is an exported `let` instead of a getter function, because then the compiler is the one
+// keeping that single writer (assigning to it from another module is an error), and because
+// a getter would have to be named one word away from `getMaximumAllowedRcloneTransfers()`,
+// which does something entirely different
+export let rcloneTransfers: number = 1;
+
 const transfersHeatYellowAt: number = 3;
 const transfersHeatRedAt: number = 6;
 // heatmap-coloring the slider for the number of maximum allowed transfers:
@@ -198,14 +205,16 @@ function updateMaximumAllowedTransfersHeat()
     outputMaximumAllowedTransfersValue.textContent = inputMaximumAllowedTransfers.value;
 }
 
+// an icon in the header claims something about rclone and not about the knob, so it reads
+// the confirmed value. That used to be the slider's value, which was only correct because
+// of where this function was called from - now it can not be called at a moment when it would
+// speak for a value that has not settled
 function updateRcloneTransfersIndicators()
 {
-    const value: number = parseInt(inputMaximumAllowedTransfers.value);
-
     indicatorRcloneTransfersYellow.style.display =
-        (value > 1 && value < transfersHeatRedAt) ? "block" : "none";
+        (rcloneTransfers > 1 && rcloneTransfers < transfersHeatRedAt) ? "block" : "none";
     indicatorRcloneTransfersRed.style.display =
-        (value >= transfersHeatRedAt) ? "block" : "none";
+        (rcloneTransfers >= transfersHeatRedAt) ? "block" : "none";
 
     updateSeparatorIndicators();
 }
@@ -221,6 +230,14 @@ function updateSeparatorIndicators()
     separatorIndicators.style.display = anyIndicatorVisible ? "block" : "none";
 }
 
+// two of these requests can easily(?) be in flight at the same time - the one that follows
+// every `/options/set` and the one that `tabs.ts` fires when the settings tab is opened,
+// and the responses are not ordered, so the older answer arriving last would put back
+// the value that rclone had before the set. Only the newest request gets to write anything,
+// the same counter trick that `panelsListingGeneration` does in `panel.ts` (there is one
+// slider here, so is no(?) need for mapping)
+let rcloneTransfersGeneration: number = 0;
+
 // this is not a part of `refreshView()` because it only changes when rclone itself
 // is restarted with a different `--transfers` value or when `/options/set` is called
 //
@@ -228,36 +245,60 @@ function updateSeparatorIndicators()
 // which includes switching to it from another tab (not via close and open)
 export function getMaximumAllowedRcloneTransfers()
 {
+    const generation: number = ++rcloneTransfersGeneration;
+
     let params: functions.rcRequest = { "blocks": "main" };
     functions.sendRequestToRclone("/options/get", params, function(rez: functions.rcOptions | null)
     {
         if (rez === null) { return; }
 
+        // a newer request has been sent in the meantime, so this answer is stale
+        if (generation !== rcloneTransfersGeneration) { return; }
+
         const transfers: number = rez["main"]["Transfers"];
+        const previousTransfers: number = rcloneTransfers;
 
         // user might have launched rclone with `--transfers` value higher than the slider's maximum,
-        // while the range input would just clamp to its `max`, which would be incorrect and also
-        // would make `getActiveQueueSlots()` allocate less slots than actually allowed,
-        // so the slider gets wider to fit the real value instead
+        // while the range input would just clamp to its `max`, so the slider gets wider to fit
+        // the real value instead. This is not only about the slider showing the right number:
+        // a clamped slider would send its clamped value on the very next `change`, for example
+        // silently downgrading rclone from 32 transfers to 20
         if (transfers > parseInt(inputMaximumAllowedTransfers.max))
         {
             inputMaximumAllowedTransfers.max = transfers.toString();
         }
         inputMaximumAllowedTransfers.value = transfers.toString();
 
+        // the assignment above will throw first if rclone ever answers without a usable number,
+        // so this one doesn't need a guard
+        rcloneTransfers = transfers;
+
         updateMaximumAllowedTransfersHeat();
         updateRcloneTransfersIndicators();
+
+        // items that were queued when just a single transfer was allowed did not get counted
+        // then, but now (when there is more than one transfer allowed) they need to be counted.
+        // This has to happen after `rcloneTransfers` has been updated, because that is what
+        // `countQueueItemFiles()` looks at to decide whether counting is worth it at all
+        //
+        // and it only happens when the allowance has actually changed, because this callback also
+        // runs every time the settings tab is opened: an item whose `/operations/size` is simply
+        // still in flight also has `fileCount` at `-1`, so counting them unconditionally here
+        // would fire another recursive walk of every queued folder on every tab open
+        if (transfers !== previousTransfers) { countQueuedFolderFiles(); }
     });
 }
 
 function setMaximumAllowedRcloneTransfers(transfers: number)
 {
     let params: functions.rcRequest = { "main": { "Transfers": transfers } };
-    functions.sendRequestToRclone("/options/set", params, function(rez: {} | null)
+    functions.sendRequestToRclone("/options/set", params, function() // function(rez)
     {
-        // the value is only(?) ever sent after being validated, so on success rclone now has
-        // exactly what the input shows, so there is no need to update anything, however
-        // a failure would leave the input showing an incorrect/unsynced value
-        if (rez === null) { getMaximumAllowedRcloneTransfers(); }
+        // a success here is not a confirmation of anything: rclone documents `options/set`
+        // as silently ignoring an option it doesn't know and warns that not every option
+        // has an effect when it is changed this way. So what rclone has now is only known
+        // by asking, and that answer is the only writer of `rcloneTransfers` - this is also
+        // what repaints the slider and the indicators when the set has failed
+        getMaximumAllowedRcloneTransfers();
     });
 }

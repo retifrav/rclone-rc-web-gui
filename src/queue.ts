@@ -1,6 +1,6 @@
 import * as settings from "./settings.js";
 import * as functions from "./functions.js";
-import { inputMaximumAllowedTransfers } from "./settings-ui.js";
+import { rcloneTransfers } from "./settings-ui.js";
 import { refreshView } from "./transfers.js";
 
 export type QueueItem = {
@@ -138,17 +138,20 @@ export function countQueuedFolderFiles()
     }
 }
 
-// how many transfers may be in flight at the same time. The number of allowed transfers
-// lives in rclone and is only mirrored in the settings slider, so in case anything is wrong
-// there (HTML default is still showing because `/options/get` failed) it will fallback to `1`.
-// A range input can not be left blank or non-numeric the way the number input before it could,
-// so the `NaN` half of the guard is only there to keep the fallback total
+// how many transfers may be in flight at the same time: rclone's own `--transfers`, as it was
+// last confirmed by rclone itself. Specifically, not the settings slider's value - that one
+// runs ahead of rclone during a drag (rclone is only told on `change`), and a tick landing
+// in that window would budget the whole tick, and hand a folder job a `_config.Transfers`,
+// that the user has not settled on. Unlike the slider, this can not be caught mid-drag,
+// because it changes only when rclone has answered
+//
+// `/options/get` failing at load leaves it at the `1` that the markup and the CSS show as well,
+// so the fallback here is only for a value that rclone should never send in the first place
 function getActiveQueueSlots() : number
 {
-    let allowedTransfers: number = parseInt(inputMaximumAllowedTransfers.value);
-    if (Number.isNaN(allowedTransfers) || allowedTransfers < 1) { return 1; }
+    if (rcloneTransfers < 1) { return 1; }
 
-    return allowedTransfers;
+    return rcloneTransfers;
 }
 
 // how many transfers an item about to be submitted is allowed to use. Everything except a folder
