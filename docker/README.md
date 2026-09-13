@@ -128,7 +128,7 @@ and then:
 ``` sh
 $ export IMAGE_DIGEST=$(jq -r '."containerimage.digest"' /tmp/buildx-metadata.json)
 $ cosign sign --key ../cosign.key "decovar/$IMAGE_NAME@$IMAGE_DIGEST"
-$ cosign verify --key ../cosign.pub "decovar/$IMAGE_NAME@$IMAGE_DIGEST"
+$ cosign verify --key ../cosign.pub "decovar/$IMAGE_NAME@$IMAGE_DIGEST" | jq
 ```
 
 ## Running a container
