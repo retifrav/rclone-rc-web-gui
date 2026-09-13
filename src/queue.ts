@@ -264,57 +264,78 @@ function processQueue()
     //console.table(activeQueueJobs);
     if (!transfersQueue.length) { return; }
 
-    functions.sendRequestToRclone("/job/list", null, function(rez: functions.rcJobList | null)
-    {
-        // when the running jobs cannot be established, nothing is submitted, and the next tick
-        // tries again. Here it is not "a request is already in flight" flag, because
-        // `sendRequestToRclone` does not call back on a transport error, so such a flag
-        // would stay raised and block the queue
-        if (rez === null) { return; }
-
-        // forget the jobs that are no longer running: `runningIds` is intersected with the IDs
-        // that were submitted. Entries from a potential previous rclone run get forgotten
-        // as well, as their IDs now belong to somebody else
-        for (let j = activeQueueJobs.length - 1; j >= 0; j--)
+    functions.requestRclone<functions.rcJobList>("/job/list", null).then(
+        function(rez)
         {
-            if (
-                activeQueueJobs[j].executeId !== rez["executeId"]
-                ||
-                rez["runningIds"].includes(activeQueueJobs[j].jobid) === false
-            )
+            // when the running jobs cannot be established, nothing is submitted, and the next tick
+            // tries again. Not a request-is-already-in-flight flag, because a failing request
+            // would leave such a flag raised and thus block the queue
+            if (rez === null) { return; }
+
+            // forget the jobs that are no longer running: `runningIds` is intersected with the IDs
+            // that were submitted. Entries from a potential previous rclone run get forgotten
+            // as well, as their IDs now belong to somebody else
+            for (let j = activeQueueJobs.length - 1; j >= 0; j--)
             {
-                activeQueueJobs.splice(j, 1);
+                if (
+                    activeQueueJobs[j].executeId !== rez["executeId"]
+                    ||
+                    rez["runningIds"].includes(activeQueueJobs[j].jobid) === false
+                )
+                {
+                    activeQueueJobs.splice(j, 1);
+                }
             }
-        }
 
-        const slots: number = getActiveQueueSlots();
+            const slots: number = getActiveQueueSlots();
 
-        if (activeQueueJobs.length === 0)
-        {
-            submitFromQueue(slots, slots);
-            return;
-        }
-
-        // each running job is inspected (via its stats group) about what it is actually doing,
-        // and responses arrive one(?) at a time, so they are counted down, and the queue is only
-        // looked at once as soon as we get the last response
-        //
-        // to keep the queue working when UI auto-refresh is off, we do the inspection here
-        // instead of relying on `refreshView()`
-        let awaitingAnswers: number = activeQueueJobs.length;
-        let usedSlots: number = 0;
-        for (let j = 0; j < activeQueueJobs.length; j++)
-        {
-            const job: ActiveQueueJob = activeQueueJobs[j];
-            const params: functions.rcRequest = { "group": "job/".concat(job.jobid.toString()) };
-            functions.sendRequestToRclone("/core/stats", params, function(rezStats: functions.rcStats | null)
+            if (activeQueueJobs.length === 0)
             {
-                usedSlots += getRunningJobCost(job, rezStats);
-                awaitingAnswers--;
-                if (awaitingAnswers === 0) { submitFromQueue(slots - usedSlots, slots); }
+                submitFromQueue(slots, slots);
+                return;
+            }
+
+            // each running job is inspected (via its stats group) about what it is actually doing,
+            // and the queue is only looked at once every one of them has answered, which is what
+            // the `Promise.all()` is for. A job whose request never made it is charged the very same
+            // conservative cost that `getRunningJobCost()` charges one that answered with a non-200,
+            // so none of these requests can fail in a way that would leave the tick without a submission
+            //
+            // to keep the queue working when UI auto-refresh is off, we do the inspection here
+            // instead of relying on `refreshView()`
+            const jobCosts: Promise<number>[] = [];
+            for (let j = 0; j < activeQueueJobs.length; j++)
+            {
+                const job: ActiveQueueJob = activeQueueJobs[j];
+                const params: functions.rcRequest = { "group": "job/".concat(job.jobid.toString()) };
+                jobCosts.push(
+                    functions.requestRclone<functions.rcStats>("/core/stats", params).then(
+                        function(rezStats)
+                        {
+                            return getRunningJobCost(job, rezStats);
+                        },
+                        function()
+                        {
+                            return getRunningJobCost(job, null);
+                        }
+                    )
+                );
+            }
+
+            Promise.all(jobCosts).then(function(costs: number[])
+            {
+                let usedSlots: number = 0;
+                for (let c = 0; c < costs.length; c++)
+                {
+                    usedSlots += costs[c];
+                }
+                submitFromQueue(slots - usedSlots, slots);
             });
-        }
-    });
+        },
+        // the failure has already been reported by `requestRclone()`,
+        // and the next tick tries again
+        function() {}
+    );
 }
 
 // items are taken from the queue in the order in which they were added, but items that do not "fit"

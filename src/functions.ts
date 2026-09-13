@@ -169,70 +169,99 @@ export type rcJobSubmission = {
     executeId: string
 }
 
-export function sendRequestToRclone(query: string, params: rcRequest | null, fn: Function)
+// function for sending requests to rclone (with a callback-enabled variant
+// in `sendRequestToRclone()`)
+//
+// A request has 3 possible outcomes, and this is the only place where all of them
+// can be told apart:
+//
+// 1. Parsed response on a 200;
+// 2. `null` when rclone answered with anything else (the status code and a 500's `error`
+//    message have already been reported to the console by then);
+// 3. Rejection when the request never made it to rclone at all.
+export function requestRclone<T>(query: string, params: rcRequest | null) : Promise<T | null>
 {
-    let url = rcloneSettings.host.concat(query);
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    if (rcloneSettings.loginToken !== null)
+    // the executor runs synchronously, so the request goes out during this call
+    // (exactly as it did when this function had a callback)
+    return new Promise<T | null>(function(resolve, reject)
     {
-        xhr.setRequestHeader(
-            "Authorization",
-            `Basic ${rcloneSettings.loginToken}`
-        );
-    }
-    else if (rcloneSettings.user !== null && rcloneSettings.pass !== null)
-    {
-        xhr.setRequestHeader(
-            "Authorization",
-            `Basic ${btoa(rcloneSettings.user.concat(":", rcloneSettings.pass))}`
-        );
-    }
-
-    // console.group("Command:", query);
-    // console.debug("URL:", url);
-    if (params === null) { xhr.send(); }
-    else
-    {
-        if (asyncOperations.includes(query))
+        let url = rcloneSettings.host.concat(query);
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        if (rcloneSettings.loginToken !== null)
         {
-            params["_async"] = true;
+            xhr.setRequestHeader(
+                "Authorization",
+                `Basic ${rcloneSettings.loginToken}`
+            );
         }
-        // console.debug("Parameters: ", params);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(JSON.stringify(params));
-    }
-    // console.groupEnd();
-
-    xhr.onload = function()
-    {
-        if (xhr.status != 200)
+        else if (rcloneSettings.user !== null && rcloneSettings.pass !== null)
         {
-            console.group("Request has failed");
-            console.error(`Error, HTTP status code: ${xhr.status}`);
-            if (xhr.status === 500)
-            {
-                let rezError = JSON.parse(xhr.response)["error"];
-                if (rezError !== undefined && rezError !== null)
-                {
-                    console.error(rezError);
-                    //alert("rclone reported an error. Check console for more details");
-                }
-            }
-            console.groupEnd();
-            fn(null);
+            xhr.setRequestHeader(
+                "Authorization",
+                `Basic ${btoa(rcloneSettings.user.concat(":", rcloneSettings.pass))}`
+            );
         }
+
+        // console.group("Command:", query);
+        // console.debug("URL:", url);
+        if (params === null) { xhr.send(); }
         else
         {
-            //console.debug(xhr.response);
-            fn(JSON.parse(xhr.response));
+            if (asyncOperations.includes(query))
+            {
+                params["_async"] = true;
+            }
+            // console.debug("Parameters: ", params);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify(params));
         }
-    };
+        // console.groupEnd();
 
-    xhr.onerror = function()
-    {
-        console.error("Couldn't send the request");
-    };
+        xhr.onload = function()
+        {
+            if (xhr.status != 200)
+            {
+                console.group("Request has failed");
+                console.error(`Error, HTTP status code: ${xhr.status}`);
+                if (xhr.status === 500)
+                {
+                    let rezError = JSON.parse(xhr.response)["error"];
+                    if (rezError !== undefined && rezError !== null)
+                    {
+                        console.error(rezError);
+                        //alert("rclone reported an error. Check console for more details");
+                    }
+                }
+                console.groupEnd();
+                resolve(null);
+            }
+            else
+            {
+                //console.debug(xhr.response);
+                resolve(JSON.parse(xhr.response) as T);
+            }
+        };
+
+        xhr.onerror = function()
+        {
+            console.error("Couldn't send the request");
+            reject(new Error(`Couldn't send the [${query}] request`));
+        };
+    });
+}
+
+// callback-enabled function for sending requests to rclone. This is what almost every call
+// in the UI uses: callback gets the parsed response on a 200 and `null` when rclone answered
+// with anything else, while a request that never made it does not call back at all - and only
+// the `processQueue()` needs to know about that 3rd outcome, so it goes directly to `requestRclone()`
+export function sendRequestToRclone<T>(query: string, params: rcRequest | null, fn: (rez: T | null) => void)
+{
+    // the empty rejection handler is what keeps a request that never made it from calling back,
+    // and it has to be the second argument of `then()` (so not a `.catch()`) on the end:
+    // `fn` is called from inside the chain, so a `.catch()` would also swallow an exception
+    // thrown by `fn` itself (and by everything it calls) and report it as a failed request
+    requestRclone<T>(query, params).then(fn, function() {});
 }
 
 export const debounce = <F extends (...args: any[]) => any>
