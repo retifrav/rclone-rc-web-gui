@@ -8,3 +8,4 @@
 /*.sublime-project export-ignore
 
 /screenshot.png    export-ignore
+/cosign.pub        export-ignore
