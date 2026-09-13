@@ -55,8 +55,8 @@ $ ./docker/prepare-for-building-the-image.sh
 
 $ cd ./docker
 $ export IMAGE_NAME='rclone-rc-web-gui'
-$ export RCLONE_VER='1.75.1'
-$ export GUI_VER='2026.9.12'
+$ export RCLONE_VER=$(sed -n 's/^ARG RCLONE_VERSION_VALUE="v\(.*\)"$/\1/p' ./Dockerfile)
+$ export GUI_VER=$(sed -n 's/^const guiVersion: string = "\(.*\)";$/\1/p' ../src/main.ts)
 
 $ docker build . \
     --build-arg RCLONE_VERSION_VALUE="v$RCLONE_VER" \
@@ -71,6 +71,8 @@ rclone-rc-web-gui   latest                    94468b279531   14 minutes ago   92
 rclone-rc-web-gui   rclone_1.68.1-gui_0.5.0   94468b279531   14 minutes ago   92.4MB
 alpine              latest                    511a44083d3a   2 months ago     8.83MB
 ```
+
+The two version variables aren't meant to be entered manually, as they are taken from the only places where they are actually defined - `ARG RCLONE_VERSION_VALUE` in the `Dockerfile` and `guiVersion` in `src/main.ts` - so that image tags and OCI annotations couldn't drift from them. To build an image with a different rclone version, change that `ARG` default. The web UI version, however, should always be the one from the sources, and `prepare-for-building-the-image.sh` refuses to pack an archive if it looks like it hasn't been bumped for this release (*it must be today's date, in the `YYYY.M.D` form, committed, and not tagged yet*). If you do need to make a package with an older version, then the date check can be skipped with `GUI_VERSION_DATE_CHECK=0`.
 
 The build requires [BuildKit](https://docs.docker.com/build/buildkit/), which is what `docker build` uses by default since Docker [v23](https://docs.docker.com/engine/release-notes/23.0/). You can disable it with `DOCKER_BUILDKIT=0`, but then the build will fail, because `TARGETARCH` will become unset and that will fail the rclone download.
 
@@ -229,7 +231,7 @@ networks:
 
 services:
   server:
-    image: decovar/rclone-rc-web-gui:rclone_1.75.0-gui_2026.8.2
+    image: decovar/rclone-rc-web-gui:rclone_1.75.1-gui_2026.9.12
     container_name: rclone-rc-web-gui
     restart: unless-stopped
     user: "YOUR-DOCKER-USER-UID:YOUR-DOCKERS-GROUP-GID"
