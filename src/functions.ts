@@ -404,6 +404,30 @@ export function sortJobs(a: rcTransferCommon, b: rcTransferCommon) : number
     else { return 1; }
 }
 
+// identity of a transfer: `group` is the rclone job (`job/4`) and `name` is the path relative
+// to that job's `srcFs`, so within one job the two of them can only ever name a single operation.
+// Both `collapseDuplicateTransfers()` and the completed transfers table key on this, and they
+// have to agree, hence this one common definition
+//
+// the separator has to be a character that cannot occur in `group`, because that is what keeps
+// the joining unambiguous - whatever is in `name` does not matter, as the first separator always
+// ends the group. A `"\n"` (which is what this used to be) does not quite qualify: rclone takes
+// a `_group` from whoever submits a job and accepts a newline in it without complaint (verified -
+// `core/group-list` happily reports a group named `job/1\nevil`), and `/core/transferred` answers
+// for every group, including the ones other rc clients made. So `{"job/1", "evil\nx.bin"}` and
+// `{"job/1\nevil", "x.bin"}` are two different transfers with one and the same key. Neither half
+// of that is something this GUI can do - it never sends `_group`, and the local backend encodes
+// control characters in file names (a real newline in a name arrives as `␊`, verified, and even
+// `--local-encoding None` does not turn that off) - but a backend whose default encoding has no
+// `Control` in it (S3 is `Slash,InvalidUtf8,Dot`) does pass a raw newline through into `name`.
+// A NUL costs nothing and closes it: rclone will take one in a `_group` too, but no POSIX or
+// Windows file name can contain one, so the `name` half of such a pair cannot exist. It is also
+// the conventional separator for exactly this (`find -print0`, `xargs -0`, `git -z`)
+export function getTransferKey(transfer: rcTransferCommon) : string
+{
+    return transfer["group"] + "\u0000" + transfer["name"];
+}
+
 // rclone reports one moved file as two entries in `/core/transferred` whenever the destination
 // has no usable server-side move: `operations.move()` registers a transfer of its own and then
 // falls back to `Copy()`, which registers a second one for the same file, while the first one
@@ -423,13 +447,11 @@ export function sortJobs(a: rcTransferCommon, b: rcTransferCommon) : number
 export function collapseDuplicateTransfers(transfers: rcTransferred[]) : rcTransferred[]
 {
     const collapsed: rcTransferred[] = [];
-    // `group` is the rclone job (`job/4`) and `name` is the path relative to that job's `srcFs`,
-    // so within one job the two of them can only ever name a single operation
     const keptAt: {[key: string]: number} = {};
 
     for (let t = 0; t < transfers.length; t++)
     {
-        const key: string = transfers[t]["group"] + "\n" + transfers[t]["name"];
+        const key: string = getTransferKey(transfers[t]);
 
         if (Object.hasOwn(keptAt, key))
         {
