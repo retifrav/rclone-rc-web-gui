@@ -404,6 +404,59 @@ export function sortJobs(a: rcTransferCommon, b: rcTransferCommon) : number
     else { return 1; }
 }
 
+// rclone reports one moved file as two entries in `/core/transferred` whenever the destination
+// has no usable server-side move: `operations.move()` registers a transfer of its own and then
+// falls back to `Copy()`, which registers a second one for the same file, while the first one
+// is never removed from rclone's `startedTransfers`. Both of them are real transfers (`checked: false`),
+// and every field of rclone's `TransferSnapshot` is identical on the two except `bytes`, so they
+// cannot be told apart individually - hence collapsing them by job and name, instead of
+// filtering one of them out
+//
+// up to rclone v1.65.0 the outer entry arrived as `checked: true`, and so the checks filter used
+// to drop it, but v1.65.1 turned it into a transfer (rclone commit `fbdf71ab`), which is why
+// this is needed now. It is a no-op on an older rclone, also on a copy operation and finally
+// on a move operation that rclone did server-side (and also in future rclone versions where
+// this problem(?) will hopefully get fixed)
+//
+// the input must already have the checks removed: a check carries the same `group` and `name`
+// as the transfer it belongs to, and a move's `deleting` entry does not always come last
+export function collapseDuplicateTransfers(transfers: rcTransferred[]) : rcTransferred[]
+{
+    const collapsed: rcTransferred[] = [];
+    // `group` is the rclone job (`job/4`) and `name` is the path relative to that job's `srcFs`,
+    // so within one job the two of them can only ever name a single operation
+    const keptAt: {[key: string]: number} = {};
+
+    for (let t = 0; t < transfers.length; t++)
+    {
+        const key: string = transfers[t]["group"] + "\n" + transfers[t]["name"];
+
+        if (Object.hasOwn(keptAt, key))
+        {
+            // when the copy succeeded but deleting the source did not, it is the outer entry
+            // that carries the error, and that is the one kept here anyway - folding the error in
+            // regardless is what keeps the outcome independent of rclone's ordering
+            const kept: number = keptAt[key];
+            if (collapsed[kept]["error"] === "" && transfers[t]["error"] !== "")
+            {
+                collapsed[kept] = Object.assign(
+                    {},
+                    collapsed[kept],
+                    {
+                        error: transfers[t]["error"]
+                    }
+                );
+            }
+            continue;
+        }
+
+        keptAt[key] = collapsed.length;
+        collapsed.push(transfers[t]);
+    }
+
+    return collapsed;
+}
+
 export function sortFilesAndFolders(a: rcListItem, b: rcListItem) : number
 {
     if (a.IsDir === true && b.IsDir === false) { return -1; }

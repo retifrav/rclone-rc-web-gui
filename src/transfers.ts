@@ -224,21 +224,29 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
         return;
     }
 
-    let completedTransfersCnt: number = 0;
-    completedTransfers.sort(functions.sortJobs).reverse();
-    for (let t in completedTransfers)
+    // checks are not actual transfers, and every move leaves a `deleting` one behind.
+    // They have to go before the duplicates are collapsed, because a check carries
+    // the same `group` and `name` as the transfer that it belongs to
+    const actualTransfers: functions.rcTransferred[] = [];
+    for (let t = 0; t < completedTransfers.length; t++)
     {
-        // don't count checks as actual transfers
-        if (completedTransfers[t]["checked"] === true) //|| completedTransfers[t]["bytes"] === 0)
-        { continue; }
+        if (completedTransfers[t]["checked"] === true) { continue; }
 
-        completedTransfersCnt++;
+        actualTransfers.push(completedTransfers[t]);
+    }
+    // a single moved file arrives as two identical transfers when rclone had to fall back
+    // from move to copy. There are more details in `collapseDuplicateTransfers()`
+    const transfersToShow: functions.rcTransferred[] =
+        functions.collapseDuplicateTransfers(actualTransfers);
 
+    transfersToShow.sort(functions.sortJobs).reverse();
+    for (let t = 0; t < transfersToShow.length; t++)
+    {
         const spanOutcome: HTMLSpanElement = document.createElement("span");
         spanOutcome.appendChild(
-            document.createTextNode(completedTransfers[t]["error"] === "" ? "OK" : "error")
+            document.createTextNode(transfersToShow[t]["error"] === "" ? "OK" : "error")
         );
-        spanOutcome.style.color = completedTransfers[t]["error"] === "" ? "green" : "red";
+        spanOutcome.style.color = transfersToShow[t]["error"] === "" ? "green" : "red";
 
         const tr: HTMLTableRowElement = document.createElement("tr");
         // date and time, for which one would certainly like to user a proper ISO format,
@@ -252,7 +260,7 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
         ).appendChild(
             Object.assign(
                 document.createTextNode(
-                    new Date(completedTransfers[t]["started_at"]).toLocaleString("en-GB")
+                    new Date(transfersToShow[t]["started_at"]).toLocaleString("en-GB")
                 )
             )
         );
@@ -272,7 +280,7 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
             )
         ).appendChild(
             Object.assign(
-                document.createTextNode(completedTransfers[t]["name"])
+                document.createTextNode(transfersToShow[t]["name"])
             )
         );
         // size
@@ -282,13 +290,13 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
             )
         ).appendChild(
             Object.assign(
-                document.createTextNode(functions.getHumanReadableValue(completedTransfers[t]["size"], ""))
+                document.createTextNode(functions.getHumanReadableValue(transfersToShow[t]["size"], ""))
             )
         );
 
         completedTransfersBody.appendChild(tr);
     }
-    completedTransfersCount.textContent = completedTransfersCnt.toString();
+    completedTransfersCount.textContent = transfersToShow.length.toString();
     completedTransfersBlock.style.display = "block";
 }
 
