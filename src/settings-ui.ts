@@ -157,8 +157,11 @@ function updateRefreshViewControls()
     settingsChbxPolling.checked = refreshEnabled;
 
     indicatorGuiFrozen.style.display = refreshEnabled ? "none" : "block";
-    inputRefresh.style.display = refreshEnabled ? "flex" : "none";
-    manualRefresh.style.display = refreshEnabled ? "none" : "flex";
+    // it was `flex` before, but now a settings row generates no box of its own,
+    // as its label and controls are items of the `.settings-grid` two-column grid,
+    // so now it's `contents`
+    inputRefresh.style.display = refreshEnabled ? "contents" : "none";
+    manualRefresh.style.display = refreshEnabled ? "none" : "contents";
 
     updateSeparatorIndicators();
 }

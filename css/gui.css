@@ -393,45 +393,101 @@ pre {
     margin: 0 0 16px 0;
 }
 
-.header-tab > h5 {
-    margin: 14px 0 10px 0;
+/*
+    two columns - labels and controls - so that every control starts at the same x
+    and the sliders can also end at the same x (they have the same width/length).
+    The labels column is `auto` instead of a hardcoded width, because otherwise
+    rewording a label can not silently break the alignment
+
+    The controls column is `1fr` and not another `auto`, because:
+
+    1. The group headings hairline spans both columns, so with content-sized tracks
+       it would end at the widest row and therefore change its length every time
+       the manual refresh row replaces the interval slider one (measured example: 311px
+       vs 277px);
+    2. The `1fr` eats all the free space, which is what keeps the labels column
+       content-sized. Without an `fr` track here, `justify-content: start` would be mandatory,
+       as remaining free space in a grid is given to `auto` tracks when `justify-content`
+       is `normal` - that stretched the labels column to about a half of the whole tab
+       and pushed all the controls far to the right.
+
+    The grid can not be `#settings` itself, as that is the element which `tabs.ts`
+    writes `display: block` to when the tab is opened
+*/
+.settings-grid {
+    display: grid;
+    /* label | control */
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 8px;
+}
+/*
+    a group heading takes a row of its own, and the hairline under it is what keeps
+    the groups apart now that all the controls sit in the same two columns
+*/
+.settings-grid > h5 {
+    grid-column: 1 / -1;
+    /*
+        the grid's `justify-items: start` would otherwise shrink the heading
+        to the width of its own text, taking the hairline with it
+    */
+    justify-self: stretch;
+    margin: 16px 0 2px 0;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #d5d5d5;
+}
+.settings-grid > h5:first-child {
+    margin-top: 0;
 }
 
+/*
+    generates no box, so a row's label and its controls become items of the grid above
+    and therefore share its columns. Note that this is also the display value which
+    `updateRefreshViewControls()` writes when it shows one of these rows again
+*/
 .settings-item {
+    display: contents;
+}
+
+.settings-control {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 8px;
 }
-.settings-item > input[type="range"] {
-    width: 12em;
+/*
+    the browsers' own margins on these differ per widget and are not even symmetric
+    (a checkbox gets `3px 3px 3px 4px` in Chromium, a range input `2px`), which put
+    the slider, the checkbox and the manual refresh button on three different left
+    edges 4px apart - the `gap` above is the only spacing here. Same reasoning as
+    the `.select-all` rule for the files panels header
+*/
+.settings-control > input,
+.settings-control > button {
+    margin: 0;
+}
+.settings-control > input[type="range"] {
+    /* both sliders share one width, which is what lines up their ends */
+    width: 16em;
     accent-color: hsl(120 75% 42%);
 }
-#input-refresh-view {
-    width: 16em;
-}
-#output-refresh-view-value,
-#output-maximum-allowed-transfers-value {
-    text-align: center;
-    font-weight: bold;
-}
-#output-refresh-view-value {
-    /* prevents the rest of the line from jumping on 1, 11, 111 */
-    width: 2em;
-}
-#output-maximum-allowed-transfers-value {
-    /* prevents the rest of the line from jumping on 1, 11, 111 */
-    width: 2em;
-}
-.settings-item > input[type="checkbox"] {
+.settings-control > input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
 }
-.settings-item > *:first-child {
-    margin-left: 0;
+.settings-control > output {
+    /* prevents the rest of the line from jumping on 1, 11, 111 */
+    width: 2em;
+    flex-shrink: 0;
+    text-align: center;
+    font-weight: bold;
 }
-.settings-item > button {
+.settings-control > button {
     padding: 4px 8px;
+}
+.settings-control > .info-badge {
+    flex-shrink: 0;
 }
 
 .info-badge {
