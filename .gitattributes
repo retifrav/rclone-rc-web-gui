@@ -5,6 +5,9 @@
 /.gitignore        export-ignore
 /.gitattributes    export-ignore
 
+/CLAUDE.md         export-ignore
+/.claude/          export-ignore
+
 /*.sublime-project export-ignore
 
 /screenshot.png    export-ignore
