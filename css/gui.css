@@ -434,8 +434,8 @@ pre {
         to the width of its own text, taking the hairline with it
     */
     justify-self: stretch;
-    margin: 16px 0 2px 0;
-    padding-bottom: 7px;
+    margin: 16px 0 0px 0;
+    padding-bottom: 8px;
     border-bottom: 1px solid #d5d5d5;
 }
 .settings-grid > h5:first-child {
@@ -449,6 +449,10 @@ pre {
 */
 .settings-item {
     display: contents;
+}
+.settings-item > :first-child {
+    justify-self: end;
+    text-align: right;
 }
 
 .settings-control {
