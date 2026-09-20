@@ -60,6 +60,13 @@ h6 { font-size: 0.7rem; }
     display: flex;
     justify-content: space-between;
 }
+.footer a {
+    text-decoration: none;
+    font-weight: bold;
+}
+.footer a:visited {
+    color: inherit;
+}
 
 h1, h2, h3, h4, h5, h6 {
     color: #333;
