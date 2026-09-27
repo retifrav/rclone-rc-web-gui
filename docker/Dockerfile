@@ -31,6 +31,10 @@ ARG GID="1000"
 # - these should be ARG, but for ENTRYPOINT script they have(?) to be ENV (and aren't meant to be overridden)
 #
 ENV PATH_TO_WEB_GUI="/var/www/rclone-rc-web-gui"
+# this is the `settings.js` template that `entrypoint.sh` generates the actual settings from.
+# It arrives with `contents.tar` as `js/settings.js.default` and is moved out of the web UI folder
+# below, so that it isn't served and that generating the settings would not need access to `js/` at all
+ENV PATH_TO_SETTINGS_DEFAULT="/usr/local/share/rclone-rc-web-gui/settings.js.default"
 ENV RCLONE_PORT="5572"
 # this one is an actual rclone variable (--config) and it is set explicitly so that
 # rclone doesn't have to resolve $HOME to find the config, which is also what allows
@@ -97,6 +101,17 @@ COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 # `ADD` both extracts the tar and sets ownership in a single layer,
 # so there is no `chown -R` afterwards rewriting every file into a second copy
 ADD --chown=$UID:$GID contents.tar $PATH_TO_WEB_GUI/
+
+# the settings template is taken out of the web UI folder, so that it is not served and, more importantly,
+# the `entrypoint.sh` would never need to write anything into `js/` - container running as a user other
+# than the UID above cannot do that, which brakes the first ever start of the container
+#
+# this has to be after the `ADD` (which is where the file comes from) but still before `USER`, so it runs
+# as root. A rename(2) keeps the mode and the ownership from the `ADD`, such as 0644 and $UID:$GID, and 0644
+# is what any `--user` UID is able to read
+RUN set -eux; \
+    mkdir -p "$(dirname "$PATH_TO_SETTINGS_DEFAULT")"; \
+    mv "$PATH_TO_WEB_GUI/js/settings.js.default" "$PATH_TO_SETTINGS_DEFAULT"
 
 USER $APPLICATION_USER
 WORKDIR /data

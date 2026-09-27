@@ -10,9 +10,11 @@ How to build an image and run a container from it.
     - [Building](#building)
         - [Signing the image](#signing-the-image)
 - [Running a container](#running-a-container)
-    - [Upgrading from an older image](#upgrading-from-an-older-image)
     - [Generic host with Docker](#generic-host-with-docker)
     - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
+- [Breaking changes](#breaking-changes)
+    - [2026.8.2](#202682)
+    - [2026.9.27](#2026927)
 
 <!-- /MarkdownTOC -->
 
@@ -133,17 +135,6 @@ $ cosign verify --key ../cosign.pub "decovar/$IMAGE_NAME@$IMAGE_DIGEST" | jq
 
 ## Running a container
 
-### Upgrading from an older image
-
-If you haven't used this image before, just skip to the next section. Otherwise, if you are upgrading from a version before [2026.8.2](https://github.com/retifrav/rclone-rc-web-gui/releases/tag/v2026.8.2), be aware that rclone config has been moved from `/home/rclone/.config/rclone/rclone.conf` to `/config/rclone.conf`, and also that container no longer needs a named volume for it. Good news is that the only thing you need to change is that one mount, because your `rclone.conf` is likely to be located in that host folder already:
-
-``` diff
-- -v rclone-config:/home/rclone/.config/rclone
-+ -v /path/to/dckr/config:/config
-```
-
-And also delete the whole top-level `volumes:` block with `driver_opts` in your `docker-compose.yaml` (*if you have it at all*).
-
 ### Generic host with Docker
 
 First create the folders for rclone config, data and web UI settings - those are your persistent data (*what will survive between container restarts*):
@@ -158,10 +149,12 @@ The container works with those folders as user `rclone` with UID `1000`, so they
 $ chown -R 1000:1000 /path/to/dckr/{data,config,settings}
 ```
 
-If you can't or don't want to change those folders ownership, then run the container as whoever owns them instead:
+If you can't or don't want to change those folders ownership, then run the container as whoever owns them instead. So, for example, if the owner is `1027:100`, then you'd go with either of the following:
 
 - `--user 1027:100` for `docker run`;
 - or `user: "1027:100"` in `docker-compose.yaml`.
+
+Those mounted folders are the only thing that needs to be writable by whichever UID the container runs as. Nothing inside the image itself ever gets written to, so running as your own user is totally fine for using this image. It is worth to mention though that images before 2026-09-27 had a [bug](#if-the-first-start-failed) that made it fail on the very first start.
 
 What you should keep in mind that if you choose to do that instead of chown'ing: a user with UID that is not in image's `/etc/passwd` will get `HOME=/`, and so rclone will no longer be able to find SSH keys via `~/.ssh`, so you will also need to add `-e HOME=/home/rclone` (*or explicitly set `key_file` for every SFTP remote in the config*).
 
@@ -297,3 +290,32 @@ Finally, here are the settings for Reverse Proxy in Login Portal:
 The `172.18.0.10` on the screenshot is the static IP address of the NGINX container in that same custom Docker network named `hub`.
 
 This is it, once you build and run the container, the GUI should become available at <https://192.168.1.100:11001>, and `rclone rc` requests should satisfy the CORS policy.
+
+## Breaking changes
+
+### 2026.8.2
+
+If you are upgrading from a version before [2026.8.2](https://github.com/retifrav/rclone-rc-web-gui/releases/tag/v2026.8.2), be aware that rclone config has been moved from `/home/rclone/.config/rclone/rclone.conf` to `/config/rclone.conf`, and also that container no longer needs a named volume for it. Good news is that the only thing you need to change is that one mount, because your `rclone.conf` is likely to be located in that host folder already:
+
+``` diff
+- -v rclone-config:/home/rclone/.config/rclone
++ -v /path/to/dckr/config:/config
+```
+
+And also delete the whole top-level `volumes:` block with `driver_opts` in your `docker-compose.yaml` (*if you have it at all*).
+
+### 2026.9.27
+
+There is no release tag for this one yet, so the header/version values will change.
+
+Images before 2026-09-27 had a bug on the very first start of a container that runs with either `--user` or `user:` set, so with a user other than the image's own UID `1000`. The bug manifested itself like this in the container logs (*the `1030` UID below is `YOUR-DOCKER-USER-UID` from the `docker-compose.yaml` example above*):
+
+```
+No settings.js file yet, creating a new one
+mv: can't preserve ownership of '/var/www/rclone-rc-web-gui/js/settings/settings.js': Operation not permitted
+mv: can't remove '/var/www/rclone-rc-web-gui/js/settings.js.default': Permission denied
+[ERROR] Could not create /var/www/rclone-rc-web-gui/js/settings/settings.js
+        The folder mounted at /var/www/rclone-rc-web-gui/js/settings is not writable by uid 1030
+```
+
+That error message was wrong, as the mounted folder was writable, and the `settings.js` was getting created in it. The actual problem was that this file was ending up being a useless template that hasn't undergone the required changes, so the UI was served with no working credentials.
