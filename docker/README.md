@@ -13,7 +13,7 @@ How to build an image and run a container from it.
     - [Generic host with Docker](#generic-host-with-docker)
     - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
 - [Breaking changes](#breaking-changes)
-    - [2026.8.2](#202682)
+    - [2026.9.13](#2026913)
     - [2026.9.27](#2026927)
 
 <!-- /MarkdownTOC -->
@@ -211,11 +211,11 @@ First, create a folder for storing the container data - what needs to survive be
 
 Once again about the UIDs: container works with those folders as `rclone` user with UID `1000`, while a DSM system user (*`docker` in my case*) gets whatever UID the DSM has assigned to it, which is most likely not `1000`. So either do `chown -R 1000:1000` on those folders (*which on Synology DSM can only be done via SSH*) or keep them owned by `docker` and tell the container to run as that user by adding `user: "UID:GID"`. If you fail to do either, the container won't start with an explicit error about that.
 
-If you are ready, open Container Manager and create a new project (*that part of `docker-compose.yaml` on the screenshot is obsolete now*):
+If you are ready, open Container Manager and create a new project (*that part of `docker-compose.yaml` on the screenshot is obsolete now, see the actual example after the screenshot*):
 
 ![](./images/synology-dsm-container-manager-create.png)
 
-Here's the full `docker-compose.yaml` contents:
+Here's the full example of a `docker-compose.yaml`:
 
 ``` yaml
 networks:
@@ -296,9 +296,9 @@ This is it, once you build and run the container, the GUI should become availabl
 
 ## Breaking changes
 
-### 2026.8.2
+### 2026.9.13
 
-If you are upgrading from a version before [2026.8.2](https://github.com/retifrav/rclone-rc-web-gui/releases/tag/v2026.8.2), be aware that rclone config has been moved from `/home/rclone/.config/rclone/rclone.conf` to `/config/rclone.conf`, and also that container no longer needs a named volume for it. Good news is that the only thing you need to change is that one mount, because your `rclone.conf` is likely to be located in that host folder already:
+If you are upgrading from a version before [2026.9.13](https://github.com/retifrav/rclone-rc-web-gui/releases/tag/v2026.9.13), be aware that rclone config has been moved from `/home/rclone/.config/rclone/rclone.conf` to `/config/rclone.conf`, and also that container no longer needs a named volume for it. Good news is that the only thing you need to change is that one mount, because your `rclone.conf` is likely to be located in that host folder already:
 
 ``` diff
 - -v rclone-config:/home/rclone/.config/rclone
@@ -311,7 +311,7 @@ And also delete the whole top-level `volumes:` block with `driver_opts` in your 
 
 There is no release tag for this one yet, so the header/version values will change.
 
-Images before 2026-09-27 had a bug on the very first start of a container that runs with either `--user` or `user:` set, so with a user other than the image's own UID `1000`. The bug manifested itself like this in the container logs (*the `1030` UID below is `YOUR-DOCKER-USER-UID` from the `docker-compose.yaml` example above*):
+Images before 2026-09-27 had a [bug](https://github.com/retifrav/rclone-rc-web-gui/issues/26) on the very first start of a container that runs with either `--user` or `user:` set, so with a user other than the image's own UID `1000`. The bug manifested itself like this in the container logs (*the `1030` UID below is `YOUR-DOCKER-USER-UID` from the `docker-compose.yaml` example above*):
 
 ```
 No settings.js file yet, creating a new one
