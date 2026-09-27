@@ -28,6 +28,7 @@
     - [Dependencies](#dependencies)
     - [Resources](#resources)
 - [License](#license)
+- [Donation](#donation)
 
 <!-- /MarkdownTOC -->
 
@@ -377,3 +378,10 @@ The project doesn't use any external libraries/frameworks, it is just plain HTML
 ## License
 
 This project is licensed under the GNU Affero General Public License, either version 3 of the license or any later version - that is the [AGPL-3.0-or-later](https://spdx.org/licenses/AGPL-3.0-or-later.html) SPDX identifier, which is also what the Docker image is labeled with. The full text of the license is in the [LICENSE](/LICENSE) file.
+
+## Donation
+
+You can support this project via [GitHub Sponsors](https://github.com/sponsors/retifrav) or by donating cryptocurrency to either of the following wallets (*[signed variant](https://decovar.dev/donation.txt)*):
+
+- XLM: `GDYB2QGJYWT6VPT7O7INWIGRGJF5ZEAQ7Y73S4T47IOP2QQ554NPN3ZM`
+- BTC: `bc1q2kfqwm2kwyw37ay2g4tnguasvp6j4hsmtrgjte`
