@@ -28,6 +28,15 @@ h4 { font-size: 1rem; }
 h5 { font-size: 0.8rem; }
 h6 { font-size: 0.7rem; }
 
+a {
+    text-decoration: none;
+    font-weight: bold;
+}
+a,
+a:visited {
+    color: inherit;
+}
+
 .body-block {
     padding: 15px 20px;
 }
@@ -59,14 +68,6 @@ h6 { font-size: 0.7rem; }
 .footer {
     display: flex;
     justify-content: space-between;
-}
-.footer a {
-    text-decoration: none;
-    font-weight: bold;
-}
-.footer a,
-.footer a:visited {
-    color: inherit;
 }
 
 h1, h2, h3, h4, h5, h6 {
