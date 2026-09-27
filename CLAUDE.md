@@ -51,7 +51,7 @@ Ten files under `src/`, split by concern rather than by size. `src/main.ts` is *
 - `src/settings-ui.ts` — the *contents* of the settings tab (the `#settings` div in `index.html`): both sliders, the polling checkbox, manual refresh, `/options/get` and `/options/set`. It does **not** own that block's visibility, which is `tabs.ts`'s. It exports `getMaximumAllowedRcloneTransfers()` for that module to call as the settings tab's on-show hook, on top of the `rcloneTransfers` store it exports for the queue, and it exports no DOM element at all.
 - `src/folder.ts`, `src/search.ts` — one panel control each.
 
-Only `settings.js`, `functions.js` and `main.js` have `<script type="module">` tags in `index.html`; every other module is reached through imports, so a new one needs no tag (the same way `folder.js`/`search.js` never had one). The Docker `sed` rewrites `./settings.js` as well as `./js/settings.js`, so a new module importing settings is handled too.
+Only `settings.js`, `functions.js` and `main.js` have `<script type="module">` tags in `index.html`; every other module is reached through imports, so a new one needs no tag (the same way `folder.js`/`search.js` never had one). The Docker `sed` — which lives in the `Dockerfile` now, not in the packing script — rewrites `./settings.js` as well as `./js/settings.js`, so a new module importing settings is handled too.
 
 Four import cycles exist and are deliberate:
 
@@ -339,13 +339,13 @@ Two smaller notes. The trailing `seconds` stays a `<label for="input-refresh-vie
 
 ### Version string
 
-**Before touching the version, the release tags or `docker/prepare-for-building-the-image.sh`, read `.claude/notes/version-string.md`** — it holds what each of the five guards is worth, why the README uses bare `sed` where the script uses `$sedCommand`, and the two alternatives that were rejected.
+**Before touching the version, the release tags or `docker/prepare-for-building-the-image.sh`, read `.claude/notes/version-string.md`** — it holds what each of the five guards is worth, why the extractions are POSIX `sed` and why the script no longer needs GNU `sed` at all, and the two alternatives that were rejected.
 
 `const guiVersion` at the top of `src/main.ts` is bumped by hand and shown in the footer. It moved from semver to a date-based scheme (`"2026.6.28"`).
 
 Being a compile-time constant it needs no rc call, so it is assigned directly in `window.onload` rather than inside the `/core/version` callback — it paints immediately and still shows when rclone is unreachable. Only the two *rclone* footer labels (`rcloneOS`, `rcloneVersion`) come from `/core/version`, which is requested exactly once on load; `refreshView()` polls only `/core/stats` and `/core/transferred`, so none of the three footer labels are touched by the refresh timer.
 
-**That line is the only place the version is edited, and everything else derives from it.** `docker/README.md`'s build section reads it back with `sed` rather than spelling `GUI_VER` out as a literal, so the image tag (`rclone_<rclone version>-gui_<gui version>`) and the `org.opencontainers.image.version` label cannot drift from what the footer shows. That extraction is **bare `sed`, deliberately, not `$sedCommand`/`gsed`** — the README is instructions for whoever builds the image, and `gsed` exists only where Homebrew put it. The only construct that genuinely needs GNU `sed` is the **in-place** edit in the prepare script, which is the whole justification for that script's `gsed` detection.
+**That line is the only place the version is edited, and everything else derives from it.** `docker/README.md`'s build section reads it back with `sed` rather than spelling `GUI_VER` out as a literal, so the image tag (`rclone_<rclone version>-gui_<gui version>`) and the `org.opencontainers.image.version` label cannot drift from what the footer shows. That extraction is **bare `sed`, deliberately** — the README is instructions for whoever builds the image, and `gsed` exists only where Homebrew put it. The prepare script's own two extractions are the same POSIX expression, which is why it needs no `gsed` branch either: the one construct that genuinely needed GNU `sed`, the **in-place** edit of the settings path, now happens inside the image.
 
 `RCLONE_VER` is derived the same way but from a **different** source of truth: rclone's version has a real `ARG RCLONE_VERSION_VALUE="v<version>"` default in the `Dockerfile`, and **that line is where the bundled rclone version lives** — read it rather than any number written into this file. `GUI_VERSION_VALUE` gets no such default on purpose, since a default in the `Dockerfile` would drift from `guiVersion`.
 
@@ -354,10 +354,10 @@ Being a compile-time constant it needs no rc call, so it is assigned directly in
 1. the `guiVersion` line can be extracted at all;
 2. it matches `^[0-9]{4}\.([1-9]|1[0-2])\.([1-9]|[12][0-9]|3[01])$` (the tags and the label are unpadded, so `2026.09.13` must not pass);
 3. no `v<version>` tag exists yet — **the strongest of the five**, date-independent and with no false positives;
-4. the working tree's value equals `git show HEAD:src/main.ts`'s — this one catches a genuinely invisible failure, `tsc` running *above* the `git stash`;
+4. the working tree's value equals `git show HEAD:src/main.ts`'s — this one catches a genuinely invisible failure, the archive being built from the working tree while the tag will point at a commit that may still hold the old version;
 5. it equals today's date — **the weakest of the five**, and so the only one with an escape hatch (`GUI_VERSION_DATE_CHECK=0`) rather than a plain refusal.
 
-The block sits **below** the `sed` and `tsc` detection and **above** the `tsc` call and the stash, so a failure costs nothing and cannot leave a half-prepared tree.
+The block sits **below** the `sed` and `tsc` detection and **above** the `tsc` call, so a failure costs nothing and cannot leave a half-prepared tree.
 
 ## Hard constraint: no `sync/sync`
 
@@ -369,7 +369,7 @@ Support for [`sync/sync`](https://rclone.org/rc/#sync-sync) is intentionally abs
 
 **Changing the literal default lines in `src/settings.ts` silently breaks the Docker image.** `docker/entrypoint.sh` generates `js/settings/settings.js` from the compiled `.default` by `sed`ing in environment variables, and those patterns match the literals exactly (`host: "http://127.0.0.1:5572",`, `user: null,`, `pass: null,`, `someExampleRemote`, …). So the *object literal* in `src/settings.ts` must not be touched — only the types around it.
 
-`./docker/prepare-for-building-the-image.sh` **must be run from the repository root** and is destructive to the working tree: it checks the GUI version (five refusals — see the version string section), compiles, `git stash`es, rewrites the settings path, tars the GUI into `docker/contents.tar`, then `rm -r ./js/*`, `git checkout -- .` and pops the stash. It needs `tsc` and GNU `sed` (`gsed` on macOS).
+`./docker/prepare-for-building-the-image.sh` **must be run from the repository root** and does only four things: it checks the GUI version (five refusals — see the version string section), compiles, tars the GUI into `docker/contents.tar`, then `rm -r ./js/*`. It needs `tsc` and stock `sed`, and it touches nothing in the working tree but the gitignored `js/` — **`contents.tar` is a plain snapshot of what a release package holds**. Every Docker-specific change to those contents, the settings path rewrite included, is made inside the image by the `RUN` after the `ADD`.
 
 The `Dockerfile` is **BuildKit-only** (`TARGETARCH` and `COPY --chmod`), so `DOCKER_BUILDKIT=0` fails outright rather than falling back. `org.opencontainers.image.version` is the **GUI** version, not rclone's, so it derives from `guiVersion` in `src/main.ts`.
 

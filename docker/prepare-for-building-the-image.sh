@@ -6,22 +6,13 @@ if [ "$currentDir" != "rclone-rc-web-gui" ]; then
     exit 1
 fi
 
-# check for sed command being available, and make sure to use gsed variant in case of Mac OS
-# (for in-place edits with `sed -i`)
-sedCommand=sed
-osName=$(uname)
-if [ "$osName" == "Darwin" ]; then
-    sedCommand=gsed
-    echo "This seems to be Mac OS, will use gsed (install it with Homebrew, if you haven't yet)"
-else
-    echo "Doesn't look like Mac OS, will use normal sed"
-fi
-echo
-
+# only regular `sed` is needed here, no `gsed` on Mac OS. The one construct that did require
+# GNU sed - the in-place edit of the settings path - now happens inside the image (see the Dockerfile),
+# where sed is from BusyBox
 echo 'Checking for sed...'
-which $sedCommand
+which sed
 if [ $? -ne 0 ]; then
-    echo "[ERROR] Did not find $sedCommand" >&2
+    echo "[ERROR] Did not find sed" >&2
     exit 2
 fi
 echo
@@ -38,7 +29,7 @@ echo
 # are derived from it (see docker/README.md), so there is nothing to keep in sync, but it is still
 # totally possible to simply forget to bump it at all
 echo 'Checking the UI version...'
-guiVersion=$($sedCommand -n 's/^const guiVersion: string = "\(.*\)";$/\1/p' ./src/main.ts)
+guiVersion=$(sed -n 's/^const guiVersion: string = "\(.*\)";$/\1/p' ./src/main.ts)
 if [ -z "$guiVersion" ]; then
     echo '[ERROR] Could not extract guiVersion from src/main.ts' >&2
     exit 4
@@ -57,8 +48,8 @@ if git rev-parse -q --verify "refs/tags/v$guiVersion" > /dev/null; then
 fi
 
 # an uncommitted bump would mean the image shipping a version that is neither in the release commit
-# nor in its tag, as tsc compiles the working tree, while the `git stash` takes those changes away again
-guiVersionCommitted=$(git show HEAD:src/main.ts | $sedCommand -n 's/^const guiVersion: string = "\(.*\)";$/\1/p')
+# nor in its tag, as the archive is built from the working tree
+guiVersionCommitted=$(git show HEAD:src/main.ts | sed -n 's/^const guiVersion: string = "\(.*\)";$/\1/p')
 if [ "$guiVersion" != "$guiVersionCommitted" ]; then
     echo "[ERROR] Version $guiVersion is not committed yet (HEAD has ${guiVersionCommitted:-none})" >&2
     exit 7
@@ -80,23 +71,10 @@ echo 'Compiling TypeScript into JavaScript...'
 tsc
 echo
 
-# save uncommitted changes, if any, before making Docker-related changes
-hasChanges=0
-if [[ `git status --porcelain` ]]; then
-    hasChanges=1
-    git stash
-    echo
-fi
-
-# retarded workaround for impossibility to map/mount a single existing file from container to host
-[ -d ./js/settings/ ] || mkdir ./js/settings/
-mv ./js/settings.js ./js/settings.js.default
-find . -type f \( -name index.html -o -name '*.js' \) -exec \
-    $sedCommand -i "
-s/\.\/js\/settings.js/\.\/js\/settings\/settings.js/g
-s/\.\/settings.js/\.\/settings\/settings.js/g
-" {} \;
-
+# the archive is a plain snapshot of what a release package holds, and every Docker-specific change
+# to those contents is made inside the image instead (see the Dockerfile), which is why this script
+# no longer alters anything but the gitignored `js/` and so it does not need stashing and restoring
+# anymore
 echo 'Packing everything for deployment with ADD...'
 cd ./docker
 contentsArchive=contents.tar
@@ -118,13 +96,6 @@ COPYFILE_DISABLE=1 tar -cvf $contentsArchive --no-xattrs -C .. \
 
 cd ..
 rm -r ./js/*
-
-# revert Docker-related changes
-git checkout -- .
-# and restore from stash
-if [[ $hasChanges == 1 ]]; then
-    git stash pop
-fi
 
 echo
 echo "Done, the UI version in the archive is $guiVersion"

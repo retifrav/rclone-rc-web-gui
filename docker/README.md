@@ -254,10 +254,13 @@ services:
       # if the user config with remotes is not in that folder already,
       # container will create it on the first ever start
       - /volume1/docker/rclone-rc-web-gui/config:/config
-      # although web UI settings are stored in just one file, its entire parent folder
-      # has to be mapped instead, otherwise Docker will create an empty folder
-      # named after that file, which is what caused that retarded workaround
-      # with moving the `settings.js` file into a subfolder
+      # although web UI settings are stored in just one file, it is its entire parent folder that has
+      # to be mapped, which is why that file lives in a subfolder of its own. Mapping the file itself
+      # can not work: there is nothing to map on the first ever start, as it's the container who creates
+      # that file, so Docker would just create an empty folder with that name. And even with the file
+      # already there, the container generates settings by writing a temporary file and renaming it,
+      # which is not something you can do with a mapped file (nor could you then edit it on the host
+      # with a text editor that would replace it)
       - /volume1/docker/rclone-rc-web-gui/settings:/var/www/rclone-rc-web-gui/js/settings
       # SSH keys
       - /volume1/docker/rclone-rc-web-gui/ssh:/home/rclone/.ssh

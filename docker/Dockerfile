@@ -32,7 +32,7 @@ ARG GID="1000"
 #
 ENV PATH_TO_WEB_GUI="/var/www/rclone-rc-web-gui"
 # this is the `settings.js` template that `entrypoint.sh` generates the actual settings from.
-# It arrives with `contents.tar` as `js/settings.js.default` and is moved out of the web UI folder
+# It arrives with `contents.tar` as the web UI's own `js/settings.js` and is moved out of that folder
 # below, so that it isn't served and that generating the settings would not need access to `js/` at all
 ENV PATH_TO_SETTINGS_DEFAULT="/usr/local/share/rclone-rc-web-gui/settings.js.default"
 ENV RCLONE_PORT="5572"
@@ -102,16 +102,36 @@ COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 # so there is no `chown -R` afterwards rewriting every file into a second copy
 ADD --chown=$UID:$GID contents.tar $PATH_TO_WEB_GUI/
 
-# the settings template is taken out of the web UI folder, so that it is not served and, more importantly,
-# the `entrypoint.sh` would never need to write anything into `js/` - container running as a user other
-# than the UID above cannot do that, which brakes the first ever start of the container
+# Docker-specific operations happen here, not during packing `contents.tar` (as it was before),
+# so the `contents.tar` is just a snapshot of the release contents. This has to be after the `ADD`
+# (which is where the files come from) but still before `USER` (so it runs as root). What's happening:
 #
-# this has to be after the `ADD` (which is where the file comes from) but still before `USER`, so it runs
-# as root. A rename(2) keeps the mode and the ownership from the `ADD`, such as 0644 and $UID:$GID, and 0644
-# is what any `--user` UID is able to read
+# 1. The settings template is taken out of the web UI folder so it wouldn't be served together with
+#    the rest of the UI, and, more importantly, so that the `entrypoint.sh` would never need to write
+#    anything into `js/`, because container running as a user other than the UID above cannot do that,
+#    which brakes the first ever start of the container. A rename(2) keeps the mode from the `ADD`,
+#    and 0644 is what any `--user` UID is able to read (while writing it requires root)
+#
+# 2. The `settings.js` is served from its own subfolder, because that folder is what the user mounts. A single
+#    file can not be the mount point for it: there is nothing on the host to mount on the first ever start,
+#    as it's the `entrypoint.sh` who creates that file, and rename(2) onto a bind-mounted file is EBUSY anyway
+#    (see docker/CLAUDE.md for more details). The folder is created here instead of being a part of the archive,
+#    and it must be writable by the UID (since `entrypoint.sh` does not create it)
+#
+# 3. Every reference to `./js/settings.js` (in `index.html`) and to `./settings.js` (in the compiled
+#    ES modules) is rewritten to point into that subfolder. The `sed -i` replaces the inodes, so those files
+#    come out owned by root and are chown'ed back for consistency
 RUN set -eux; \
     mkdir -p "$(dirname "$PATH_TO_SETTINGS_DEFAULT")"; \
-    mv "$PATH_TO_WEB_GUI/js/settings.js.default" "$PATH_TO_SETTINGS_DEFAULT"
+    mv "$PATH_TO_WEB_GUI/js/settings.js" "$PATH_TO_SETTINGS_DEFAULT"; \
+    mkdir -p "$PATH_TO_WEB_GUI/js/settings"; \
+    sed -i \
+        -e 's|\./js/settings\.js|./js/settings/settings.js|g' \
+        -e 's|\./settings\.js|./settings/settings.js|g' \
+        "$PATH_TO_WEB_GUI/index.html" "$PATH_TO_WEB_GUI"/js/*.js; \
+    chown "$UID:$GID" \
+        "$PATH_TO_WEB_GUI/js/settings" \
+        "$PATH_TO_WEB_GUI/index.html" "$PATH_TO_WEB_GUI"/js/*.js
 
 USER $APPLICATION_USER
 WORKDIR /data
