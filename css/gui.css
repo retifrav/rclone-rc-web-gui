@@ -129,6 +129,17 @@ td > progress {
 #completedTransfersBody > tr:hover {
     background-color: #ebebeb;
 }
+/*
+    gets displayed by `transfers.ts` when rclone may have dropped
+    some of the entries (due to the 100 entries cap per job)
+*/
+#completedTransfersTrimmed {
+    display: none;
+    margin: 8px 0 0;
+    font-size: 0.9em;
+    font-style: italic;
+    color: #757575;
+}
 
 #currentTransfers {
     max-height: 300px;

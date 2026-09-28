@@ -8,11 +8,30 @@ Verified with a `MutationObserver` on the `<tbody>`: 0 added, 0 removed, 0 batch
 
 ## The list is not capped at 100, and rclone's own documentation says it is
 
-`core/transferred`'s help text reads *"Note only the last 100 completed transfers are returned"*, which is true only when a `group` is passed; with no group the endpoint answers `groups.sum(ctx).Transferred()`, the sum over **every** stats group, each pruned separately past `100 + --transfers`. Every rc job is a group of its own, so the total is roughly that per job ever run, up to `--max-stats-groups` (default 1000) groups — and no flag caps the sum.
+`core/transferred`'s help text reads *"Note only the last 100 completed transfers are returned"*, which is true only when a `group` is passed; with no group the endpoint answers `groups.sum(ctx).Transferred()`, the sum over **every** stats group, each pruned separately past `100 + <that job's own Transfers>`. Every rc job is a group of its own, so the total is roughly that per job ever run, up to `--max-stats-groups` (default 1000) groups — and no flag caps the sum.
 
 Measured: 25 `/sync/copy` jobs × 60 files → **1500 entries, 684 KB of JSON per poll**, and a single 150-file job settles at exactly **104** entries (`100 + --transfers 4`, 46 pruned).
 
 So a reader checking upstream docs will conclude the table cannot grow and that conclusion is wrong; re-derive it with 25 jobs rather than trusting either the doc line or this paragraph.
+
+## One job is capped, and the table showing part of a big one is not a regression
+
+Reported as "a 100+ file folder copy did not list all its files", with the reconcile (`10adbb7`) as the suspect. It is rclone, and it predates the reconcile.
+
+The mechanism, in v1.75.1: `Transfer.Done()` (`fs/accounting/transfer.go`) ends with `tr.stats.PruneTransfers()`, and `PruneTransfers()` (`fs/accounting/stats.go`) removes the first finished entry from `startedTransfers` whenever `len(s.startedTransfers) > s.maxCompletedTransfers + s.ci.Transfers`. `maxCompletedTransfers` starts as the package var `MaxCompletedTransfers = 100`; `SetMaxCompletedTransfers()` exists but only in Go, and `rclone help flags` has nothing for it. `startedTransfers` holds checks as well, so they count against the same budget.
+
+Measured against the container's rclone with two `local` remotes (`src`, `dst`) under `--transfers 4`, submitting through `rclone rc` and reading the GUI over CDP:
+
+- **150-file `/sync/copy`**: 150 files at the destination, 104 entries in `/core/transferred`, `f047`–`f150` — `f001`–`f046` pruned. HEAD rendered 104 rows with `(X)` 104, and so did the pre-reconcile build (`git archive 365ec34`, compiled, served by its own `rcd`, `reconcileCompletedTransfers` confirmed absent from the served `transfers.js`), with the same first and last names.
+- **The cap follows the job's own `Transfers`**: the same copy submitted with `_config: {"Transfers": 2}` under `--transfers 4` settled at **102**, beside 104 for a job without it. The stats group's `ci` comes from the job's context, so for the queue it is the allocation it sends as `_config.Transfers`.
+- **50-file cross-remote `/sync/move`**: 50 files at the destination and none left at the source, but 104 raw entries of which 36–37 are checks (two runs), rendering **34 rows**. Well under 100 rows, which is why the hint counts the raw response and not the rows.
+- **The cap is per job, not a global eviction**: three 60-file jobs gave 180 rows and a fourth 240, none of them touched by the others.
+
+Keeping pruned rows GUI-side was rejected for three reasons: a job can complete more entries between two polls than it keeps (not measured precisely — the 150 × 2 KB local copy had finished within the 4 s wait, i.e. two poll intervals), so the GUI would still miss files; a page reload loses whatever the GUI kept; and it breaks the table being equal to rclone's list, which the removal pass exists to maintain.
+
+The hint (`#completedTransfersTrimmed`, `mayHaveUnlistedTransfers()`) was verified over CDP, console empty throughout: hidden on load and with an empty list; hidden at 180 and 240 rows made of 60-file jobs; shown after the 150-file job (344 rows); shown for the 50-file move (34 rows); hidden again after an `rcd` restart with the block hidden and `(X)` 0. Across four steady ticks with it shown, a `MutationObserver` saw 0 writes to the `<tbody>` and 0 attribute mutations on the hint — assigning the same inline `display` again records nothing.
+
+One harness trap: chromium served a **cached `index.html`** from an earlier `rcd` alongside the new JS, so `getElementById("completedTransfersTrimmed")` came back `null` and the empty-list branch threw. Disable the cache (`Network.setCacheDisabled`) before navigating when the markup has changed between runs.
 
 ## Measured cost of the rebuild this replaced
 

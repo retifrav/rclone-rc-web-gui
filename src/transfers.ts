@@ -15,6 +15,13 @@ const completedTransfersCount: HTMLSpanElement =
     document.getElementById("completedTransfersCount") as HTMLSpanElement;
 const completedTransfersBody: HTMLTableSectionElement =
     document.getElementById("completedTransfersBody") as HTMLTableSectionElement;
+const completedTransfersTrimmed: HTMLParagraphElement =
+    document.getElementById("completedTransfersTrimmed") as HTMLParagraphElement;
+
+// how many completed entries rclone keeps per stats group (`accounting.MaxCompletedTransfers`),
+// on top of that group's own `Transfers`. Past that it drops the oldest finished one, and there
+// is no flag to change this value
+const rcloneMaxCompletedTransfers: number = 100;
 
 // a rendered row of the completed transfers table, kept so that the next refresh can reuse it
 // instead of building it again. The `signature` holds the fields that the row actually shows,
@@ -308,6 +315,27 @@ function buildCompletedTransferRow(transfer: functions.rcTransferred) : HTMLTabl
     return tr;
 }
 
+// every job is a stats group of its own, and rclone keeps only `100 + <that job's Transfers>`
+// of its entries, so a job with more files than that is listed only partially. Checks and duplicate
+// entries of a moved file count too, so this has to be given the response before those are
+// filtered out. The job's own `Transfers` is not known here (for the queue it is the allocation,
+// for other rc clients it is anything), so this tests for just the `> 100`, which every trimmed job
+// is past, but so is a job of 101 files that lost nothing, hence it is only a "may"
+function mayHaveUnlistedTransfers(completedTransfers: functions.rcTransferred[]) : boolean
+{
+    const groupsCounts: Map<string, number> = new Map();
+    for (let t = 0; t < completedTransfers.length; t++)
+    {
+        const group: string = completedTransfers[t]["group"];
+        const counted: number | undefined = groupsCounts.get(group);
+        const count: number = (counted === undefined ? 0 : counted) + 1;
+        if (count > rcloneMaxCompletedTransfers) { return true; }
+
+        groupsCounts.set(group, count);
+    }
+    return false;
+}
+
 // removes every row from `node` to the end of the table
 function trimCompletedTransfers(node: ChildNode | null)
 {
@@ -333,7 +361,7 @@ function trimCompletedTransfers(node: ChildNode | null)
 // always a problem and partially a reason for the "frozen UI" feature)
 function reconcileCompletedTransfers(transfersToShow: functions.rcTransferred[])
 {
-    // rclone drops entries from its own list (every stats group gets pruned past `100 + --transfers`)
+    // rclone drops entries from its own list (every stats group gets pruned past `100 + <its Transfers>`)
     // and it also starts over after a restart, so the rows whose entry is no longer in the response
     // have to go, otherwise the table will no longer match the rclone data
     const keysToShow: Set<string> = new Set();
@@ -403,8 +431,12 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
         renderedCompletedTransfers.clear();
         completedTransfersBlock.style.display = "none";
         completedTransfersCount.textContent = "0";
+        completedTransfersTrimmed.style.display = "none";
         return;
     }
+
+    completedTransfersTrimmed.style.display =
+        mayHaveUnlistedTransfers(completedTransfers) ? "block" : "none";
 
     // checks are not actual transfers, and every move leaves a `deleting` one behind.
     // They have to go before the duplicates are collapsed, because a check carries

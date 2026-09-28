@@ -271,6 +271,11 @@
 
     <div class="body-block" style="flex-grow:1; padding-bottom:30px;">
         <h2>Completed transfers (<span id="completedTransfersCount">0</span>)</h2>
+        <p id="completedTransfersTrimmed">
+            Some multi-file jobs might not list all the files that have been transferred:
+            rclone keeps only about 100 completed transfers per job in its reporting,
+            and at least one of the jobs has reached that limit.
+        </p>
         <div id="completedTransfers">
             <table>
                 <thead>

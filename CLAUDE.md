@@ -118,11 +118,19 @@ A copy, and a move rclone does server-side, are already right and give one entry
 
 ### The completed transfers table is reconciled, not rebuilt
 
-**Before touching `reconcileCompletedTransfers()` or the key and signature helpers, read `.claude/notes/completed-transfers-table.md`** — it holds the cost measurements, why the NUL separator is not a free choice, the two reasons the signature is load-bearing, and the timestamp-checkpoint alternative that silently loses records.
+**Before touching `reconcileCompletedTransfers()`, the key and signature helpers or `mayHaveUnlistedTransfers()`, read `.claude/notes/completed-transfers-table.md`** — it holds the cost measurements, the per-job cap measurements behind the trimmed-list hint, why the NUL separator is not a free choice, the two reasons the signature is load-bearing, and the timestamp-checkpoint alternative that silently loses records.
 
 `updateCompletedTransfers()` does **not** wipe the `<tbody>` and rebuild it. It filters the checks, collapses the duplicates and sorts as before, then hands the result to `reconcileCompletedTransfers()`, which diffs it against `renderedCompletedTransfers` — a `Map` of the rows currently on screen — and touches only what actually changed. **A refresh that brings nothing new does zero DOM writes.**
 
-**The list is not capped at 100, and rclone's own documentation says it is.** `core/transferred`'s help text is true only when a `group` is passed; with no group it sums **every** stats group, each pruned separately past `100 + --transfers`, and no flag caps the sum. Measured: 25 jobs × 60 files → 1500 entries, 684 KB of JSON per poll. So don't conclude from upstream docs that the table cannot grow.
+**The list is not capped at 100, and rclone's own documentation says it is.** `core/transferred`'s help text is true only when a `group` is passed; with no group it sums **every** stats group, each pruned separately past `100 + <that job's own Transfers>`, and no flag caps the sum. Measured: 25 jobs × 60 files → 1500 entries, 684 KB of JSON per poll. So don't conclude from upstream docs that the table cannot grow.
+
+**One job, on the other hand, *is* capped, so a big job is always listed only partially — and that is rclone, not the reconcile.** Past `100 + <the job's own Transfers>` entries (its `_config.Transfers` when it has one, so the queue's allocation — measured 102 at `Transfers: 2` under `--transfers 4`) rclone drops the oldest finished one, and no flag changes the 100. Checks and move duplicates use up the same budget while the table hides them: a 150-file copy shows 104 rows, a 50-file cross-remote folder move just 34. The pre-reconcile build (`365ec34`) showed the identical 104, so this is not a regression of the reconcile. **Don't "fix" it by keeping pruned rows GUI-side** — more than 100 small files can finish between two polls, a reload loses them anyway, and it breaks the table being equal to rclone's list.
+
+What the GUI does instead is **`#completedTransfersTrimmed`**, a hint under the heading that `updateCompletedTransfers()` shows while `mayHaveUnlistedTransfers()` holds. Three rules about it:
+
+- It counts the **raw** response per `group`, *before* the checks filter and the collapse, because those entries count against rclone's budget — a row-based count misses the 34-row move entirely.
+- The threshold is **`> 100`, not `100 + Transfers`**: the job's own `Transfers` is not known to the GUI (an allocation for the queue's jobs, anything for other rc clients'), and every finished trimmed job is past 100 regardless.
+- Hence the wording is **"may be missing"**: a job of 101 to `100 + Transfers` entries shows the hint without having lost anything, and `/core/transferred` alone cannot tell the two apart.
 
 **Identity is `group` + `name`, through `functions.getTransferKey()`**, which `collapseDuplicateTransfers()` calls as well so the two cannot drift. **The two fields are joined with a `"\u0000"`, and the separator is not a free choice** — it has to be a character that cannot occur in `group`, and a `"\n"` does not qualify. `getCompletedTransferSignature()` uses NUL for the same reason. Don't "simplify" either back to a printable separator.
 
