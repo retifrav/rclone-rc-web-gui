@@ -10,7 +10,7 @@ ARG TARGETARCH
 # if we ever need `linux-arm-v7`, `linux-arm-v6` and so on
 #ARG TARGETVARIANT
 
-ARG RCLONE_VERSION_VALUE="v1.75.1"
+ARG RCLONE_VERSION_VALUE="v1.75.2"
 
 # these arguments are only for the OCI annotations. They have no default values,
 # because web UI version lives in `src/main.ts`, and so a default value here would
