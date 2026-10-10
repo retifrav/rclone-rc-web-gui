@@ -14,7 +14,7 @@ How to build an image and run a container from it.
     - [Synology DSM with Container Manager](#synology-dsm-with-container-manager)
 - [Breaking changes](#breaking-changes)
     - [2026.9.13](#2026913)
-    - [2026.9.27](#2026927)
+    - [2026.10.10](#20261010)
 
 <!-- /MarkdownTOC -->
 
@@ -307,9 +307,9 @@ If you are upgrading from a version before [2026.9.13](https://github.com/retifr
 
 And also delete the whole top-level `volumes:` block with `driver_opts` in your `docker-compose.yaml` (*if you have it at all*).
 
-### 2026.9.27
+### 2026.10.10
 
-There is no release tag for this one yet, so the header/version values will change.
+This is not really a breaking change but rather a fix for something that was already broken.
 
 Images before 2026-09-27 had a [bug](https://github.com/retifrav/rclone-rc-web-gui/issues/26) on the very first start of a container that runs with either `--user` or `user:` set, so with a user other than the image's own UID `1000`. The bug manifested itself like this in the container logs (*the `1030` UID below is `YOUR-DOCKER-USER-UID` from the `docker-compose.yaml` example above*):
 
