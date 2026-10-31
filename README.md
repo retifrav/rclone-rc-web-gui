@@ -208,10 +208,10 @@ Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*)
 
 There are several settings available for you to configure in `./js/settings.js`.
 
-Aside from self-explanatory variables like host, credentials and timers, there is an object for storing settings for your remotes. An example:
+Aside from self-explanatory fields like host and credentials (*in `rcloneSettings`*) and timers (*in `userSettings`*), there is a `remotes` object for storing settings for your remotes. Here's an example:
 
 ``` js
-var remotes = {
+export const remotes = {
     "disk": {
         "startingFolder": "media/somedisk/downloads",
         "canQueryDisk": true,
@@ -222,22 +222,22 @@ var remotes = {
         "canQueryDisk": false,
         "pathToQueryDisk": ""
     }
-}
+};
 ```
 
-Here:
+in there:
 
 - we have 2 remotes: `disk` and `seedbox`;
 - both have `startingFolder` set, so that will be the folder opened when the remote is chosen in the files panel;
 - `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
   - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
 
-The `userSettings` has a `useChecksumsForChecks` key, which is the default state of the checksums checkbox for the [check operation](#the-check-operation) (*`false` by default*). If your `settings.js` is from an older version, then it likely does not have this field, so you can add it there yourself if you'd like to have checksums on by default:
+The `userSettings` contains `useChecksumsForChecks`, which is the default state (*`false`*) of the checksums setting for the [check operation](#the-check-operation). If your `settings.js` is from an older version, then it likely does not have this field, so you can add it there yourself if you'd like to have checksums enabled by default:
 
 ``` js
 export const userSettings = {
     // ...
-    useChecksumsForChecks = true
+    useChecksumsForChecks: true
 };
 ```
 
@@ -368,9 +368,12 @@ Set the credentials (*the same ones that are in `/home/SOME-USER/.htpasswd`*) an
 $ sudo -u www-data nano /var/www/rclone-rc-web-gui/js/settings.js
 ```
 ``` js
-var rcloneHost = "http://IP-ADDRESS-OR-DOMAIN/rclone"; // using port 80, so no need to set it
-var rcloneUser = "USERNAME-FROM-HTPASSWD";
-var rclonePass = "PASSWORD-FROM-HTPASSWD";
+export const rcloneSettings = {
+    host: "http://IP-ADDRESS-OR-DOMAIN/rclone", // using port 80, so no need to set it
+    user: "USERNAME-FROM-HTPASSWD",
+    pass: "PASSWORD-FROM-HTPASSWD",
+    // ...
+};
 ```
 
 Add some remotes to rclone config, if you haven't yet:
