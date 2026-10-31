@@ -1,6 +1,15 @@
 import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 import { QueueItem, transfersQueue, removeFromQueue } from "./queue.js";
+import {
+    RunningCheck,
+    FinishedCheck,
+    runningChecks,
+    getCompletedCheckEntries,
+    getFinishedCheck,
+    isCheckGroup,
+    showCheckResult
+} from "./check.js";
 
 const currentTransfersBlock: HTMLDivElement =
     document.getElementById("currentTransfers") as HTMLDivElement;
@@ -55,13 +64,14 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransferring[] | u
         currentTransfersBody.removeChild(currentTransfersBody.firstChild);
     }
 
+    // nothing is transferring, but there are running checks or queue items to show
     let addQueueElementsOnly = false;
 
     if (currentTransfers === undefined || !currentTransfers.length)
     {
         currentTransfersCount.textContent = "0";
 
-        if (!transfersQueue.length)
+        if (!transfersQueue.length && !runningChecks.length)
         {
             currentTransfersBlock.style.display = "none";
             return;
@@ -170,6 +180,12 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransferring[] | u
             currentTransfersBody.appendChild(tr);
         }
     }
+    // add running checks, a single row per job, as their individual file checks
+    // are not in `transferring` (and would be far too many anyway)
+    for (let c = 0; c < runningChecks.length; c++)
+    {
+        currentTransfersBody.appendChild(buildRunningCheckRow(runningChecks[c]));
+    }
     // add items from the queue
     for (let q = 0; q < transfersQueue.length; q++)
     {
@@ -206,7 +222,13 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransferring[] | u
             )
         ).appendChild(
             Object.assign(
-                document.createTextNode(transfersQueue[q].dataPath)
+                // the destination is half of what a check means, unlike a copy or a move,
+                // which always go to the other panel
+                document.createTextNode(
+                    queueItem.operationType === "check"
+                        ? queueItem.dataPath.concat(" → ", queueItem.dstFS)
+                        : queueItem.dataPath
+                )
             )
         );
         // cancel
@@ -230,6 +252,107 @@ function updateCurrentTransfers(currentTransfers: functions.rcTransferring[] | u
         currentTransfersBody.appendChild(tr);
     }
     currentTransfersBlock.style.display = "block";
+}
+
+// `1:05` or `1:02:03`
+function getElapsedTime(since: string) : string
+{
+    const seconds: number = Math.max(0, Math.floor((Date.now() - new Date(since).getTime()) / 1000));
+    const minutes: number = Math.floor(seconds / 60) % 60;
+    const hours: number = Math.floor(seconds / 3600);
+    const ss: string = (seconds % 60).toString().padStart(2, "0");
+
+    if (hours === 0) { return `${minutes}:${ss}`; }
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${ss}`;
+}
+
+// rclone does not know in advance how many files a check is going to look at (see `getCheckProgress()`),
+// so there is no percentage to show. So the progress bar is an indeterminate one, and the row says
+// how many files have been checked so far and for how long the check has been running
+function buildRunningCheckRow(check: RunningCheck) : HTMLTableRowElement
+{
+    const tr: HTMLTableRowElement = document.createElement("tr");
+    // operation type
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createElement("code")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode("check")
+        )
+    );
+    // what is checked against what. The progress column takes all the width it can get,
+    // so with plain spaces around the arrow the two paths would wrap onto three lines,
+    // while a file name in this column (having no spaces) never does
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td"),
+            {
+                className: "canBeLong"
+            }
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode(check.srcFs.concat("\u00A0→\u00A0", check.dstFs))
+        )
+    );
+    // size, which a check has none of
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode("-")
+        )
+    );
+    // files that got looked at and the elapsed time, no speed here
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode(
+                `${check.processed} ${check.processed === 1 ? "file" : "files"} checked `
+                + `in ${getElapsedTime(check.startedAt)}`
+            )
+        )
+    );
+    // progress, where a `<progress>` without a `value` is an indeterminate one
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createElement("progress")
+        )
+    );
+    // cancel
+    const imgCancel: HTMLImageElement = Object.assign(
+        document.createElement("img"),
+        {
+            src: "./images/x-square.svg",
+            title: "Cancel this check"
+        }
+    );
+    imgCancel.addEventListener(
+        "click",
+        function() { cancelTransfer(this, "job/".concat(check.jobid.toString())); }
+    );
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(imgCancel);
+
+    return tr;
 }
 
 // the fields of a completed transfer that its row actually shows. A transfer keeps its identity
@@ -260,6 +383,9 @@ function getCompletedTransferSignature(transfer: functions.rcTransferred) : stri
 
 function buildCompletedTransferRow(transfer: functions.rcTransferred) : HTMLTableRowElement
 {
+    const finishedCheck: FinishedCheck | undefined = getFinishedCheck(functions.getTransferKey(transfer));
+    if (finishedCheck !== undefined) { return buildCompletedCheckRow(finishedCheck); }
+
     const spanOutcome: HTMLSpanElement = document.createElement("span");
     spanOutcome.appendChild(
         document.createTextNode(transfer["error"] === "" ? "OK" : "error")
@@ -315,6 +441,89 @@ function buildCompletedTransferRow(transfer: functions.rcTransferred) : HTMLTabl
     return tr;
 }
 
+// a finished check is a single row for the entire job, and that row opens the results dialog.
+// The outcome is "failed" when the check did run but found something (or could not finish),
+// and "error" when there is no result at all
+function buildCompletedCheckRow(check: FinishedCheck) : HTMLTableRowElement
+{
+    let outcome: string = "error";
+    if (check.result !== null) { outcome = check.result["success"] === true ? "OK" : "failed"; }
+
+    const spanOutcome: HTMLSpanElement = document.createElement("span");
+    spanOutcome.appendChild(document.createTextNode(outcome));
+    spanOutcome.style.color = outcome === "OK" ? "green" : "red";
+
+    // focusable and opened with Enter as well, as it is effectively a button
+    const tr: HTMLTableRowElement = Object.assign(
+        document.createElement("tr"),
+        {
+            className: "clickable",
+            tabIndex: 0,
+            title: "Show the results of this check"
+        }
+    );
+    tr.addEventListener(
+        "click",
+        function() { showCheckResult(check); }
+    );
+    tr.addEventListener(
+        "keydown",
+        function(e)
+        {
+            if (e.key !== "Enter") { return; }
+            showCheckResult(check);
+        }
+    );
+    // date and time (see `buildCompletedTransferRow()`)
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode(
+                new Date(check.entry["started_at"]).toLocaleString("en-GB")
+            )
+        )
+    );
+    // outcome
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(spanOutcome);
+    // what was checked against what
+    const tdName: HTMLTableCellElement = Object.assign(
+        document.createElement("td"),
+        {
+            className: "canBeLong"
+        }
+    );
+    tdName.appendChild(
+        Object.assign(
+            document.createElement("code")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode("check")
+        )
+    );
+    tdName.appendChild(document.createTextNode(" ".concat(check.entry["name"])));
+    tr.appendChild(tdName);
+    // size, which a check has none of
+    tr.appendChild(
+        Object.assign(
+            document.createElement("td")
+        )
+    ).appendChild(
+        Object.assign(
+            document.createTextNode("-")
+        )
+    );
+
+    return tr;
+}
+
 // every job is a stats group of its own, and rclone keeps only `100 + <that job's Transfers>`
 // of its entries, so a job with more files than that is listed only partially. Checks and duplicate
 // entries of a moved file count too, so this has to be given the response before those are
@@ -327,6 +536,10 @@ function mayHaveUnlistedTransfers(completedTransfers: functions.rcTransferred[])
     for (let t = 0; t < completedTransfers.length; t++)
     {
         const group: string = completedTransfers[t]["group"];
+        // a check job lists nothing but its individual file checks, which are never shown,
+        // so however many of them rclone has dropped, nothing is missing from the table
+        if (isCheckGroup(group)) { continue; }
+
         const counted: number | undefined = groupsCounts.get(group);
         const count: number = (counted === undefined ? 0 : counted) + 1;
         if (count > rcloneMaxCompletedTransfers) { return true; }
@@ -425,7 +638,11 @@ function reconcileCompletedTransfers(transfersToShow: functions.rcTransferred[])
 
 function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
 {
-    if (completedTransfers === undefined || !completedTransfers.length)
+    // finished checks are not in rclone's list (only their individual file checks are, and those
+    // get filtered out like every other check), they are kept by the UI itself (`check.ts`)
+    const completedChecks: functions.rcTransferred[] = getCompletedCheckEntries();
+
+    if ((completedTransfers === undefined || !completedTransfers.length) && !completedChecks.length)
     {
         trimCompletedTransfers(completedTransfersBody.firstChild);
         renderedCompletedTransfers.clear();
@@ -451,13 +668,15 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
     // a single moved file arrives as two identical transfers when rclone had to fall back
     // from move to copy. There are more details in `collapseDuplicateTransfers()`
     const transfersToShow: functions.rcTransferred[] =
-        functions.collapseDuplicateTransfers(actualTransfers);
+        functions.collapseDuplicateTransfers(actualTransfers).concat(completedChecks);
 
     transfersToShow.sort(functions.sortJobs).reverse();
     reconcileCompletedTransfers(transfersToShow);
 
     completedTransfersCount.textContent = transfersToShow.length.toString();
-    completedTransfersBlock.style.display = "block";
+    // a response can consist of nothing but checks, which is what every running
+    // check job produces, and then there is nothing to show but the table's header
+    completedTransfersBlock.style.display = transfersToShow.length > 0 ? "block" : "none";
 }
 
 export function refreshView()

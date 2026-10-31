@@ -2,6 +2,7 @@ import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 import { initPanels } from "./panel.js";
 import { initQueue } from "./queue.js";
+import { initChecks } from "./check.js";
 import { initSettingsUI } from "./settings-ui.js";
 import { initTabs } from "./tabs.js";
 import { refreshView } from "./transfers.js";
@@ -44,6 +45,7 @@ window.onload = () =>
     // every module owns the elements it works with and handles their listeners
     initPanels();
     initQueue();
+    initChecks();
     initSettingsUI();
     initTabs();
 

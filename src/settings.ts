@@ -36,14 +36,22 @@ type UserSettings = {
     timerRefreshView: number,
     timerRefreshViewInterval: ReturnType<typeof setInterval> | undefined,
     timerProcessQueue: number,
-    timerProcessQueueInterval: ReturnType<typeof setInterval> | undefined
+    timerProcessQueueInterval: ReturnType<typeof setInterval> | undefined,
+    // optional, because this setting was added at some point later, so there
+    // are already users with their own `js/settings.js` files deployed without it
+    useChecksumsForChecks?: boolean
 }
 export const userSettings: UserSettings = {
     timerRefreshEnabled: true,
     timerRefreshView: 2, // seconds
     timerRefreshViewInterval: undefined,
     timerProcessQueue: 5, // seconds
-    timerProcessQueueInterval: undefined
+    timerProcessQueueInterval: undefined,
+    // whether the check operation compares checksums (so not size-only) by default.
+    // Using checksums is a much heavier kind of check: on local disks and SFTP remotes
+    // every file gets read in full on both sides. It also works only if both remotes
+    // have a hash type in common, otherwise rclone compares just the sizes anyway
+    useChecksumsForChecks: false
 }
 
 // setting this to `true` will hide the donation (red heart) button :(

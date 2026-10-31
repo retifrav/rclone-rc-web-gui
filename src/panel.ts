@@ -2,7 +2,7 @@ import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 import * as folder from "./folder.js";
 import * as search from "./search.js";
-import { addToQueue } from "./queue.js";
+import { addToQueue, addCheckToQueue } from "./queue.js";
 import { showMessage, showConfirmation } from "./dialog.js";
 
 // which `openPath()` call owns the panel listing. Since this function can be called once more
@@ -56,6 +56,11 @@ const leftPanelCommandMove: HTMLButtonElement =
     document.getElementById("leftPanelCommandMove") as HTMLButtonElement;
 const rightPanelCommandMove: HTMLButtonElement =
     document.getElementById("rightPanelCommandMove") as HTMLButtonElement;
+// check
+const leftPanelCommandCheck: HTMLButtonElement =
+    document.getElementById("leftPanelCommandCheck") as HTMLButtonElement;
+const rightPanelCommandCheck: HTMLButtonElement =
+    document.getElementById("rightPanelCommandCheck") as HTMLButtonElement;
 //delete
 const leftPanelCommandDelete: HTMLButtonElement =
     document.getElementById("leftPanelCommandDelete") as HTMLButtonElement;
@@ -137,6 +142,14 @@ export function initPanels()
     rightPanelCommandMove.addEventListener(
         "click",
         function() { moveClicked(this, "rightPanelFiles"); }
+    );
+    leftPanelCommandCheck.addEventListener(
+        "click",
+        function() { checkClicked(this, "leftPanelFiles"); }
+    );
+    rightPanelCommandCheck.addEventListener(
+        "click",
+        function() { checkClicked(this, "rightPanelFiles"); }
     );
     leftPanelCommandDelete.addEventListener(
         "click",
@@ -650,6 +663,13 @@ function moveClicked(btn: HTMLButtonElement, filesPanelID: string)
     operationClicked(btn, "move", filesPanelID);
 }
 
+// the folder open in this panel against the folder open in the other one,
+// selected items in either of the listings play no role
+function checkClicked(btn: HTMLButtonElement, filesPanelID: string)
+{
+    operationClicked(btn, "check", filesPanelID);
+}
+
 function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
     // the same selection that `addToQueue()` is going to take, so the dialog
@@ -728,7 +748,7 @@ function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
 
 function operationClicked(btn: HTMLButtonElement, operationType: string, filesPanelID: string)
 {
-    if (operationType === "copy" || operationType === "move")
+    if (operationType === "copy" || operationType === "move" || operationType === "check")
     {
         if (functions.panelsPathsHaveValue() !== true)
         {
@@ -744,7 +764,8 @@ function operationClicked(btn: HTMLButtonElement, operationType: string, filesPa
     btn.disabled = true;
     setTimeout(function () { btn.disabled = false; }, 5000);
 
-    addToQueue(operationType, filesPanelID);
+    if (operationType === "check") { addCheckToQueue(filesPanelID); }
+    else { addToQueue(operationType, filesPanelID); }
 
     updateFilesCount(filesPanelID);
 }

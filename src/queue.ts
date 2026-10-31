@@ -2,6 +2,7 @@ import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 import { rcloneTransfers } from "./settings-ui.js";
 import { refreshView } from "./transfers.js";
+import { registerCheckJob } from "./check.js";
 import { showMessage } from "./dialog.js";
 
 export type QueueItem = {
@@ -17,7 +18,10 @@ export type QueueItem = {
     "submitFailures": number,
     // how many files a folder contains - maximum transfers that it could ever use
     // (`countQueueItemFiles()`), and `-1` here would mean that rclone failed to find out
-    "fileCount": number
+    "fileCount": number,
+    // extra per-job rclone settings for the submission's `_config`, such as `SizeOnly` for a check
+    // or `IgnoreTimes` for copying again the files that a check has found to be different
+    "jobConfig": functions.rcConfig
 }
 // how many times can a queue item get rejected before it stops trying and drops out for good
 // (with en error to console)
@@ -87,12 +91,77 @@ export function addToQueue(operationType: string, filesPanelID: string)
                 : destinationBase,
             "filesPanelID": filesPanelID,
             "submitFailures": 0,
-            "fileCount": -1
+            "fileCount": -1,
+            "jobConfig": {}
         };
         transfersQueue.push(queueItem);
         countQueueItemFiles(queueItem);
 
         checkedBoxes[i].checked = false;
+    }
+}
+
+// a check compares the entire folder that is open in the panel with the one open in the other panel,
+// so unlike the other operations it does not care about the selected items. The checksums setting
+// is taken at the time of the click, so toggling it afterwards does not change an already queued check
+export function addCheckToQueue(filesPanelID: string)
+{
+    transfersQueue.push(
+        {
+            "dtAdded": new Date(),
+            "operationType": "check",
+            "dataType": "folder",
+            "dataPath": functions.panelsPaths[filesPanelID],
+            "sourcePath": "",
+            "targetPath": "",
+            "dstFS": functions.getDestinationPath(filesPanelID),
+            "filesPanelID": filesPanelID,
+            "submitFailures": 0,
+            "fileCount": -1,
+            "jobConfig": {
+                // set explicitly in both cases, so a `--size-only` that rclone was started with
+                // does not quietly turn the checksums off
+                "SizeOnly": settings.userSettings.useChecksumsForChecks !== true
+            }
+        }
+    );
+}
+
+// copying the files that a check has reported as missing or different, where `filePaths` are relative
+// to `sourceFs` (which is how rclone reports them) and go to the same relative paths under `destinationFs`
+// (`/operations/copyfile` creates the missing folders on the way)
+//
+// `IgnoreTimes` is there for a file with a different hash but the same size and modification time,
+// which would otherwise be skipped as unchanged, so copying it again would silently do nothing
+export function queueFileCopies(
+    sourceFs: string,
+    destinationFs: string,
+    filePaths: string[],
+    filesPanelID: string
+    )
+{
+    const sourceBase = sourceFs.endsWith("/") ? sourceFs : sourceFs.concat("/");
+    const destinationBase = destinationFs.endsWith("/") ? destinationFs : destinationFs.concat("/");
+
+    for (let f = 0; f < filePaths.length; f++)
+    {
+        transfersQueue.push(
+            {
+                "dtAdded": new Date(),
+                "operationType": "copy",
+                "dataType": "file",
+                "dataPath": sourceBase.concat(filePaths[f]),
+                "sourcePath": sourceBase,
+                "targetPath": filePaths[f],
+                "dstFS": destinationBase,
+                "filesPanelID": filesPanelID,
+                "submitFailures": 0,
+                "fileCount": -1,
+                "jobConfig": {
+                    "IgnoreTimes": true
+                }
+            }
+        );
     }
 }
 
@@ -116,6 +185,9 @@ export function removeFromQueue(removeBtn: HTMLImageElement, queueItem: QueueIte
 function countQueueItemFiles(queueItem: QueueItem)
 {
     if (queueItem.dataType !== "folder" || queueItem.operationType === "delete") { return; }
+
+    // a check does not use transfers, so there is nothing for the count to decide
+    if (queueItem.operationType === "check") { return; }
 
     // with a single transfer allowed there is nothing for the count to decide, and the queue is
     // a simple one-at-a-time FIFO, so walking of the source to count the files (`/operations/size`)
@@ -171,6 +243,12 @@ function getActiveQueueSlots() : number
 // from finished jobs
 function getQueueItemAllocation(queueItem: QueueItem, slots: number) : number
 {
+    // a check is a barrier: it needs all the slots, so it only starts once nothing that the queue
+    // has started is still running, and then it holds them all, so that it would not check a folder
+    // that is still being copied. It uses checkers and not transfers, so it never reports any,
+    // which is why `getRunningJobCost()` charges it the whole allocation for as long as it runs
+    if (queueItem.operationType === "check") { return slots; }
+
     if (queueItem.dataType !== "folder" || queueItem.operationType === "delete") { return 1; }
 
     // `-1` is `countQueueItemFiles()` not having got an answer (yet?)
@@ -438,6 +516,9 @@ function submitQueueItem(queueItem: QueueItem, allocatedSlots: number)
         case "delete":
             deleteOperation(queueItem, allocatedSlots);
             break;
+        case "check":
+            checkOperation(queueItem, allocatedSlots);
+            break;
         default:
             console.error(`Unknown operation type: ${queueItem.operationType}`);
     }
@@ -453,7 +534,7 @@ function copyOrMoveOperation(queueItem: QueueItem, allocatedSlots: number)
         params["srcFs"] = queueItem.dataPath;
         params["dstFs"] = queueItem.dstFS;
         // without this the job would grab the global number of `--transfers`, which would mess up the queue
-        params["_config"] = { "Transfers": allocatedSlots };
+        params["_config"] = Object.assign({}, queueItem.jobConfig, { "Transfers": allocatedSlots });
         if (queueItem.operationType === "move")
         {
             params["deleteEmptySrcDirs"] = true;
@@ -463,19 +544,23 @@ function copyOrMoveOperation(queueItem: QueueItem, allocatedSlots: number)
         {
             console.error(`Unknown operation type: ${queueItem.operationType}`);
         }
-        functions.sendRequestToRclone(folderOperation, params, function(rez: functions.rcJobSubmission | null)
-        {
-            //console.debug("Folder operation result:", rez);
-            rememberQueueJob(rez, queueItem, allocatedSlots);
-            // if (queueItem.operationType === "move")
-            // {
-            //     refreshFilesListing();
-            // }
-            // else
-            // {
-            //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
-            // }
-        });
+        functions.sendRequestToRclone(
+            folderOperation,
+            params,
+            function(rez: functions.rcJobSubmission | null)
+            {
+                //console.debug("Folder operation result:", rez);
+                rememberQueueJob(rez, queueItem, allocatedSlots);
+                // if (queueItem.operationType === "move")
+                // {
+                //     refreshFilesListing();
+                // }
+                // else
+                // {
+                //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
+                // }
+            }
+        );
     }
     else
     {
@@ -483,26 +568,32 @@ function copyOrMoveOperation(queueItem: QueueItem, allocatedSlots: number)
             "srcFs": queueItem.sourcePath,
             "srcRemote": queueItem.targetPath,
             "dstFs": queueItem.dstFS,
-            "dstRemote": queueItem.targetPath
+            "dstRemote": queueItem.targetPath,
+            // an empty one changes nothing for rclone
+            "_config": queueItem.jobConfig
         };
         let fileOperation = functions.getFileOperation(queueItem.operationType);
         if (fileOperation === "")
         {
             console.error(`Unknown operation type: ${queueItem.operationType}`);
         }
-        functions.sendRequestToRclone(fileOperation, params, function(rez: functions.rcJobSubmission | null)
-        {
-            //console.debug("File operation result:", rez);
-            rememberQueueJob(rez, queueItem, allocatedSlots);
-            // if (queueItem.operationType === "move")
-            // {
-            //     refreshFilesListing();
-            // }
-            // else
-            // {
-            //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
-            // }
-        });
+        functions.sendRequestToRclone(
+            fileOperation,
+            params,
+            function(rez: functions.rcJobSubmission | null)
+            {
+                //console.debug("File operation result:", rez);
+                rememberQueueJob(rez, queueItem, allocatedSlots);
+                // if (queueItem.operationType === "move")
+                // {
+                //     refreshFilesListing();
+                // }
+                // else
+                // {
+                //     openPath(functions.panelsPaths[panelToUpdate], panelToUpdate);
+                // }
+            }
+        );
     }
 }
 
@@ -521,10 +612,39 @@ function deleteOperation(queueItem: QueueItem, allocatedSlots: number)
         console.error(`Unknown operation type: ${queueItem.operationType}`);
     }
     // console.debug("Delete:", folderOperation, params);
-    functions.sendRequestToRclone(folderOperation, params, function(rez: functions.rcJobSubmission | null)
-    {
-        //console.debug("Delete result:", rez);
-        rememberQueueJob(rez, queueItem, allocatedSlots);
-        //openPath(functions.panelsPaths[queueItem.filesPanelID], queueItem.filesPanelID);
-    });
+    functions.sendRequestToRclone(
+        folderOperation,
+        params,
+        function(rez: functions.rcJobSubmission | null)
+        {
+            //console.debug("Delete result:", rez);
+            rememberQueueJob(rez, queueItem, allocatedSlots);
+            //openPath(functions.panelsPaths[queueItem.filesPanelID], queueItem.filesPanelID);
+        }
+    );
+}
+
+// setting `oneWay` parameter because the point of the check is to make sure that everything
+// from the source got copied to the destination, so destination-only files are not a problem.
+// Also there is no `download` parameter, because that would read both sides fully, regardless
+// of whether there are hashes
+function checkOperation(queueItem: QueueItem, allocatedSlots: number)
+{
+    const params: functions.rcRequest = {
+        "srcFs": queueItem.dataPath,
+        "dstFs": queueItem.dstFS,
+        "oneWay": true,
+        "_config": queueItem.jobConfig
+    };
+    functions.sendRequestToRclone(
+        "/operations/check",
+        params,
+        function(rez: functions.rcJobSubmission | null)
+        {
+            rememberQueueJob(rez, queueItem, allocatedSlots);
+            if (rez === null) { return; }
+
+            registerCheckJob(rez, queueItem);
+        }
+    );
 }

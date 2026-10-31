@@ -6,7 +6,8 @@ export const asyncOperations: string[] = [
     "/operations/purge",
     "/operations/copyfile",
     "/operations/movefile",
-    "/operations/deletefile"
+    "/operations/deletefile",
+    "/operations/check"
 ]
 
 export const panelsPaths: {[key: string]: string} = {
@@ -104,16 +105,32 @@ export type rcRequest = {
     dstFs?: string,
     dstRemote?: string,
     deleteEmptySrcDirs?: boolean,
-    // per-job settings, which rclone applies to that job alone and to nothing else, here it is used
-    // to allocate a number of allowed transfers to a folder operation
-    _config?: {
-        Transfers: number
-    },
+    // for `/operations/check`, only report the source files that are missing from
+    // (or different in) the destination and not the other way around
+    oneWay?: boolean,
+    // per-job settings, which rclone applies to that job alone and to nothing else
+    _config?: rcConfig,
     // `/options/set` takes the option block name as the key
     main?: {
         // it really is `Transfers` with a capital `T`
         Transfers: number
     }
+}
+
+// the per-job `_config` (rclone merges it over a copy of its global config, so only
+// the keys given here are changed for that job), and the keys are the same
+// as the `main` block of `/options/get`
+export type rcConfig = {
+    // used to allocate a number of allowed transfers to a folder operation
+    Transfers?: number,
+    // a check that compares only sizes and not hashes. Note that rclone still reports
+    // the `hashType` that it would have used, so the result alone does not tell
+    // whether this was set
+    SizeOnly?: boolean,
+    // transfer even a file whose size and modification time match, which is how a file
+    // that a check found to have a different hash can be copied again (otherwise it gets
+    // skipped as unchanged)
+    IgnoreTimes?: boolean
 }
 
 // only the `main` block is asked for, and only the values listed here are going to be used
@@ -167,6 +184,34 @@ export type rcJobList = {
 export type rcJobSubmission = {
     jobid: number,
     executeId: string
+}
+
+// the result of `/operations/check`. The paths are relative to `srcFs`, and every list
+// is there (as `[]` when empty) except the ones that were not asked for, such as
+// `match`, which are `null`
+export type rcCheckResult = {
+    success: boolean, // `false` also when the check could not be completed (cancelled, no such folder)
+    status: string, // `"OK"` or the reason, such as `"3 differences found"`
+    hashType?: string, // `"none"` when the two remotes have no hash type in common
+    missingOnDst: string[],
+    differ: string[],
+    error: string[] // the files that could not be read or hashed
+}
+
+// `/job/status`. A job that failed as a call (such as an unknown remote) has its reason
+// in `error` and an empty `{}` for `output`, while a check that found differences (or
+// was cancelled) is a successful job, and its outcome is in `output` - so `output`
+// can be read only when `error` is empty
+export type rcJobStatus = {
+    id: number,
+    executeId: string,
+    group: string,
+    finished: boolean,
+    success: boolean,
+    error: string,
+    startTime: string, // ISO-8601 strings, same as `rcTransferred` timestamps
+    endTime: string,
+    output: rcCheckResult
 }
 
 // what rclone answers with when it has nothing to answer with, such as `/operations/mkdir`

@@ -28,6 +28,8 @@ const inputMaximumAllowedTransfers: HTMLInputElement =
     document.getElementById("input-maximum-allowed-transfers") as HTMLInputElement;
 const outputMaximumAllowedTransfersValue: HTMLOutputElement =
     document.getElementById("output-maximum-allowed-transfers-value") as HTMLOutputElement;
+const settingsChbxChecksums: HTMLInputElement =
+    document.getElementById("chbx-checksums") as HTMLInputElement;
 
 export function initSettingsUI()
 {
@@ -53,6 +55,10 @@ export function initSettingsUI()
     updateRefreshViewControls();
 
     getMaximumAllowedRcloneTransfers();
+
+    // `js/settings.js` is edited by a user (and a file deployed before this setting existed
+    // does not have it at all), so anything but an actual `true` leaves the checksums off
+    settingsChbxChecksums.checked = settings.userSettings.useChecksumsForChecks === true;
 
     settingsChbxPolling.addEventListener(
         "change",
@@ -85,6 +91,12 @@ export function initSettingsUI()
     );
 
     btnManualRefresh.addEventListener("click", refreshView);
+
+    // read when a check is added to the queue, so it does not affect the ones that are already there
+    settingsChbxChecksums.addEventListener(
+        "change",
+        function() { settings.userSettings.useChecksumsForChecks = this.checked; }
+    );
 
     settings.userSettings.timerRefreshViewInterval = window.setInterval(
         timerRefreshViewFunction,

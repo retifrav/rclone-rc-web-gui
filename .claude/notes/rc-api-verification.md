@@ -21,6 +21,10 @@ Every *load-bearing* claim held: the 18 endpoints, the idle omission of `transfe
 
 `/core/transferred` reports a single moved file **twice** when rclone falls back to a copy. That one was bisected across nine release binaries rather than only checked against the container's — see `.claude/notes/duplicate-transfers.md`.
 
+## Added on 2026-10-31
+
+`/operations/check` and `/job/status` (now 20 endpoints), measured for the Check operation — see `.claude/notes/check.md` for the result shapes, the progress counters (including why neither `totalChecks` nor `listed` is a total) and the job expiry.
+
 ## Fields rclone sends that no `rc*` type mentions
 
 Purely additive, so the structural reads are unaffected: `core/version` adds `osArch`/`osKernel`/`osVersion`, `core/stats` adds `listed` and four `serverSide*` counters (`serverSideCopies`, `serverSideCopyBytes`, `serverSideMoves`, `serverSideMoveBytes`), and async submissions return `executeId` next to `jobid`.

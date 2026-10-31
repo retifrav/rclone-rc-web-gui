@@ -19,7 +19,7 @@ Both decoupled alternatives were rejected:
 - A `registerTab()` exported by `tabs.ts` and called from each tab's own module scatters the list so that "which tabs exist?" stops having one answer.
 - A `CustomEvent` dispatched on the block has no precedent anywhere in `src/` (there is not one `dispatchEvent` in the codebase) and falls under the same "more indirection than this GUI is worth" stance as the callback registry.
 
-## Why the four import cycles are safe
+## Why the five import cycles are safe
 
 **Nothing is read at module-evaluation time**: every cross-module access happens inside a function that first runs at or after `window.onload`, and the `getElementById` consts are initialised before that (module scripts are deferred, so the DOM is parsed). Breaking them would take a callback registry, which is more indirection than this GUI is worth.
 

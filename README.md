@@ -20,6 +20,7 @@
     - [Configuration](#configuration)
         - [Settings](#settings)
     - [Queue](#queue)
+    - [The check operation](#the-check-operation)
 - [Deployment](#deployment)
     - [Docker](#docker)
     - [Generic GNU/Linux server](#generic-gnulinux-server)
@@ -57,6 +58,8 @@ Having a fancy UI was the least important thing for me, so as you can see it is 
     + [operations/deletefile](https://rclone.org/rc/#operations-deletefile)
 - creating a new directory
     + [operations/mkdir](https://rclone.org/rc/#operations-mkdir)
+- checking that all the files in the source directory are present in the destination directory
+    + [operations/check](https://rclone.org/rc/#operations-check)
 
 #### Sync command isn't supported
 
@@ -229,6 +232,15 @@ Here:
 - `disk` has `canQueryDisk` set to `true`, so it supports querying information about available disk space;
   - in case of external disks, you'll also need to set their mounted path (`pathToQueryDisk`).
 
+The `userSettings` has a `useChecksumsForChecks` key, which is the default state of the checksums checkbox for the [check operation](#the-check-operation) (*`false` by default*). If your `settings.js` is from an older version, then it likely does not have this field, so you can add it there yourself if you'd like to have checksums on by default:
+
+``` js
+export const userSettings = {
+    // ...
+    useChecksumsForChecks = true
+};
+```
+
 #### Settings
 
 There is also a settings section right in the UI - it shows up when you click on the gear icon in the top-right corner of the header.
@@ -244,6 +256,19 @@ Later, however, support for parallel transfers was added as well - mainly for si
 It is probably worth to mention that since this queue is client-side, it is only your browser who knows about it, so if you will add more operations from a different host, browser, or even a different tab in the same browser - all of them can still go in parallel.
 
 The queue being client-side also means that once you close the browser/tab where the UI is running, its queue will no longer exist. However, all the ongoing transfers will of course still be there, as they are already being handled by `rclone` (*[_async = true](https://rclone.org/rc/#running-asynchronous-jobs-with-async-true)*).
+
+### The check operation
+
+By default only the file sizes are compared. You can turn on checksums in [settings](#settings) (*or in [settings.js](#configuration)*), but be aware that this is a much heavier kind of check. Also, it works only if both remotes support a common checksum type, otherwise rclone compares just the sizes anyway (*but the results dialog will show which comparison was done*).
+
+A check goes through the [queue](#queue), and it waits until everything that is higher in the queue is finished, so you can queue a copy and then a check of the same directories right away, and the check will not look at a half-copied directory. While the check is running, nothing else from the queue below it starts either, no matter if there are slots available.
+
+When a check is finished, it gets a single row in the completed transfers table, and clicking on that row shows the results: which files are missing from the destination, which are different and which could not be read. If there are any of those, "Copy the failed files again" button will add them to the queue to be copied again (*overwriting the mismatched ones in the destination*).
+
+A few things to know:
+
+- like the queue, the check results are known only to the browser tab that started the check, so they are gone after a page refresh;
+- rclone keeps a finished job's results only for `--rc-job-expire-duration` (*1 minute by default*), and the UI picks them up within a few seconds, but if it can't (*say, the browser tab was suspended for longer than that*), then the row will say `error` and that the results are not available anymore.
 
 ## Deployment
 

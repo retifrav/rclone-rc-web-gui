@@ -129,6 +129,14 @@ td > progress {
 #completedTransfersBody > tr:hover {
     background-color: #ebebeb;
 }
+/* a finished check, which opens its results dialog */
+#completedTransfersBody > tr.clickable {
+    cursor: pointer;
+}
+#completedTransfersBody > tr.clickable:focus-visible {
+    outline: 2px solid #02699C;
+    outline-offset: -2px;
+}
 /*
     gets displayed by `transfers.ts` when rclone may have dropped
     some of the entries (due to the 100 entries cap per job)
