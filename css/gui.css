@@ -135,10 +135,14 @@ td > progress {
 */
 #completedTransfersTrimmed {
     display: none;
-    margin: 8px 0 0;
+    margin: 15px 10px;
+    border: 2px solid #F7B500;
+    border-radius: 0.25rem;
+    padding: 8px 12px;
+    background-color: hsl(45 100% 94%);
     font-size: 0.9em;
     font-style: italic;
-    color: #757575;
+    color: hsl(38 95% 27%);
 }
 
 #currentTransfers {

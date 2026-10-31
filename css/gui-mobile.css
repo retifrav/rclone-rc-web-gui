@@ -20,6 +20,10 @@
         font-size: 0.9em;
     }
 
+    #completedTransfersTrimmed {
+        margin-inline: 0; /* left and right */
+    }
+
     /* not much space left to show the files size */
     .fileLine > .file-size {
         display: none;
