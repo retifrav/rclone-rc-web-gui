@@ -3,6 +3,7 @@ import * as functions from "./functions.js";
 import * as folder from "./folder.js";
 import * as search from "./search.js";
 import { addToQueue } from "./queue.js";
+import { showMessage, showConfirmation } from "./dialog.js";
 
 // which `openPath()` call owns the panel listing. Since this function can be called once more
 // while its `/operations/list` is still in flight (a folder clicked twice on a slow remote,
@@ -61,22 +62,10 @@ const leftPanelCommandDelete: HTMLButtonElement =
 const rightPanelCommandDelete: HTMLButtonElement =
     document.getElementById("rightPanelCommandDelete") as HTMLButtonElement;
 // create new folder
-const leftPanelNewFolderName: HTMLInputElement =
-    document.getElementById("leftPanelNewFolderName") as HTMLInputElement;
-const rightPanelNewFolderName: HTMLInputElement =
-    document.getElementById("rightPanelNewFolderName") as HTMLInputElement;
 const leftPanelCommandShowCreateFolder: HTMLButtonElement =
     document.getElementById("leftPanelCommandShowCreateFolder") as HTMLButtonElement;
 const rightPanelCommandShowCreateFolder: HTMLButtonElement =
     document.getElementById("rightPanelCommandShowCreateFolder") as HTMLButtonElement;
-const leftPanelCommandCreateFolder: HTMLButtonElement =
-    document.getElementById("leftPanelCommandCreateFolder") as HTMLButtonElement;
-const rightPanelCommandCreateFolder: HTMLButtonElement =
-    document.getElementById("rightPanelCommandCreateFolder") as HTMLButtonElement;
-const leftPanelCommandHideCreateFolder: HTMLButtonElement =
-    document.getElementById("leftPanelCommandHideCreateFolder") as HTMLButtonElement;
-const rightPanelCommandHideCreateFolder: HTMLButtonElement =
-    document.getElementById("rightPanelCommandHideCreateFolder") as HTMLButtonElement;
 // refresh
 const leftPanelCommandRefresh: HTMLButtonElement =
     document.getElementById("leftPanelCommandRefresh") as HTMLButtonElement;
@@ -158,62 +147,13 @@ export function initPanels()
         function() { deleteClicked(this, "rightPanelFiles"); }
     );
     // create new folder
-    leftPanelNewFolderName.addEventListener(
-        "keydown", // with `keyup` the `Enter` key event gets into a "loop" on closing the alert with `Enter` too
-        function(e)
-        {
-            switch (e.key)
-            {
-                case "Enter":
-                    folder.createFolderClicked(leftPanelCommandCreateFolder, "leftPanelFiles");
-                    break;
-                case "Escape":
-                    folder.hideCreateFolder(this);
-                    break;
-            }
-        }
-    );
-    rightPanelNewFolderName.addEventListener(
-         "keydown", // with `keyup` the `Enter` key event gets into a "loop" on closing the alert with `Enter` too
-         function(e)
-         {
-            switch (e.key)
-            {
-                case "Enter":
-                    folder.createFolderClicked(
-                        rightPanelCommandCreateFolder,
-                        "rightPanelFiles"
-                    );
-                    break;
-                case "Escape":
-                    folder.hideCreateFolder(this);
-                    break;
-            }
-         }
-    );
     leftPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { folder.showCreateFolder(this, "leftPanelFiles"); }
+        function() { folder.createFolderClicked("leftPanelFiles"); }
     );
     rightPanelCommandShowCreateFolder.addEventListener(
         "click",
-        function() { folder.showCreateFolder(this, "rightPanelFiles"); }
-    );
-    leftPanelCommandCreateFolder.addEventListener(
-        "click",
-        function() { folder.createFolderClicked(this, "leftPanelFiles"); }
-    );
-    rightPanelCommandCreateFolder.addEventListener(
-        "click",
-        function() { folder.createFolderClicked(this, "rightPanelFiles"); }
-    );
-    leftPanelCommandHideCreateFolder.addEventListener(
-        "click",
-        function() { folder.hideCreateFolder(this); }
-    );
-    rightPanelCommandHideCreateFolder.addEventListener(
-        "click",
-        function() { folder.hideCreateFolder(this) }
+        function() { folder.createFolderClicked("rightPanelFiles"); }
     );
     // refresh
     leftPanelCommandRefresh.addEventListener(
@@ -692,7 +632,11 @@ export function refreshClicked(filesPanelID: string)
     }
     else
     {
-        alert("Nothing to refresh, choose a remote first.");
+        showMessage(
+            "warning",
+            "No remote chosen",
+            [ "Nothing to refresh, choose a remote first." ]
+        );
     }
 }
 
@@ -708,7 +652,78 @@ function moveClicked(btn: HTMLButtonElement, filesPanelID: string)
 
 function deleteClicked(btn: HTMLButtonElement, filesPanelID: string)
 {
-    operationClicked(btn, "delete", filesPanelID);
+    // the same selection that `addToQueue()` is going to take, so the dialog
+    // also lists the ticked rows that are scrolled out of view
+    const checkedBoxes: HTMLInputElement[] = Array.from(
+        getFilesPanel(filesPanelID).querySelectorAll("input[name=fileListItem]:checked")
+    );
+    if (checkedBoxes.length === 0) { return; }
+
+    let hasFolders: boolean = false;
+    const itemsList: HTMLUListElement = Object.assign(
+        document.createElement("ul"),
+        {
+            className: "dialog-list"
+        }
+    );
+    for (let i = 0; i < checkedBoxes.length; i++)
+    {
+        const fileLine: HTMLDivElement = checkedBoxes[i].nextElementSibling as HTMLDivElement;
+        if (fileLine.dataset.type === "folder") { hasFolders = true; }
+
+        const li: HTMLLIElement = document.createElement("li");
+        li.appendChild(
+            Object.assign(
+                document.createElement("img"),
+                {
+                    src: (fileLine.querySelector(".icon") as HTMLImageElement).getAttribute("src")!,
+                    alt: ""
+                }
+            )
+        );
+        const spanName: HTMLSpanElement = document.createElement("span");
+        spanName.appendChild(
+            document.createTextNode(
+                (fileLine.querySelector(".file-name") as HTMLParagraphElement).textContent!
+            )
+        );
+        li.appendChild(spanName);
+        itemsList.appendChild(li);
+    }
+
+    const question: HTMLParagraphElement = document.createElement("p");
+    question.appendChild(
+        document.createTextNode(
+            "Delete ".concat(
+                checkedBoxes.length === 1 ? "this item" : `these ${checkedBoxes.length} items`,
+                " from "
+            )
+        )
+    );
+    const questionPath: HTMLElement = document.createElement("code");
+    questionPath.appendChild(document.createTextNode(functions.panelsPaths[filesPanelID]));
+    question.appendChild(questionPath);
+    question.appendChild(document.createTextNode("?"));
+
+    showConfirmation(
+        "trash3.svg",
+        "Delete",
+        [
+            question,
+            itemsList,
+            hasFolders
+                ? "Folders are deleted with everything in them, and this cannot be undone."
+                : "This cannot be undone."
+        ],
+        "Delete"
+    ).then(
+        function(confirmed: boolean)
+        {
+            if (confirmed !== true) { return; }
+
+            operationClicked(btn, "delete", filesPanelID);
+        }
+    );
 }
 
 function operationClicked(btn: HTMLButtonElement, operationType: string, filesPanelID: string)
@@ -717,7 +732,11 @@ function operationClicked(btn: HTMLButtonElement, operationType: string, filesPa
     {
         if (functions.panelsPathsHaveValue() !== true)
         {
-            alert("Cannot perform an operation when one of the panels does not have a remote chosen.");
+            showMessage(
+                "warning",
+                "No remote chosen",
+                [ "Cannot perform an operation when one of the panels does not have a remote chosen." ]
+            );
             return;
         }
     }

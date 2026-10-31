@@ -1,11 +1,16 @@
 import { panelsPaths, debounce } from "./functions.js";
 import { updateFilesCount } from "./panel.js";
+import { showMessage } from "./dialog.js";
 
 export function showSearch(btn: HTMLButtonElement, filesPanelID: string)
 {
     if (panelsPaths[filesPanelID] === "")
     {
-        alert("Nothing to search in, choose a remote first.");
+        showMessage(
+            "warning",
+            "No remote chosen",
+            [ "Nothing to search in, choose a remote first." ]
+        );
         return;
     }
 
@@ -24,7 +29,7 @@ export function hideSearch(btn: HTMLButtonElement | HTMLInputElement, filesPanel
     searchBlock.style.display = "none";
     // the search query needs to be emptied with the block, otherwise reopening the search panel
     // will show a query that is not being applied to anything, since `clearSearch()` has just
-    // made the entire listing unfiltered again (same with `createFolderClicked()`)
+    // made the entire listing unfiltered again
     (searchBlock.querySelector("input") as HTMLInputElement).value = "";
     (panelDiv.querySelector(".controls") as HTMLDivElement).style.display = "flex";
 

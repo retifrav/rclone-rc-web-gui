@@ -2,6 +2,7 @@ import * as settings from "./settings.js";
 import * as functions from "./functions.js";
 import { rcloneTransfers } from "./settings-ui.js";
 import { refreshView } from "./transfers.js";
+import { showMessage } from "./dialog.js";
 
 export type QueueItem = {
     "dtAdded": Date,
@@ -234,6 +235,7 @@ function rememberQueueJob(rez: functions.rcJobSubmission | null, queueItem: Queu
                 + "could mean an unreachable remote, a path that is no longer valid or some other problem "
                 + "of the sorts."
             );
+            reportDroppedQueueItem(queueItem);
             return;
         }
 
@@ -248,6 +250,46 @@ function rememberQueueJob(rez: functions.rcJobSubmission | null, queueItem: Queu
             "dataType": queueItem.dataType,
             "allocatedSlots": allocatedSlots
         }
+    );
+}
+
+// the list of the currently open "removed from the queue" dialog, so the items
+// that are given up on while it is open get added to it instead of each one opening
+// a dialog of its own on top of it (a batch of items which rclone refuses for the same
+// reason would otherwise produce a stack of those)
+let droppedQueueItemsList: HTMLUListElement | null = null;
+
+function reportDroppedQueueItem(queueItem: QueueItem)
+{
+    const li: HTMLLIElement = document.createElement("li");
+    li.appendChild(document.createTextNode(queueItem.operationType.concat(" of ")));
+    const itemPath: HTMLElement = document.createElement("code");
+    itemPath.appendChild(document.createTextNode(queueItem.dataPath));
+    li.appendChild(itemPath);
+
+    if (droppedQueueItemsList !== null)
+    {
+        droppedQueueItemsList.appendChild(li);
+        return;
+    }
+
+    droppedQueueItemsList = Object.assign(
+        document.createElement("ul"),
+        {
+            className: "dialog-list"
+        }
+    );
+    droppedQueueItemsList.appendChild(li);
+    showMessage(
+        "error",
+        "Removed from the queue",
+        [
+            `rclone refused to start these ${queueSubmitAttempts} times in a row, so they have been `
+            + "taken off the queue. The browser console has the details.",
+            droppedQueueItemsList
+        ]
+    ).then(
+        function() { droppedQueueItemsList = null; }
     );
 }
 

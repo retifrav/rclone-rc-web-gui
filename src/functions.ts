@@ -169,6 +169,18 @@ export type rcJobSubmission = {
     executeId: string
 }
 
+// what rclone answers with when it has nothing to answer with, such as `/operations/mkdir`
+export type rcEmptyResponse = Record<string, never>;
+
+// a response together with the reason rclone gave when it did not answer with a 200,
+// for the callers that show that reason to the user (see `requestRcloneWithError()`)
+export type rcOutcome<T> = {
+    rez: T | null,
+    // rclone's own `error` message on a non-200, and an empty string when there is none:
+    // on a 200, and on a failed request that wasn't answered by rclone's rc (a 401, a proxy)
+    error: string
+}
+
 // function for sending requests to rclone (with a callback-enabled variant
 // in `sendRequestToRclone()`)
 //
@@ -176,14 +188,25 @@ export type rcJobSubmission = {
 // can be told apart:
 //
 // 1. Parsed response on a 200;
-// 2. `null` when rclone answered with anything else (the status code and a 500's `error`
+// 2. `null` when rclone answered with anything else (the status code and rclone's `error`
 //    message have already been reported to the console by then);
 // 3. Rejection when the request never made it to rclone at all.
 export function requestRclone<T>(query: string, params: rcRequest | null) : Promise<T | null>
 {
+    // the 3rd outcome is a rejection here too, as it passes through this `then()` untouched
+    return requestRcloneWithError<T>(query, params).then(
+        function(outcome: rcOutcome<T>) { return outcome.rez; }
+    );
+}
+
+// the same three outcomes as `requestRclone()`, except that the 2nd one also carries the `error`
+// message which rclone sends with it, which is what lets a dialog show the reason (and not just
+// that something failed). Everything else goes through `requestRclone()`, which wraps this one
+export function requestRcloneWithError<T>(query: string, params: rcRequest | null) : Promise<rcOutcome<T>>
+{
     // the executor runs synchronously, so the request goes out during this call
     // (exactly as it did when this function had a callback)
-    return new Promise<T | null>(function(resolve, reject)
+    return new Promise<rcOutcome<T>>(function(resolve, reject)
     {
         let url = rcloneSettings.host.concat(query);
         let xhr = new XMLHttpRequest();
@@ -224,22 +247,19 @@ export function requestRclone<T>(query: string, params: rcRequest | null) : Prom
             {
                 console.group("Request has failed");
                 console.error(`Error, HTTP status code: ${xhr.status}`);
-                if (xhr.status === 500)
+                const rezError: string = getRcloneError(xhr);
+                if (rezError !== "")
                 {
-                    let rezError = JSON.parse(xhr.response)["error"];
-                    if (rezError !== undefined && rezError !== null)
-                    {
-                        console.error(rezError);
-                        //alert("rclone reported an error. Check console for more details");
-                    }
+                    console.error(rezError);
+                    //alert("rclone reported an error. Check console for more details");
                 }
                 console.groupEnd();
-                resolve(null);
+                resolve({ rez: null, error: rezError });
             }
             else
             {
                 //console.debug(xhr.response);
-                resolve(JSON.parse(xhr.response) as T);
+                resolve({ rez: JSON.parse(xhr.response) as T, error: "" });
             }
         };
 
@@ -251,16 +271,33 @@ export function requestRclone<T>(query: string, params: rcRequest | null) : Prom
     });
 }
 
-// callback-enabled function for sending requests to rclone. This is what almost every call
-// in the UI uses: callback gets the parsed response on a 200 and `null` when rclone answered
-// with anything else, while a request that never made it does not call back at all - and only
-// the `processQueue()` needs to know about that 3rd outcome, so it goes directly to `requestRclone()`
+// rclone sends its reason as JSON with every rc error (400, 404 and 500 alike),
+// but not every failed request is answered by the rc: a 401 is `text/plain`,
+// and so is an error page of a reverse proxy in between (or rather HTML). Parsing
+// those would throw inside `onload`, after which the promise would never settle,
+// hence checking the `Content-Type` before parsing anything
+function getRcloneError(xhr: XMLHttpRequest) : string
+{
+    const contentType: string | null = xhr.getResponseHeader("Content-Type");
+    if (contentType === null || !contentType.startsWith("application/json")) { return ""; }
+
+    const rezError: unknown = JSON.parse(xhr.response)["error"];
+    return typeof rezError === "string" ? rezError : "";
+}
+
+// callback-enabled function for sending requests to rclone. This is what almost
+// every call in the UI uses: callback gets the parsed response on a 200 and `null`
+// when rclone answered with anything else, while a request that never made it
+// does not call back at all. Only `processQueue()` and the New folder dialog need
+// to know about that 3rd outcome, so they go directly to `requestRclone()`
+// and `requestRcloneWithError()` respectively
 export function sendRequestToRclone<T>(query: string, params: rcRequest | null, fn: (rez: T | null) => void)
 {
-    // the empty rejection handler is what keeps a request that never made it from calling back,
-    // and it has to be the second argument of `then()` (so not a `.catch()`) on the end:
-    // `fn` is called from inside the chain, so a `.catch()` would also swallow an exception
-    // thrown by `fn` itself (and by everything it calls) and report it as a failed request
+    // the empty rejection handler is what keeps a request that never made it from
+    // calling back, and it has to be the second argument of `then()` (so not
+    // a `.catch()`) on the end: `fn` is called from inside the chain, so a `.catch()`
+    // would also swallow an exception thrown by `fn` itself (and by everything it calls)
+    // and report it as a failed request
     requestRclone<T>(query, params).then(fn, function() {});
 }
 

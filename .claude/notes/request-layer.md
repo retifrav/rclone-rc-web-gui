@@ -20,4 +20,4 @@ Only *synchronous* XHR is deprecated, `fetch` buys nothing measurable for small 
 
 ## Why no logging in the `rez === null` guards
 
-`requestRclone` has already written the status code (and any 500 `error` message) to the console before the callback runs. A transport failure logs in `xhr.onerror`, rejects, and is absorbed by the adapter's empty rejection handler without ever invoking the callback, so `null` is the only bad value that can arrive.
+`requestRclone` has already written the status code (and rclone's `error` message, for any status whose body is `application/json`) to the console before the callback runs. A transport failure logs in `xhr.onerror`, rejects, and is absorbed by the adapter's empty rejection handler without ever invoking the callback, so `null` is the only bad value that can arrive.
