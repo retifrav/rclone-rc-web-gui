@@ -84,20 +84,18 @@
 
             <h5>[ rclone ]</h5>
             <div class="settings-item">
-                <label for="input-maximum-allowed-transfers">Parallel transfers</label>
+                <label for="input-maximum-allowed-transfers"
+                    title="How many simultaneous transfers rclone is allowed to do. Note that changing this setting does not apply to the current jobs that are already in progress.">Parallel transfers</label>
                 <div class="settings-control">
                     <input id="input-maximum-allowed-transfers" type="range" min="1" max="20" step="1" value="1">
                     <output id="output-maximum-allowed-transfers-value" for="input-maximum-allowed-transfers">1</output>
-                    <img class="icon info-badge" src="./images/info-square.svg"
-                        title="How many simultaneous transfers rclone is allowed to do. Note that changing this setting does not apply to the current jobs that are already in progress.">
                 </div>
             </div>
             <div class="settings-item">
-                <label for="chbx-checksums">Checks with checksums</label>
+                <label for="chbx-checksums"
+                    title="Whether the check operation compares not only file sizes but checksums too. Be aware that this is a much heavier kind of check than comparing just the sizes (on local disks and SFTP remotes every file has to be read fully on both sides), however unlike size-only check it does reveal differences when a destination file has correct size but different content and different modification time. Also, it gets actually enabled only if both remotes support a common checksum type, otherwise rclone will compare only the sizes anyway. Note that changing this setting does not apply to the checks that are already in the queue.">Checks with checksums</label>
                 <div class="settings-control">
                     <input id="chbx-checksums" type="checkbox">
-                    <img class="icon info-badge" src="./images/info-square.svg"
-                        title="Whether the check operation compares not only file sizes but checksums too. Be aware that this is a much heavier kind of check than comparing just the sizes (on local disks and SFTP remotes every file has to be read fully on both sides), however unlike size-only check it does reveal differences when a destination file has correct size but different content and different modification time. Also, it actually gets enabled only if both remotes support a common checksum type, otherwise rclone will compare only the sizes anyway. Note that changing this setting does not apply to the checks that are already in the queue.">
                 </div>
             </div>
         </div>

@@ -482,6 +482,9 @@ pre {
     justify-self: end;
     text-align: right;
 }
+.settings-item > :first-child[title] {
+    cursor: help;
+}
 
 .settings-control {
     display: flex;
@@ -517,14 +520,6 @@ pre {
 }
 .settings-control > button {
     padding: 4px 8px;
-}
-.settings-control > .info-badge {
-    flex-shrink: 0;
-}
-
-.info-badge {
-    cursor: help;
-    opacity: 0.7;
 }
 
 /* --- donation tab --- */

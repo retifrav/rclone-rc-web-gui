@@ -259,7 +259,7 @@ The queue being client-side also means that once you close the browser/tab where
 
 ### The check operation
 
-By default only the file sizes are compared. You can turn on checksums in [settings](#settings) (*or in [settings.js](#configuration)*), but be aware that this is a much heavier kind of check. Also, it works only if both remotes support a common checksum type, otherwise rclone compares just the sizes anyway (*but the results dialog will show which comparison was done*).
+By default only the file sizes are compared. You can turn on checksums in [settings](#settings) (*or in [settings.js](#configuration)*), but be aware that this is a much heavier kind of check. Also, it works only if both remotes support a common checksum type, otherwise rclone compares just the sizes anyway (*but the results dialog will show which kind of comparison was used*).
 
 A check goes through the [queue](#queue), and it waits until everything that is higher in the queue is finished, so you can queue a copy and then a check of the same directories right away, and the check will not look at a half-copied directory. While the check is running, nothing else from the queue below it starts either, no matter if there are slots available.
 

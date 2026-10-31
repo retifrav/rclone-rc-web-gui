@@ -48,9 +48,11 @@ export const userSettings: UserSettings = {
     timerProcessQueue: 5, // seconds
     timerProcessQueueInterval: undefined,
     // whether the check operation compares checksums (so not size-only) by default.
-    // Using checksums is a much heavier kind of check: on local disks and SFTP remotes
-    // every file gets read in full on both sides. It also works only if both remotes
-    // have a hash type in common, otherwise rclone compares just the sizes anyway
+    // Using checksums is a much heavier kind of check than comparing just the sizes,
+    // however unlike size-only check it does reveal differences when a destination file
+    // has correct size but different content and different modification time. Also,
+    // it gets actually enabled only if both remotes support a common checksum type,
+    // otherwise rclone will compare only the sizes anyway
     useChecksumsForChecks: false
 }
 

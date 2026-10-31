@@ -389,6 +389,8 @@ The settings tab's rows are a **two-column grid** — one column of labels, one 
 
 Two smaller notes. The trailing `seconds` stays a `<label for="input-refresh-view">` so clicking it still focuses the slider. And `#manualRefresh`'s label is a **`<span>`, not a `<label for="btn-manualRefresh">`** — a button takes its accessible name from its contents, and clicking a label for one is not a useful affordance.
 
+**A row's explanation goes in the `title` of its label, not in an element of its own** — there used to be an `info-badge` image beside the transfers slider and the checksums checkbox for that, removed as clutter. `.settings-item > :first-child[title]` gives such a label `cursor: help`, so the question-mark cursor appears exactly where a tooltip exists and a label without a `title` gets none; it is `:first-child` for the same reason as the right-alignment rule.
+
 ### Version string
 
 **Before touching the version, the release tags or `docker/prepare-for-building-the-image.sh`, read `.claude/notes/version-string.md`** — it holds what each of the five guards is worth, why the extractions are POSIX `sed` and why the script no longer needs GNU `sed` at all, and the two alternatives that were rejected.
