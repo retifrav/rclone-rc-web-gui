@@ -667,13 +667,16 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
     }
     // a single moved file arrives as two identical transfers when rclone had to fall back
     // from move to copy. There are more details in `collapseDuplicateTransfers()`
-    const transfersToShow: functions.rcTransferred[] =
-        functions.collapseDuplicateTransfers(actualTransfers).concat(completedChecks);
+    const collapsedTransfers: functions.rcTransferred[] =
+        functions.collapseDuplicateTransfers(actualTransfers);
+    const transfersToShow: functions.rcTransferred[] = collapsedTransfers.concat(completedChecks);
 
     transfersToShow.sort(functions.sortJobs).reverse();
     reconcileCompletedTransfers(transfersToShow);
 
-    completedTransfersCount.textContent = transfersToShow.length.toString();
+    // a finished check has a row in the table, but it has not transferred anything,
+    // so the counter does not count it
+    completedTransfersCount.textContent = collapsedTransfers.length.toString();
     // a response can consist of nothing but checks, which is what every running
     // check job produces, and then there is nothing to show but the table's header
     completedTransfersBlock.style.display = transfersToShow.length > 0 ? "block" : "none";
