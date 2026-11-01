@@ -201,11 +201,7 @@ Here's also an example of using this image to run a container in Synology DSM [C
 Being tailored to my needs, this particular setup has certain specifics, which you might not necessaryly want to have in yours, namely:
 
 - the container data folders are owned by a specially created `docker:dockers` system user, which has no access rights to anywhere but that one dedicated `/volume1/docker/` folder (*not sure if that actually makes any difference*);
-- the container port `5572` isn't mapped to the host, as instead there is also an NGINX container running, who serves as a reverse-proxy for it (*and other containers in that particular Docker network*);
-- that NGINX container is in turn also not mapping its ports to host - instead it's Synology DSM Login Portal who exposes NGINX container ports via the [Reverse Proxy](https://kb.synology.com/vi-vn/DSM/help/DSM/AdminCenter/system_login_portal_advanced?version=7#b_5) feature;
-    - this intermediate step of having NGINX container might seem redundant, and you can actually reverse-proxy the containers "directly", but in that case you won't be able to access them by names, so instead of having one static IP address of just the NGINX container, you will have to use static IP addresses of every single container, which is less convenient.
-
-...so if your setup is different, you will need to adjust the following instructions accordingly.
+- the container's port (*`5572`*) isn't mapped to the host, instead the container gets a static IP address assigned to it in a custom Docker bridge network, and then it gets reverse-proxied with Synology DSM Login Portal [Reverse Proxy](https://kb.synology.com/vi-vn/DSM/help/DSM/AdminCenter/system_login_portal_advanced?version=7#b_5) feature.
 
 First, create a folder for storing the container data - what needs to survive between container restarts/rebuilds. I've put mine into `/volume1/docker/rclone-rc-web-gui/`. Inside that path create folders for `data`, `settings` and `config`. Then make `docker` user to be the owner of those folders:
 
@@ -213,11 +209,7 @@ First, create a folder for storing the container data - what needs to survive be
 
 Once again about the UIDs: container works with those folders as `rclone` user with UID `1000`, while a DSM system user (*`docker` in my case*) gets whatever UID the DSM has assigned to it, which is most likely not `1000`. So either do `chown -R 1000:1000` on those folders (*which on Synology DSM can only be done via SSH*) or keep them owned by `docker` and tell the container to run as that user by adding `user: "UID:GID"`. If you fail to do either, the container won't start with an explicit error about that.
 
-If you are ready, open Container Manager and create a new project (*that part of `docker-compose.yaml` on the screenshot is obsolete now, see the actual example after the screenshot*):
-
-![](./images/synology-dsm-container-manager-create.png)
-
-Here's the full example of a `docker-compose.yaml`:
+Then open Container Manager and create a new project:
 
 ``` yaml
 networks:
@@ -226,7 +218,7 @@ networks:
 
 services:
   server:
-    image: decovar/rclone-rc-web-gui:rclone_1.75.1-gui_2026.9.12
+    image: decovar/rclone-rc-web-gui:rclone_1.75.2-gui_2026.10.10
     container_name: rclone-rc-web-gui
     restart: unless-stopped
     user: "YOUR-DOCKER-USER-UID:YOUR-DOCKERS-GROUP-GID"
@@ -237,7 +229,7 @@ services:
       # that is the IP address of my Synology NAS host in my home network
       - RCLONE_ALLOW_ORIGIN_HOST=192.168.1.100
       # that public port on my Synology NAS exposed via Reverse Proxy in Login Portal
-      - RCLONE_ALLOW_ORIGIN_PORT=11001
+      - RCLONE_ALLOW_ORIGIN_PORT=11011
       # username for Basic authentication
       - RCLONE_USER=rclone
       # password for Basic authentication
@@ -246,9 +238,7 @@ services:
       - HOME=/home/rclone
     networks:
       hub:
-        # static IP address for the container, which isn't really needed for this one,
-        # as it will be accessed by NGINX container via name, not IP address. But while
-        # we are here, this is how NGINX container gets its static IP address 172.18.0.10
+        # static IP address (for Synology DSM's Reverse Proxy to be able to reach the container)
         ipv4_address: 172.18.0.11
     volumes:
       # default local remote path, which doesn't even have to be mapped, if you don't intend to use it
@@ -274,27 +264,11 @@ If you don't yet have a custom network, container creation will fail. So create 
 
 ![](./images/synology-dsm-container-manager-network-hub.png)
 
-And then for NGINX container you add the following website configuration (*`/volume1/docker/nginx/data/conf.d/rclone-rc-web-gui.conf`, in my case*):
-
-``` nginx
-server {
-    listen 11001;
-
-    location / {
-        proxy_pass http://rclone-rc-web-gui:5572;
-        proxy_set_header Host $host:$server_port;
-        proxy_set_header X-Forwarded-Proto https;
-    }
-}
-```
-
 Finally, here are the settings for Reverse Proxy in Login Portal:
 
 ![](./images/synology-dsm-login-portal-reverse-proxy.png)
 
-The `172.18.0.10` on the screenshot is the static IP address of the NGINX container in that same custom Docker network named `hub`.
-
-This is it, once you build and run the container, the GUI should become available at <https://192.168.1.100:11001>, and `rclone rc` requests should satisfy the CORS policy.
+This is it - once you build and run the container, the GUI should become available at <https://192.168.1.100:11011> (*and HTTP requests to `rclone rc` should satisfy the CORS policy*).
 
 ## Breaking changes
 
