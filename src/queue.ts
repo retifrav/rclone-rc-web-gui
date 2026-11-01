@@ -101,9 +101,10 @@ export function addToQueue(operationType: string, filesPanelID: string)
     }
 }
 
-// a check compares the entire folder that is open in the panel with the one open in the other panel,
-// so unlike the other operations it does not care about the selected items. The checksums setting
-// is taken at the time of the click, so toggling it afterwards does not change an already queued check
+// a check compares (recursively) the entire folder that is open in the panel with the one
+// open in the other panel, so unlike the other operations it does not care about the selected
+// items. The checksums setting is taken at the time of the click, so toggling it afterwards
+// does not change an already queued check
 export function addCheckToQueue(filesPanelID: string)
 {
     transfersQueue.push(
@@ -121,7 +122,11 @@ export function addCheckToQueue(filesPanelID: string)
             "jobConfig": {
                 // set explicitly in both cases, so a `--size-only` that rclone was started with
                 // does not quietly turn the checksums off
-                "SizeOnly": settings.userSettings.useChecksumsForChecks !== true
+                "SizeOnly": settings.userSettings.useChecksumsForChecks !== true,
+                // `--max-depth` that rclone was started with would otherwise limit the check
+                // to the specified depth and so it could report a check being OK without even
+                // looking in folders deeper than that level
+                "MaxDepth": -1
             }
         }
     );

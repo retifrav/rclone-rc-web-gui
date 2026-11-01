@@ -130,7 +130,10 @@ export type rcConfig = {
     // transfer even a file whose size and modification time match, which is how a file
     // that a check found to have a different hash can be copied again (otherwise it gets
     // skipped as unchanged)
-    IgnoreTimes?: boolean
+    IgnoreTimes?: boolean,
+    // how many levels of folders an operation goes into, `-1` means no limit,
+    // which is the default, unless rclone was started with `--max-depth N`
+    MaxDepth?: number
 }
 
 // only the `main` block is asked for, and only the values listed here are going to be used

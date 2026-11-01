@@ -15,6 +15,15 @@ The real concern is **cost, not support**: the local backend has `SlowHash: true
 
 `_config: {"SizeOnly": true}` is honoured by `operations/check`: a same-size, different-content pair is reported in `differ` without it and passes with it. But **`hashType` is `md5` in both cases**, because rclone computes the common hash type before it looks at `SizeOnly`, so the result alone cannot say whether hashes were compared. The GUI therefore keeps its own `sizeOnly` per check. It sends `SizeOnly: false` explicitly too, so that an `rcd` started with `--size-only` cannot silently turn the checksums off.
 
+## `MaxDepth`, and why filters are left alone
+
+Measured on 2026-11-01 (rclone v1.75.2) over HTTP against a real `rcd --max-depth 1 --exclude '*.log'`, with a tree where one file was missing on the destination three folders down (`a/b/c/deep.txt`), one differed two folders down (`a/b/two.txt`), and an uncopied `skipped.log` sat at the top:
+
+- `operations/check` is recursive by default, but the global `--max-depth` limits it, and then the result is **`success: true`, `status: "OK"`**, with `match: ["top.txt"]` only. With `_config: {"MaxDepth": -1}` the same `rcd` reported `missingOnDst: ["a/b/c/deep.txt"]` and `differ: ["a/b/two.txt"]`, so the per-job override works.
+- `/options/get` reports the flag as `main.MaxDepth` (`-1` when unset, `1` here), and `/options/set` changes it at runtime (set to `2`, then read back as `2`). `/job/status` of a finished check carries `differ`, `error`, `hashType`, `missingOnDst`, `missingOnSrc`, `status` and `success` and nothing about depth. A note in the results dialog was considered and rejected for those reasons: it would need the value recorded at submission (a read when the dialog opens can be stale), and it would sit behind a green `OK` row that nobody has a reason to click.
+- `skipped.log` stayed unreported even with `MaxDepth: -1`, as `--exclude` still applied. The check deliberately leaves filters alone: overriding them would list every excluded file as missing, and folder copies honour them too, so a check that honours them agrees with what was copied.
+- Under `--max-depth 1` folder copies are still limited: `sync/copy` of the same source copied only `top.txt` (loopback). So "Copy X, then Check X" on such an `rcd` reports the deeper files as missing, which is true. "Copy the failed files again" then fixes it, since `operations/copyfile` of `a/b/c/deep.txt` (with `IgnoreTimes: true`, like the requeued copies) worked under the same `--max-depth 1`.
+
 ## Result shapes (`/job/status` of an async check)
 
 | Case | job `error` | job `success` | `output` |

@@ -268,7 +268,8 @@ When a check is finished, it gets a single row in the completed transfers table,
 A few things to know:
 
 - like the queue, the check results are known only to the browser tab that started the check, so they are gone after a page refresh;
-- rclone keeps a finished job's results only for `--rc-job-expire-duration` (*1 minute by default*), and the UI picks them up within a few seconds, but if it can't (*say, the browser tab was suspended for longer than that*), then the row will say `error` and that the results are not available anymore.
+- rclone keeps a finished job's results only for `--rc-job-expire-duration` (*1 minute by default*), and the UI picks them up within a few seconds, but if it can't (*say, the browser tab was suspended for longer than that*), then the row will say `error` and that the results are not available anymore;
+- a check always goes through all the nested directories, even if rclone was started with `--max-depth`, but filters such as `--exclude` are still respected.
 
 ## Deployment
 
