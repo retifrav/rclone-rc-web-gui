@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# development build is mostly for running locally, so it skips the release-specific checks
+devBuild=0
+# skipping the date check is for a release that is published on a later date
+skipDateCheck=0
+for arg in "$@"; do
+    case "$arg" in
+        -d|--dev)
+            devBuild=1
+            ;;
+        --skip-date-check)
+            skipDateCheck=1
+            ;;
+        *)
+            echo "[ERROR] Unknown argument: $arg" >&2
+            echo "    Usage: $0 [-d|--dev] [--skip-date-check]" >&2
+            exit 9
+            ;;
+    esac
+done
+
 currentDir="$(basename "$PWD")"
 if [ "$currentDir" != "rclone-rc-web-gui" ]; then
     echo '[ERROR] This script should run from the rclone-rc-web-gui repository root' >&2
@@ -41,28 +61,36 @@ if ! printf '%s' "$guiVersion" | grep -qE '^[0-9]{4}\.([1-9]|1[0-2])\.([1-9]|[12
     exit 5
 fi
 
-# if that version has been released already, then most likely maintainer forgot to bump it
-if git rev-parse -q --verify "refs/tags/v$guiVersion" > /dev/null; then
-    echo "[ERROR] Tag v$guiVersion exists already, so the version likely needs bumping" >&2
-    exit 6
-fi
+if [ "$devBuild" -eq 1 ]; then
+    echo 'Development build, skipping the release checks (tag, commit and date)'
+else
+    # if that version has been released already, then most likely maintainer forgot to bump it
+    if git rev-parse -q --verify "refs/tags/v$guiVersion" > /dev/null; then
+        echo "[ERROR] Tag v$guiVersion exists already, so the version likely needs bumping" >&2
+        echo "    Or re-run with --dev, if this is not a release build" >&2
+        exit 6
+    fi
 
-# an uncommitted bump would mean the image shipping a version that is neither in the release commit
-# nor in its tag, as the archive is built from the working tree
-guiVersionCommitted=$(git show HEAD:src/main.ts | sed -n 's/^const guiVersion: string = "\(.*\)";$/\1/p')
-if [ "$guiVersion" != "$guiVersionCommitted" ]; then
-    echo "[ERROR] Version $guiVersion is not committed yet (HEAD has ${guiVersionCommitted:-none})" >&2
-    exit 7
-fi
+    # an uncommitted bump would mean the image shipping a version that is neither in the release
+    # commit nor in its tag, as the archive is built from the working tree
+    guiVersionCommitted=$(git show HEAD:src/main.ts | sed -n 's/^const guiVersion: string = "\(.*\)";$/\1/p')
+    if [ "$guiVersion" != "$guiVersionCommitted" ]; then
+        echo "[ERROR] Version $guiVersion is not committed yet (HEAD has ${guiVersionCommitted:-none})" >&2
+        echo "    Or re-run with --dev, if this is not a release build" >&2
+        exit 7
+    fi
 
-# the version is meant to be the publishing date, but a bump could have been made a day before publishing,
-# hence the override. And that is not `date +%Y.%-m.%-d`, because the `%-` padding suppression
-# is a GNU extension, which is absent on Mac OS (while `10#` is what keeps `08`/`09` from being read as octal)
-today="$(date +%Y).$((10#$(date +%m))).$((10#$(date +%d)))"
-if [ "$guiVersion" != "$today" ] && [ "${GUI_VERSION_DATE_CHECK:-1}" != "0" ]; then
-    echo "[ERROR] Version $guiVersion is not today's date ($today)" >&2
-    echo "    Bump it in src/main.ts, or re-run with GUI_VERSION_DATE_CHECK=0" >&2
-    exit 8
+    # the version is meant to be the publishing date, but a bump could have been made a day before
+    # publishing, hence `--skip-date-check`. And that is not `date +%Y.%-m.%-d`, because the `%-` padding
+    # suppression is a GNU extension, which is absent on Mac OS (while `10#` is what keeps `08`/`09`
+    # from being read as octal)
+    today="$(date +%Y).$((10#$(date +%m))).$((10#$(date +%d)))"
+    if [ "$guiVersion" != "$today" ] && [ "$skipDateCheck" -eq 0 ]; then
+        echo "[ERROR] Version $guiVersion is not today's date ($today)" >&2
+        echo "    Bump it in src/main.ts, or re-run with --skip-date-check" >&2
+        echo "    (or with --dev, if this is not a release build)" >&2
+        exit 8
+    fi
 fi
 
 echo
@@ -99,3 +127,6 @@ rm -r ./js/*
 
 echo
 echo "Done, the UI version in the archive is $guiVersion"
+if [ "$devBuild" -eq 1 ]; then
+    echo "[WARNING] This is a development build, so do not publish the image" >&2
+fi

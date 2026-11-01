@@ -409,7 +409,7 @@ Two smaller notes. The trailing `seconds` stays a `<label for="input-refresh-vie
 
 ### Version string
 
-**Before touching the version, the release tags or `docker/prepare-for-building-the-image.sh`, read `.claude/notes/version-string.md`** — it holds what each of the five guards is worth, why the extractions are POSIX `sed` and why the script no longer needs GNU `sed` at all, and the two alternatives that were rejected.
+**Before touching the version, the release tags or `docker/prepare-for-building-the-image.sh`, read `.claude/notes/version-string.md`** — it holds what each of the five guards is worth, why `-d`/`--dev` skips three of them rather than the commit check alone, why the date override is a flag and no longer an environment variable, why the extractions are POSIX `sed` and why the script no longer needs GNU `sed` at all, and the four alternatives that were rejected.
 
 `const guiVersion` at the top of `src/main.ts` is bumped by hand and shown in the footer. It moved from semver to a date-based scheme (`"2026.6.28"`).
 
@@ -425,7 +425,9 @@ Being a compile-time constant it needs no rc call, so it is assigned directly in
 2. it matches `^[0-9]{4}\.([1-9]|1[0-2])\.([1-9]|[12][0-9]|3[01])$` (the tags and the label are unpadded, so `2026.09.13` must not pass);
 3. no `v<version>` tag exists yet — **the strongest of the five**, date-independent and with no false positives;
 4. the working tree's value equals `git show HEAD:src/main.ts`'s — this one catches a genuinely invisible failure, the archive being built from the working tree while the tag will point at a commit that may still hold the old version;
-5. it equals today's date — **the weakest of the five**, and so the only one with an escape hatch (`GUI_VERSION_DATE_CHECK=0`) rather than a plain refusal.
+5. it equals today's date — **the weakest of the five**, and so the only one with an escape hatch of its own (`--skip-date-check`) rather than a plain refusal. That used to be the `GUI_VERSION_DATE_CHECK=0` environment variable, and **don't bring the variable back**: an `export` of it stays in the shell and silently disables the check for every later run, where a flag lasts for the one run it is typed on.
+
+**`-d`/`--dev` makes it a dev build — an image for running locally, not a release — and skips checks 3 to 5 together**, keeping 1 and 2, because the image tag and the README's `GUI_VER` line still need a version that can be extracted and is well-formed. Don't narrow it to the commit check or split it into one flag per check: between releases `guiVersion` is the last released version and already tagged, so a dev build stops at 3 and never reaches 4. `--skip-date-check` stays separate, because a release published the day after its bump still wants 3 and 4. A dev build ends with a `[WARNING]`, and `docker/README.md` tags such an image `:dev` only, since the version-derived tag and `latest` would otherwise take over the local tags of the release it is not. An unknown argument is refused with exit 9, before anything else runs.
 
 The block sits **below** the `sed` and `tsc` detection and **above** the `tsc` call, so a failure costs nothing and cannot leave a half-prepared tree.
 
@@ -439,7 +441,7 @@ Support for [`sync/sync`](https://rclone.org/rc/#sync-sync) is intentionally abs
 
 **Changing the literal default lines in `src/settings.ts` silently breaks the Docker image.** `docker/entrypoint.sh` generates `js/settings/settings.js` from the compiled `.default` by `sed`ing in environment variables, and those patterns match the literals exactly (`host: "http://127.0.0.1:5572",`, `user: null,`, `pass: null,`, `someExampleRemote`, `"startingFolder": "path/to/some/path/there"`, `"pathToQueryDisk": ""`). So **those lines** must not be touched, and a new field must not contain any of those strings either (`user: null,` is matched anywhere in the file). Every pattern sits in `rcloneSettings` or `remotes`; adding a line to `userSettings` is safe, which was verified for `useChecksumsForChecks` by running the entrypoint's `sed` over the compiled file before and after and diffing the two outputs — the new line was the only difference. Re-run that diff whenever the literal changes.
 
-`./docker/prepare-for-building-the-image.sh` **must be run from the repository root** and does only four things: it checks the GUI version (five refusals — see the version string section), compiles, tars the GUI into `docker/contents.tar`, then `rm -r ./js/*`. It needs `tsc` and stock `sed`, and it touches nothing in the working tree but the gitignored `js/` — **`contents.tar` is a plain snapshot of what a release package holds**. Every Docker-specific change to those contents, the settings path rewrite included, is made inside the image by the `RUN` after the `ADD`.
+`./docker/prepare-for-building-the-image.sh` **must be run from the repository root** and does only four things: it checks the GUI version (five refusals, three of which `-d`/`--dev` skips — see the version string section), compiles, tars the GUI into `docker/contents.tar`, then `rm -r ./js/*`. It needs `tsc` and stock `sed`, and it touches nothing in the working tree but the gitignored `js/` — **`contents.tar` is a plain snapshot of what a release package holds**. Every Docker-specific change to those contents, the settings path rewrite included, is made inside the image by the `RUN` after the `ADD`.
 
 The `Dockerfile` is **BuildKit-only** (`TARGETARCH` and `COPY --chmod`), so `DOCKER_BUILDKIT=0` fails outright rather than falling back. `org.opencontainers.image.version` is the **GUI** version, not rclone's, so it derives from `guiVersion` in `src/main.ts`.
 
