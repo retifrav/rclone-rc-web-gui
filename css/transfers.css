@@ -1,0 +1,97 @@
+table {
+    width: 100%;
+    border-spacing: 0px;
+    border-collapse: collapse;
+    overflow-x: auto;
+}
+table th,
+table td {
+    padding: 4px 8px;
+    text-align: left;
+}
+td > progress {
+    width: 100%;
+}
+#currentTransfers > table td:nth-last-child(2) {
+    width: 100%;
+}
+#currentTransfers > table th:first-child,
+#currentTransfers > table td:first-child {
+    text-align: right;
+}
+#currentTransfers > table td:nth-child(2) {
+    min-width: 50%;
+}
+
+#completedTransfersBody > tr > td:first-child {
+/*#completedTransfersBody > tr > td:last-child {*/
+    font-family: "Courier New", Courier, monospace;
+}
+
+#completedTransfers > table,
+#completedTransfers > table td:nth-last-child(2) {
+    width: 100%;
+}
+#currentTransfers > table td,
+#completedTransfers > table td:first-child,
+#completedTransfers > table td:last-child {
+    white-space: nowrap;
+}
+.canBeLong,
+#currentTransfers > table td.canBeLong {
+    white-space: pre-line;
+}
+#completedTransfers > table td:nth-child(2) {
+    text-align: center;
+}
+#completedTransfersBody {
+    color: #555;
+}
+#completedTransfersBody > tr:hover {
+    background-color: #ebebeb;
+}
+/* a finished check, which opens its results dialog */
+#completedTransfersBody > tr.clickable {
+    cursor: pointer;
+}
+#completedTransfersBody > tr.clickable:focus-visible {
+    outline: 2px solid #02699C;
+    outline-offset: -2px;
+}
+/*
+    gets displayed by `transfers.ts` when rclone may have dropped
+    some of the entries (due to the 100 entries cap per job)
+*/
+#completedTransfersTrimmed {
+    display: none;
+    margin: 15px 10px;
+    border: 2px solid #F7B500;
+    border-radius: 0.25rem;
+    padding: 8px 12px;
+    background-color: hsl(45 100% 94%);
+    font-size: 0.9em;
+    font-style: italic;
+    color: hsl(38 95% 27%);
+}
+
+#currentTransfers {
+    max-height: 300px;
+}
+#completedTransfers {
+    max-height: 700px;
+}
+#currentTransfers, #completedTransfers {
+    margin-top: 15px;
+    overflow-y: auto;
+    /* padding: 4px 8px; */
+}
+
+td > img {
+    vertical-align: middle;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+#currentTransfersBody img {
+    cursor: pointer;
+}

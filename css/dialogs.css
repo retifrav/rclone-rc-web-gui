@@ -1,0 +1,217 @@
+/*
+    browsers own styles for a `<dialog>` element are not much (border, padding, centering,
+    faint backdrop), and all(?) of them are overridden here, so the dialog windows look
+    the same in different browsers.
+
+    There must be no `display` on `.dialog` itself. An author rule wins over the browser's
+    `dialog:not([open]) { display: none }` regardless of specificity, so a closed dialog
+    would then be displayed right in the page. That is why the flex column is the inner `form`.
+*/
+.dialog {
+    width: min(30rem, calc(100vw - 2rem));
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 1px solid gray;
+    border-radius: 0.5em;
+    color: #000;
+    background-color: #fff;
+    box-shadow: 0 10px 30px -10px #000;
+    /* the header and footer backgrounds would otherwise stick out of the rounded corners */
+    overflow: hidden;
+}
+.dialog::backdrop {
+    background-color: rgb(0 0 0 / 0.35);
+}
+.dialog[open] {
+    animation: dialog-appear 150ms ease-out;
+}
+.dialog[open]::backdrop {
+    animation: dialog-backdrop-appear 150ms ease-out;
+}
+@keyframes dialog-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+@keyframes dialog-backdrop-appear {
+    from {
+        opacity: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .dialog[open],
+    .dialog[open]::backdrop {
+        animation: none;
+    }
+}
+
+.dialog > form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 2rem);
+    margin: 0;
+}
+
+.dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 8px 15px;
+    background-color: #ebebeb;
+    border-bottom: 1px solid gray;
+}
+.dialog-header > img {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+.dialog-header > h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+.dialog-close {
+    appearance: none;
+    display: flex;
+    margin: 0 0 0 auto;
+    padding: 5px;
+    border: 1px solid transparent;
+    border-radius: 0.25em;
+    background-color: transparent;
+    cursor: pointer;
+}
+/* same as the header tab buttons (in `tabs.css`) */
+.dialog-close:hover {
+    background-color: #e0e0e0;
+}
+.dialog-close > img {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+/*
+    the spacing is a `gap`, not margins, because the error line is always the last child
+    and is hidden most of the time, and a hidden child generates no box, so it gets no gap,
+    while the `:last-child` margin rules would still have matched it
+*/
+.dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    /* the body scrolls when the dialog does not fit the screen, the header and footer stay */
+    overflow-y: auto;
+}
+.dialog-body > * {
+    flex-shrink: 0;
+    margin: 0;
+}
+.dialog-body code {
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+.dialog-error {
+    color: #b02a37;
+    /* rclone's error messages carry long paths with no break opportunity */
+    overflow-wrap: anywhere;
+}
+.dialog-success {
+    color: green; /* #008000 */
+}
+.dialog-failure {
+    /* plain red might be too light for a text on white (4.0:1, under the 4.5:1 of WCAG AA) */
+    color: red; /* #b02a37 */
+}
+.dialog-list {
+    max-height: 12em;
+    padding: 6px 10px;
+    overflow-y: auto;
+    list-style: none;
+    border: 1px solid #ccc;
+    border-radius: 0.25em;
+}
+.dialog-list > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    overflow-wrap: anywhere;
+}
+.dialog-list > li > img {
+    flex-shrink: 0;
+    width: 1.1em;
+    height: 1.1em;
+}
+
+.dialog-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 10px 15px;
+    background-color: #f1f1f1;
+    border-top: 1px solid #d5d5d5;
+}
+
+/*
+    these are styled here instead of leaving them to the browser, as the browsers
+    own buttons and fields are what actually differs between them (and they do not
+    even inherit the page font by default)
+*/
+.dialog-button,
+.dialog-input {
+    appearance: none;
+    margin: 0;
+    font: inherit;
+    border: 1px solid #b5b5b5;
+    border-radius: 0.25em;
+}
+.dialog-button {
+    min-width: 6em;
+    padding: 5px 14px;
+    color: #000;
+    background-color: #fafafa;
+    cursor: pointer;
+}
+.dialog-button:enabled:hover {
+    background-color: #e8e8e8;
+}
+.dialog-button.primary {
+    color: #fff;
+    background-color: #02699C;
+    border-color: #02699C;
+}
+.dialog-button.primary:enabled:hover {
+    background-color: #015580;
+    border-color: #015580;
+}
+.dialog-button.danger {
+    color: #fff;
+    background-color: #b02a37;
+    border-color: #b02a37;
+}
+.dialog-button.danger:enabled:hover {
+    background-color: #8f222d;
+    border-color: #8f222d;
+}
+.dialog-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.dialog-input {
+    width: 100%;
+    padding: 6px 8px;
+    color: #000;
+    background-color: #fff;
+}
+.dialog-input[aria-invalid="true"] {
+    border-color: #b02a37;
+}
+.dialog-button:focus-visible,
+.dialog-input:focus-visible,
+.dialog-close:focus-visible {
+    outline: 2px solid #02699C;
+    outline-offset: 1px;
+}

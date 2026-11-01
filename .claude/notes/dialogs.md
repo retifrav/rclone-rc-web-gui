@@ -7,14 +7,14 @@ Supporting notes for the **Dialogs** section of `CLAUDE.md`.
 Considered explicitly (the class it needs was judged not to be the obstacle — `target: ES2022` emits classes natively and the Build section only asks for an emit re-diff once one exists). It loses on three other counts:
 
 - The natural form, a customized built-in (`class … extends HTMLDialogElement` + `<dialog is="…">`), is not supported by Safari and WebKit has said it will not be. An autonomous `<rclone-dialog>` would therefore have to create a real `<dialog>` inside itself to get `showModal()`'s behaviour — one more layer around the same code.
-- What custom elements are good for is dialog content authored as markup, and the convenient form of that (named `<slot>`s for header, body, buttons) needs Shadow DOM, which walls the content off from `gui.css`. Without Shadow DOM the element has to move its own children around by hand.
+- What custom elements are good for is dialog content authored as markup, and the convenient form of that (named `<slot>`s for header, body, buttons) needs Shadow DOM, which walls the content off from `dialogs.css`. Without Shadow DOM the element has to move its own children around by hand.
 - Every dialog in the GUI is filled with runtime data (the current path, the selected names, the dropped queue items, validation errors), so callers would build it in code either way.
 
 The callers only ever see `showDialog()` / `showMessage()` / `showConfirmation()`, so the module can become a custom element later without touching a call site.
 
 ## Why the look is browser-independent
 
-`alert()` is browser chrome and no CSS reaches it. `<dialog>` is an ordinary element whose UA defaults are a short, spec-defined list (border, `1em` padding, `Canvas` background, centring, a faint `::backdrop`, a `max-width`/`max-height` on `:modal`), and `gui.css` overrides every one of them. What does differ per engine is native form controls, inside a dialog or not — hence `.dialog-button`/`.dialog-input`/`.dialog-close` with `appearance: none; font: inherit` (controls do not inherit the page font by default).
+`alert()` is browser chrome and no CSS reaches it. `<dialog>` is an ordinary element whose UA defaults are a short, spec-defined list (border, `1em` padding, `Canvas` background, centring, a faint `::backdrop`, a `max-width`/`max-height` on `:modal`), and `dialogs.css` overrides every one of them. What does differ per engine is native form controls, inside a dialog or not — hence `.dialog-button`/`.dialog-input`/`.dialog-close` with `appearance: none; font: inherit` (controls do not inherit the page font by default).
 
 ## The `display` trap
 

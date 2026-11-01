@@ -1,0 +1,169 @@
+/* the header buttons which open the tabs, the active one is marked with a chip */
+.header > input.icon {
+    width: calc(2rem + 8px);
+    height: calc(2rem + 8px);
+    padding: 3px;
+    border: 1px solid transparent;
+    border-radius: 0.25em;
+    cursor: pointer;
+}
+.header > input.icon[aria-expanded="false"]:hover {
+    background-color: #e0e0e0;
+}
+.header > input.icon[aria-expanded="true"] {
+    background-color: #cbe8f6;
+    border-color: #02699C;
+}
+
+.header-tab {
+    display: none;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid gray;
+    padding: 15px 20px;
+}
+
+.header-tab * {
+    color: #4c4c4c;
+}
+.header-tab *:not(h1, h2, h3, h4, h5, h6) {
+    font-size: 0.85rem;
+}
+
+.header-tab > h4 {
+    margin: 0 0 16px 0;
+}
+
+/* --- settings tab --- */
+
+/*
+    two columns - labels and controls - so that every control starts at the same x
+    and the sliders can also end at the same x (they have the same width/length).
+    The labels column is `auto` instead of a hardcoded width, because otherwise
+    rewording a label can not silently break the alignment
+
+    The controls column is `1fr` and not another `auto`, because:
+
+    1. The group headings hairline spans both columns, so with content-sized tracks
+       it would end at the widest row and therefore change its length every time
+       the manual refresh row replaces the interval slider one (measured example: 311px
+       vs 277px);
+    2. The `1fr` eats all the free space, which is what keeps the labels column
+       content-sized. Without an `fr` track here, `justify-content: start` would be mandatory,
+       as remaining free space in a grid is given to `auto` tracks when `justify-content`
+       is `normal` - that stretched the labels column to about a half of the whole tab
+       and pushed all the controls far to the right.
+
+    The grid can not be `#settings` itself, as that is the element which `tabs.ts`
+    writes `display: block` to when the tab is opened
+*/
+.settings-grid {
+    display: grid;
+    /* label | control */
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 8px;
+}
+/*
+    a group heading takes a row of its own, and the hairline under it is what keeps
+    the groups apart now that all the controls sit in the same two columns
+*/
+.settings-grid > h5 {
+    grid-column: 1 / -1;
+    /*
+        the grid's `justify-items: start` would otherwise shrink the heading
+        to the width of its own text, taking the hairline with it
+    */
+    justify-self: stretch;
+    margin: 16px 0 0px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #d5d5d5;
+}
+.settings-grid > h5:first-child {
+    margin-top: 0;
+}
+
+/*
+    generates no box, so a row's label and its controls become items of the grid above
+    and therefore share its columns. Note that this is also the display value which
+    `updateRefreshViewControls()` writes when it shows one of these rows again
+*/
+.settings-item {
+    display: contents;
+}
+.settings-item > :first-child {
+    justify-self: end;
+    text-align: right;
+}
+.settings-item > :first-child[title] {
+    cursor: help;
+}
+
+.settings-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+/*
+    the browsers' own margins on these differ per widget and are not even symmetric
+    (a checkbox gets `3px 3px 3px 4px` in Chromium, a range input `2px`), which put
+    the slider, the checkbox and the manual refresh button on three different left
+    edges 4px apart - the `gap` above is the only spacing here. Same reasoning as
+    the `.select-all` rule for the files panels header (in `panels.css`)
+*/
+.settings-control > input,
+.settings-control > button {
+    margin: 0;
+}
+.settings-control > input[type="range"] {
+    /* both sliders share one width, which is what lines up their ends */
+    width: 16em;
+    accent-color: hsl(120 75% 42%);
+}
+.settings-control > input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+}
+.settings-control > output {
+    /* prevents the rest of the line from jumping on 1, 11, 111 */
+    width: 2em;
+    flex-shrink: 0;
+    text-align: center;
+    font-weight: bold;
+}
+.settings-control > button {
+    padding: 4px 8px;
+}
+
+/* --- donation tab --- */
+
+ul.cryptocurrency-wallets {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+
+    .cryptocurrency-wallet-information {
+        margin-top: 6px;
+
+        p {
+            margin: 0 0 2px 0;
+        }
+
+        span,
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        code {
+            padding: 6px;
+            background-color: #e2e2e2;
+            border-radius: 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            user-select: all;
+        }
+    }
+    .cryptocurrency-wallet-information:first-of-type {
+        margin-top: 0;
+    }
+}

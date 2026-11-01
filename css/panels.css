@@ -1,0 +1,185 @@
+div.controls button,
+div.input-query button,
+div.input-query input {
+    padding: 4px 6px;
+}
+
+button.with-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+button.with-icon > span.hide-on-desktop {
+    display: none;
+}
+
+#files {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px -5px -5px -5px;
+    overflow-x: auto;
+}
+#files > * {
+    margin: 5px;
+}
+.filesPanelWrapper {
+    min-width: 300px;
+    flex: 1 0;
+    display: flex;
+    flex-direction: column;
+}
+.filesPanel {
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    flex: 1 0;
+}
+.filesPanel select {
+    padding: 3px 6px;
+}
+.panelFilesContainer {
+    max-height: 700px;
+    margin-top: 4px;
+    padding: 5px 0;
+    overflow-y: auto;
+}
+.filesList {
+    display: flex;
+    flex-direction: column;
+}
+.filesList > * {
+    margin: 2px 0;
+}
+
+.file-list-item {
+    display: flex;
+    padding: 0 5px;
+    align-items: center;
+}
+.file-list-item > input {
+    margin: 0 5px;
+    flex-shrink: 0;
+}
+.fileLine {
+    flex: 1 0;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+.fileLine > .icon {
+    flex-shrink: 0;
+}
+.fileLine > .file-name {
+    margin: 0 0 0 10px;
+    /* a name with no break opportunity will overflow the panel */
+    overflow-wrap: anywhere;
+}
+.fileLine > .file-size {
+    margin-left: auto;
+    padding-left: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-family: "Courier New", Courier, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9em;
+    color: #757575;
+}
+.folderLine:hover {
+    background-color: #ebebeb;
+    cursor: pointer;
+}
+.fileLine > .file-name > span.path-hint {
+    color: gray;
+}
+
+.filesPanelHeader {
+    display: flex;
+    justify-content: space-between;
+}
+.filesCountGroup {
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+    padding-right: 6px;
+    font-size: 0.8rem;
+    color: #555;
+}
+.filesCount {
+    font-weight: bold;
+}
+.select-all {
+    margin: 0 6px 0 0;
+}
+
+.loadingAnimation {
+    width: 1.5em;
+    height: 1.5em;
+    margin-left: 15px;
+    border: 0.25em solid #f3f3f3;
+    border-top: 0.25em solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.controls,
+.input-query {
+    display: flex;
+}
+.controls,
+.input-query,
+.lastButtons {
+    gap: 4px;
+}
+
+.input-query {
+    display: none;
+}
+
+/*
+    using grid here so that the warning hint could share the input's cell in order
+    to right-align to the input's end. Going with `position: absolute` would anchor
+    to the entire row, which includes the Cancel button
+*/
+.input-query.search {
+    grid-template-columns: 1fr auto;
+}
+.input-query.search > input {
+    grid-area: 1 / 1;
+}
+.input-query.search > button {
+    grid-area: 1 / 2;
+}
+.input-query.search > input,
+.input-query.search > .search-hint {
+    font: inherit;
+    font-size: 0.85rem;
+}
+.input-query.search > input:invalid {
+    background-color: hsl(45 100% 94%);
+}
+.search-hint {
+    grid-area: 1 / 1;
+    justify-self: end;
+    align-self: center;
+    margin-right: 10px;
+    color: hsl(38 95% 27%);
+    /* clicking on the hint should fall through to the underlying input field */
+    pointer-events: none;
+    visibility: hidden;
+}
+.input-query.search > input:invalid ~ .search-hint {
+    visibility: visible;
+}
+
+.lastButtons {
+    display: flex;
+    margin-left: auto;
+}

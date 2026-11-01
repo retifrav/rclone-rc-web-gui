@@ -1,6 +1,6 @@
 // modal dialog windows (it was just `alert()` before). These are native `<dialog>` elements
 // opened with `showModal()`, which provides the behaviour (backdrop, inert page behind it,
-// ESC, being on top of everything, focus restore), while the entire look comes from `gui.css`,
+// ESC, being on top of everything, focus restore), while the entire look comes from `dialogs.css`,
 // so they look the same in different browsers
 //
 // every call builds a new dialog and removes it once it is closed, so several of them

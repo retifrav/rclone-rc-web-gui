@@ -12,13 +12,15 @@ The counter text does not care (its number comes from the response length), whic
 
 The two `<span class="filesCount">`s carry `id="leftPanelFilesCount"`/`"rightPanelFilesCount"` so the module declares them as consts and picks one with a `filesPanelID` ternary — the same move as the search inputs, and it retired the two `filesPanel.parentNode!.parentNode!` + `getElementsByClassName("filesCount")[0]` walks `openPath()` used to do.
 
-The class stays because `gui.css` keys `font-weight: bold` on it, and nothing else in the GUI reaches the counters by class. The two panel divs got consts as well, reached through `getFilesPanel(filesPanelID)`, which `openPath()` uses in place of its own `document.getElementById(filesPanelID)` so that the module has one way of getting at a panel rather than two.
+The class stays because `panels.css` keys `font-weight: bold` on it, and nothing else in the GUI reaches the counters by class. The two panel divs got consts as well, reached through `getFilesPanel(filesPanelID)`, which `openPath()` uses in place of its own `document.getElementById(filesPanelID)` so that the module has one way of getting at a panel rather than two.
 
 ## Why the checkbox sits inside the counter `<div>`
 
 Before the `Items:` label (`☑ Items: 3/19`), which needs no wrapper and no change to that flex row — the header is `justify-content: space-between` with the remote `<select>` at one end, so a third child of `.filesPanelHeader` would have re-centred the select instead.
 
-`gui.css` gives it one rule, `.select-all { vertical-align: middle; margin: 0 5px 0 0 }`: the browsers' own checkbox margins are asymmetric (`3px 3px 3px 4px` in Chromium) and the gap to a 0.8rem label should not be whatever each of them happens to pick. Measured with the rule in place: 5px gap, the checkbox centre 1.13px off the label's (it was -2px on the UA default), and no header overflow at 1300px, 640px or 400px.
+`panels.css` gives it one rule, `.select-all { margin: 0 6px 0 0 }`: the browsers' own checkbox margins are asymmetric (`3px 3px 3px 4px` in Chromium) and the gap to a 0.8rem label should not be whatever each of them happens to pick. The vertical centring is not that rule's doing but the counter `<div>`'s: `.filesCountGroup` is a flex row with `align-items: center`. Measured in Chromium on 2026-11-01 with the rule in place: a 6px gap, the checkbox centre 0px off the `Items:` text's, and no header overflow at 1300px, 640px or 400px (both panels, one with `1/5` in the counter). With the rule reverted to the UA margins the gap is 3px and the centring is still exact, which is what shows it comes from the flex row.
+
+An earlier version of this note quoted the rule as `.select-all { vertical-align: middle; margin: 0 5px 0 0 }`, with measurements taken on it (a 5px gap, the centre 1.13px off, and -2px on the UA default). That rule never reached a commit: `bb74195`, which introduced the select-all checkbox, already has the flex row and the 6px margin, and the rule has not changed since.
 
 There is deliberately no icon button for this — `images/` has no check glyph, and a native checkbox is what the rows themselves use.
 
@@ -50,6 +52,6 @@ Over the DevTools protocol with real mouse clicks (assigning `.checked` from a s
 
 ## Two traps in verifying over the DevTools protocol
 
-**Chromium keeps a disk cache in its default profile directory between launches**, and `rcd` sends no `Cache-Control`, so heuristic freshness applies and a just-edited `gui.css` is served stale without even a revalidation — a CSS measurement can silently describe the previous version. `Network.setCacheDisabled` (or a throwaway `--user-data-dir`) is the fix.
+**Chromium keeps a disk cache in its default profile directory between launches**, and `rcd` sends no `Cache-Control`, so heuristic freshness applies and a just-edited stylesheet is served stale without even a revalidation — a CSS measurement can silently describe the previous version. `Network.setCacheDisabled` (or a throwaway `--user-data-dir`) is the fix.
 
 The driver also has to `process.exit()` rather than merely killing the browser it spawned: killing the launcher leaves the browser tree and the open WebSocket alive, so node keeps running and the run looks hung.

@@ -28,7 +28,7 @@ So this slider's second half is flat on purpose, and that is the one place it do
 
 It paints the filled part of the track and the knob together, where anything more would mean replacing the widget with `::-moz-range-*`/`::-webkit-slider-*` pseudo-elements (which cannot be set inline and so would need a CSS custom property instead).
 
-`gui.css` carries green as a static `accent-color` on `.settings-control > input[type="range"]`, which is the start of *both* sliders' scales, so the first paint matches the markup's `value` rather than flashing the browser's default blue.
+`tabs.css` carries green as a static `accent-color` on `.settings-control > input[type="range"]`, which is the start of *both* sliders' scales, so the first paint matches the markup's `value` rather than flashing the browser's default blue.
 
 Verified in Chromium only — no Firefox in the dev container — and note Chromium flips the *unfilled* track between dark and light depending on the accent's luminance (so it changes appearance around the middle of the scale), which is its own contrast heuristic and not something this code sets.
 

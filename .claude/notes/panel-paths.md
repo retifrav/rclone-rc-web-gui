@@ -16,13 +16,13 @@ A negative size is how a backend says it does not know one, and it would render 
 
 `src/search.ts` used to filter on `fileLine.querySelector("p").textContent`, which resolves to the *first* `<p>` in document order — correct only for as long as the name happens to come first, and a query that silently starts matching the wrong child rather than failing. It is `querySelector(".file-name")` now.
 
-The class lives on **all three** name elements (`openPath()`'s two, plus the static `..` rows in `index.html`), because `gui.css` keys the name's `margin`/`overflow-wrap` and the `.path-hint` colour on it rather than on `> p`.
+The class lives on **all three** name elements (`openPath()`'s two, plus the static `..` rows in `index.html`), because `panels.css` keys the name's `margin`/`overflow-wrap` and the `.path-hint` colour on it rather than on `> p`.
 
 ## Why the size stays a `<span>`
 
 With the query no longer positional, a `<p>` there would no longer break anything, so the reason that survives is semantic: a size is not a paragraph of prose, `<p>` maps to the `paragraph` role, and a second one would expose every file row as two paragraph nodes instead of one. (How a screen reader voices that is unverified — no screen reader in the dev container.)
 
-Converting it was measured before being dropped, and there is a trap in it either way. Leaving `gui.css` keyed on `.fileLine > p` while making the size a `<p>` comes out pixel-identical — but only by accident, that rule's `margin: 0 0 0 10px` happening to zero the UA block margins for it, and it leaks `overflow-wrap: anywhere` onto the size (inert, but only because `white-space: nowrap` is there). Re-scope the rule to `.file-name` as it is now and the size `<p>` picks up the UA `margin-block: 1em` instead: **12.96px top and bottom, taking every file row from 37.3px to 60.9px** while the folder rows stay 37.3px. It takes an explicit `margin: 0 0 0 auto` on `.file-size` to get back to identical — a guard to write and to keep, for nothing gained.
+Converting it was measured before being dropped, and there is a trap in it either way. Leaving `panels.css` keyed on `.fileLine > p` while making the size a `<p>` comes out pixel-identical — but only by accident, that rule's `margin: 0 0 0 10px` happening to zero the UA block margins for it, and it leaks `overflow-wrap: anywhere` onto the size (inert, but only because `white-space: nowrap` is there). Re-scope the rule to `.file-name` as it is now and the size `<p>` picks up the UA `margin-block: 1em` instead: **12.96px top and bottom, taking every file row from 37.3px to 60.9px** while the folder rows stay 37.3px. It takes an explicit `margin: 0 0 0 auto` on `.file-size` to get back to identical — a guard to write and to keep, for nothing gained.
 
 ## Why `overflow-wrap: anywhere` and not `break-word`
 

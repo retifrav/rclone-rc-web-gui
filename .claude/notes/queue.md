@@ -24,7 +24,7 @@ Live ES-module bindings are what make the named import see each update, which is
 
 ## Why the fallback is 1, and why the `NaN` guard went away
 
-Its initialiser is a literal `1`, agreeing with the markup's `value="1"`, the `<output>`'s `1` and `gui.css`'s static green `accent-color` — so a failed `/options/get` at load leaves the queue serial and the UI honest (verified by holding that request open for a whole session: slider 1, both icons dark, separator hidden, and a queued folder submitted with `_config.Transfers: 1` rather than `NaN` or `undefined`).
+Its initialiser is a literal `1`, agreeing with the markup's `value="1"`, the `<output>`'s `1` and `tabs.css`'s static green `accent-color` — so a failed `/options/get` at load leaves the queue serial and the UI honest (verified by holding that request open for a whole session: slider 1, both icons dark, separator hidden, and a queued folder submitted with `_config.Transfers: 1` rather than `NaN` or `undefined`).
 
 The `NaN` half of the old guard went with the `parseInt`: `JSON.parse` cannot produce a `NaN`, and a response missing `Transfers` throws at the slider assignment that sits *above* the store write, so the store cannot take a bad value.
 
