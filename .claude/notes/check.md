@@ -56,6 +56,21 @@ The first version did show `checks + errors` against a `/operations/size` total,
 So the running row has an indeterminate `<progress>` (no `value` at all, `position` −1) and `N files checked in m:ss`, both from what the poll already fetches plus the GUI's own `startedAt`.
 - In `/core/transferred` every file check is an entry with `checked: true`, `what: "checking"`. A 4000-file check left **102** entries in its group, which is past the 100 the trimmed-list hint tests for, so the hint has to skip check jobs' groups.
 
+## The count in the results dialog
+
+Measured on 2026-11-01 (rclone v1.75.2) with a source of 282 files in four folders: 3 missing on the destination (one three folders down), 1 differing in size, 1 with the same size and modification time but different content, and 1 unreadable (`chmod 000`, so it fails only when it has to be hashed). `/core/stats` of the job's group, read right after `/job/status` reported `finished: true`:
+
+| Mode | `checks` | `errors` | `missingOnDst` | `differ` | `error` | `checks + missingOnDst` |
+|---|---|---|---|---|---|---|
+| sizes only | 279 | 4 | 3 | 1 | 0 | 282 |
+| checksums | 279 | 6 | 3 | 2 | 1 | 282 |
+
+- Both differing files and the unreadable one count as checks (279 = 282 − 3 in both modes), so `checks + missingOnDst.length` is exactly the source. `checks + errors`, the running row's number, would say 283 and 285. The result's own `status` also left the unreadable file out ("5 differences found" while `errors` was 6).
+- The counters are final by the time `/job/status` says `finished`, since rclone has already finished every check of the job by then.
+- The stats group outlives the job: with `--rc-job-expire-duration 15s`, `/job/status` for the job read `job not found` after 20 s, and `/core/stats` for `job/1` still returned `checks: 279`. A group that does not exist is no error either. It reads all zeros, the same as one deleted with `core/stats-delete`.
+- The `match` list would also give a total, but it names every matching file, so a large folder means a large response. One `/core/stats` is a fixed few hundred bytes.
+- End to end through the GUI (headless, both modes) the dialog said `282 files were checked.` both times. Every check in that run finished within a single tick, so the last progress poll would have shown 0.
+
 ## Expiry and restarts
 
 rclone removes a finished job after `--rc-job-expire-duration` (default 60 s, checked every `--rc-job-expire-interval`, default 10 s). Asking about it after that is a 500 `{"error": "job not found"}`. With `--rc-job-expire-duration 5s` and the GUI frozen (auto-refresh off) for 30 s, `/job/list` no longer had the check, yet the GUI had already collected its result, because `pollChecks()` runs independently of the refresh. After an rcd restart mid-check, the old job id was `job not found` on the new instance; the check finished as "no result" after three polls (~15 s). If the id had existed on the new instance, the `executeId` comparison would have caught it instead.

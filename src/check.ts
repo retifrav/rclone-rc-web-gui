@@ -38,6 +38,9 @@ export type FinishedCheck = {
     "result": functions.rcCheckResult | null,
     // why there is no result
     "error": string,
+    // how many of the source files were looked at (`finishCheckWithCount()`),
+    // `-1` is when there is no result or the final stats of the job could not be fetched
+    "checkedFiles": number,
     // the job's single row in the completed transfers table, which is shaped as a transfer
     // so that it can be sorted and reconciled together with the actual ones
     "entry": functions.rcTransferred
@@ -121,7 +124,8 @@ function pollCheck(check: RunningCheck)
                     + "more than --rc-job-expire-duration ago (one minute by default), or rclone "
                     + "has been restarted.",
                     "",
-                    ""
+                    "",
+                    -1
                 );
             }
             return;
@@ -136,7 +140,8 @@ function pollCheck(check: RunningCheck)
                 null,
                 "rclone has been restarted while this check was running, so its result is lost.",
                 "",
-                ""
+                "",
+                -1
             );
             return;
         }
@@ -149,13 +154,19 @@ function pollCheck(check: RunningCheck)
 
         // a check that found differences, or got cancelled, is still a successful job,
         // and only a job that failed as such has no result to show
-        finishCheck(
-            check,
-            rez["error"] === "" ? rez["output"] : null,
-            rez["error"],
-            rez["startTime"],
-            rez["endTime"]
-        );
+        if (rez["error"] !== "")
+        {
+            finishCheck(
+                check,
+                null,
+                rez["error"],
+                rez["startTime"],
+                rez["endTime"],
+                -1
+            );
+            return;
+        }
+        finishCheckWithCount(check, rez["output"], rez["startTime"], rez["endTime"]);
     });
 }
 
@@ -179,12 +190,43 @@ function getCheckProgress(check: RunningCheck)
     });
 }
 
+// the count from the last `getCheckProgress()` can be a tick old, and a check that finishes within
+// one tick never got it at all, so the job's stats are asked for once more now that they are final.
+// rclone keeps a stats group after it has forgotten the job, so this cannot come too late
+//
+// by now the missing files are known by name, so unlike the progress this count does not run ahead.
+// Every source file that is present in the destination is a check, the ones that differ or could not
+// be read included, and every one that is not is in `missingOnDst`
+function finishCheckWithCount(
+    check: RunningCheck,
+    result: functions.rcCheckResult,
+    startTime: string,
+    endTime: string
+    )
+{
+    const params: functions.rcRequest = { "group": getCheckGroup(check.jobid) };
+    functions.sendRequestToRclone("/core/stats", params, function(rez: functions.rcStats | null)
+    {
+        // the count is only a detail, while the result is already here, so a failed request
+        // still finishes the check, just without the count
+        finishCheck(
+            check,
+            result,
+            "",
+            startTime,
+            endTime,
+            rez === null ? -1 : rez["checks"] + result["missingOnDst"].length
+        );
+    });
+}
+
 function finishCheck(
     check: RunningCheck,
     result: functions.rcCheckResult | null,
     error: string,
     startTime: string,
-    endTime: string
+    endTime: string,
+    checkedFiles: number
     )
 {
     // two ticks can have their `/job/status` in flight for the same check
@@ -216,6 +258,7 @@ function finishCheck(
             "sizeOnly": check.sizeOnly,
             "result": result,
             "error": error,
+            "checkedFiles": checkedFiles,
             "entry": entry
         }
     );
@@ -340,6 +383,10 @@ export function showCheckResult(check: FinishedCheck)
     }
 
     body.push(getComparisonDescription(check, result));
+    if (check.checkedFiles !== -1)
+    {
+        body.push(`${check.checkedFiles} ${check.checkedFiles === 1 ? "file was" : "files were"} checked.`);
+    }
     body.push(
         result["success"] === true
             ? "All the files are present in the destination."
