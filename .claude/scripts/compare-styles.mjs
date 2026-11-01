@@ -1,6 +1,7 @@
 // Proves that a change to the stylesheets changed nothing on screen: drives the real GUI through
 // several states and, in each, compares the computed style of every element between the
-// stylesheets of the working tree and those of a git revision. See `.claude/notes/stylesheets.md`.
+// stylesheets of the working tree and those of a git revision, in the light and in the dark
+// colour scheme (the system preference, emulated). See `.claude/notes/stylesheets.md`.
 //
 //     node .claude/scripts/compare-styles.mjs [<revision>]    (HEAD by default)
 //
@@ -298,6 +299,9 @@ async function run(devtoolsPort, baseline, control)
 {
     const { ws, send, ev, waitFor, failedRequests, consoleErrors } = await connect(devtoolsPort);
     const width = w => send("Emulation.setDeviceMetricsOverride", { width: w, height: 1000, deviceScaleFactor: 1, mobile: false });
+    // the system preference, which is what the GUI follows unless a theme was chosen in its settings
+    // (and nothing is chosen in a fresh profile), so it switches every `light-dark()` in the stylesheets
+    const scheme = s => send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: s }] });
     const pressEnter = async () =>
     {
         await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", text: "\r", windowsVirtualKeyCode: 13 });
@@ -353,27 +357,32 @@ async function run(devtoolsPort, baseline, control)
     const results = [];
     const compareState = async (state) =>
     {
-        for (const w of [1280, 400])
+        for (const s of ["light", "dark"])
         {
-            await width(w);
-            await sleep(200);
-            for (const isForced of [false, true])
+            await scheme(s);
+            for (const w of [1280, 400])
             {
-                let nodeIds = [];
-                if (isForced)
+                await width(w);
+                await sleep(200);
+                for (const isForced of [false, true])
                 {
-                    const { root } = await send("DOM.getDocument", { depth: -1 });
-                    nodeIds = (await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: "*" })).nodeIds;
-                    for (const nodeId of nodeIds)
+                    let nodeIds = [];
+                    if (isForced)
                     {
-                        await send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: ["hover", "focus", "focus-visible", "focus-within", "active"] });
+                        const { root } = await send("DOM.getDocument", { depth: -1 });
+                        nodeIds = (await send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: "*" })).nodeIds;
+                        for (const nodeId of nodeIds)
+                        {
+                            await send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: ["hover", "focus", "focus-visible", "focus-within", "active"] });
+                        }
                     }
+                    const r = await ev(`__compare('baseline')`);
+                    results.push({ state, scheme: s, width: w, forced: isForced, entries: r.entries, diffs: r.diffs });
+                    for (const nodeId of nodeIds) { await send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: [] }); }
                 }
-                const r = await ev(`__compare('baseline')`);
-                results.push({ state, width: w, forced: isForced, entries: r.entries, diffs: r.diffs });
-                for (const nodeId of nodeIds) { await send("CSS.forcePseudoState", { nodeId, forcedPseudoClasses: [] }); }
             }
         }
+        await scheme("light");
         await width(1280);
     };
 
@@ -472,7 +481,7 @@ async function main()
     for (const r of results)
     {
         differences += r.diffs.length;
-        console.log((r.diffs.length === 0 ? "ok    " : "DIFF  ") + r.state + " @" + r.width + "px" + (r.forced ? ", forced" : "")
+        console.log((r.diffs.length === 0 ? "ok    " : "DIFF  ") + r.state + " @" + r.width + "px, " + r.scheme + (r.forced ? ", forced" : "")
             + ": " + r.diffs.length + " differences in " + r.entries + " entries");
         printDiffs(r.diffs, 15);
     }

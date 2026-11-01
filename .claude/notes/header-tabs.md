@@ -58,11 +58,13 @@ Verified in Chromium with real key events: the two buttons are the document's **
 
 ### Why the border carries the state and not the fill
 
-A measured constraint, not a preference: the two glyphs sit at opposite ends of the luminance scale, so no fill can be 3:1 against the `#ebebeb` header while keeping the red `suit-heart-fill` at 3:1 — light enough for the heart is ~1.02:1 against the header, and dark enough for the header destroys the black gear. Hence `#cbe8f6` fill (heart 3.4:1, gear 16:1) with a `#02699C` border, 5.03:1 on the header and reused from the snowflake indicator rather than invented.
+A measured constraint, not a preference: the two glyphs sit at opposite ends of the luminance scale, so no fill can be 3:1 against the `#ebebeb` header while keeping the red `suit-heart-fill-red` at 3:1 — light enough for the heart is ~1.02:1 against the header, and dark enough for the header destroys the black gear. Hence `#cbe8f6` fill (heart 3.4:1, gear 16:1) with a `#02699C` border, 5.03:1 on the header and reused from the snowflake indicator rather than invented.
+
+In dark mode the same declarations are painted through the buttons' filter, which is what makes them `#243a44` fill and `#5fabd1` border on a `#2a2a2a` header (heart 5.36:1, gear 8.85:1, border 5.63:1, all measured off the screen) — see `dark-mode.md` for the filter and for why the heart is filtered too. The file was `suit-heart-fill.svg` until then and was renamed for the colour-suffix convention described there.
 
 ### Why the box is `calc(2rem + 8px)` with `padding: 3px`
 
-A chip flush to the 2rem glyph box does not read: `gear-wide-connected` is a 16×16 viewBox whose teeth reach nearly every edge, and `suit-heart-fill` is 16×**14**, so under a forced square it letterboxes and its chip would show bands on two sides only — the two chips would not even look alike. The 1px-always border makes toggling paint-only (verified: button x-positions identical across all three states). Side benefit: the hit target goes 32px → 40px.
+A chip flush to the 2rem glyph box does not read: `gear-wide-connected` is a 16×16 viewBox whose teeth reach nearly every edge, and `suit-heart-fill-red` is 16×**14**, so under a forced square it letterboxes and its chip would show bands on two sides only — the two chips would not even look alike. The 1px-always border makes toggling paint-only (verified: button x-positions identical across all three states). Side benefit: the hit target goes 32px → 40px.
 
 ### The mobile mirror
 

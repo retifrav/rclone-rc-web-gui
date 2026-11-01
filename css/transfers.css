@@ -45,17 +45,24 @@ td > progress {
     text-align: center;
 }
 #completedTransfersBody {
-    color: #555;
+    color: light-dark(#555, #aaaaaa);
 }
 #completedTransfersBody > tr:hover {
-    background-color: #ebebeb;
+    background-color: light-dark(#ebebeb, #2a2a2a);
+}
+/* status cell - same colors as the check results dialog (in `dialogs.css`) */
+.outcome-ok {
+    color: light-dark(green, #4cbb4c);
+}
+.outcome-failed {
+    color: light-dark(red, #ff6b6b);
 }
 /* a finished check, which opens its results dialog */
 #completedTransfersBody > tr.clickable {
     cursor: pointer;
 }
 #completedTransfersBody > tr.clickable:focus-visible {
-    outline: 2px solid #02699C;
+    outline: 2px solid light-dark(#02699C, #5fabd1);
     outline-offset: -2px;
 }
 /*
@@ -68,10 +75,10 @@ td > progress {
     border: 2px solid #F7B500;
     border-radius: 0.25rem;
     padding: 8px 12px;
-    background-color: hsl(45 100% 94%);
+    background-color: light-dark(hsl(45 100% 94%), hsl(45 60% 14%));
     font-size: 0.9em;
     font-style: italic;
-    color: hsl(38 95% 27%);
+    color: light-dark(hsl(38 95% 27%), hsl(42 90% 65%));
 }
 
 #currentTransfers {

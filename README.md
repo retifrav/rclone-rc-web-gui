@@ -245,7 +245,7 @@ export const userSettings = {
 
 There is also a settings section right in the UI - it shows up when you click on the gear icon in the top-right corner of the header.
 
-The UI settings are not persistent and will reset back to the default/configured values on the next page refresh. The rclone settings survive page reloads as it's rclone who is holding them (*while it keeps runing*).
+The UI settings are not persistent and will reset back to the default/configured values on the next page refresh (*except for the UI theme setting, which is stored in `localStorage`*). The rclone settings survive page reloads as it's rclone who is holding them (*while it keeps runing*).
 
 ### Queue
 

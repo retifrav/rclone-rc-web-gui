@@ -33,7 +33,7 @@ How it works: the real GUI is served by `rclone rcd --rc-no-auth --transfers 4 -
 
 Per comparison, the computed value of every property of every element is recorded in both modes, along with `::before`/`::after` (the `*:before, *:after` box-sizing rule) and `::backdrop` for each `<dialog>`. Before each snapshot every running animation is `finish()`ed, and the infinite one (the spinner's `spin`) is paused at `currentTime = 0`, since the swap gives the `@keyframes` a new identity and can restart them.
 
-Five states, each at **1280px and 400px** (the latter inside `gui-mobile.css`'s `max-width: 720px`), and each both plain and with `CSS.forcePseudoState` forcing `hover`, `focus`, `focus-visible`, `focus-within` and `active` on **every** node at once:
+Five states, each at **1280px and 400px** (the latter inside `gui-mobile.css`'s `max-width: 720px`), each in the **light and the dark colour scheme** (the system preference emulated with `Emulation.setEmulatedMedia`, which every `light-dark()` follows when no theme is chosen, and none is in a fresh profile), and each both plain and with `CSS.forcePseudoState` forcing `hover`, `focus`, `focus-visible`, `focus-within` and `active` on **every** node at once:
 
 1. both panels listed, one row ticked, a finished copy and a finished check (`tr.clickable`) in the completed table, a bandwidth-limited copy in flight in the current one, a spinner appended to a panel (the real one is gone as soon as the listing lands) and `#completedTransfersTrimmed` shown;
 2. the settings tab open, the left search row with a 2-character query (`:invalid`) and the right one filtering rows away;
@@ -43,7 +43,7 @@ Five states, each at **1280px and 400px** (the latter inside `gui-mobile.css`'s 
 
 Two more checks run before the comparisons, and either one failing exits with 2. A **negative control** in state 1: the baseline with only the `.loadingAnimation` rule moved to the front of its first sheet, i.e. a split that gets the one tie wrong, must come out as differences on the spinner and nowhere else — it came out as exactly `margin-left` and `margin-inline-start` `0px -> 15px`. And forcing has to take effect: `#btn-settings`'s `background-color` goes from `rgba(0, 0, 0, 0)` to `rgb(224, 224, 224)` (the `:hover` rule) under a forced `hover`.
 
-Result for the split (baseline `HEAD`, i.e. the single `gui.css`): **0 differences in all 20 comparisons** (780 to 906 entries each), with no failed request and no console error during the run. To make sure that a real difference does get reported, it was also run against `ee53031~1`, the commit before `.dialog-success`/`.dialog-failure` were added: exit 1, and the only differences were `p.dialog-failure { color: rgb(0, 0, 0) -> rgb(255, 0, 0) }` (plus the 16 properties that follow `color`) in the check results dialog state, at both widths.
+Result for the split (baseline `HEAD`, i.e. the single `gui.css`, run before the dark scheme existed, so light only): **0 differences in all 20 comparisons** (780 to 906 entries each), with no failed request and no console error during the run. To make sure that a real difference does get reported, it was also run against `ee53031~1`, the commit before `.dialog-success`/`.dialog-failure` were added: exit 1, and the only differences were `p.dialog-failure { color: rgb(0, 0, 0) -> rgb(255, 0, 0) }` (plus the 16 properties that follow `color`) in the check results dialog state, at both widths.
 
 ### Why the script does what it does
 

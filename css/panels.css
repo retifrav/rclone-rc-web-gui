@@ -31,7 +31,7 @@ button.with-icon > span.hide-on-desktop {
 }
 .filesPanel {
     margin-top: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid light-dark(#ccc, #444444);
     flex: 1 0;
 }
 .filesPanel select {
@@ -82,14 +82,14 @@ button.with-icon > span.hide-on-desktop {
     font-family: "Courier New", Courier, monospace;
     font-variant-numeric: tabular-nums;
     font-size: 0.9em;
-    color: #757575;
+    color: light-dark(#757575, #8f8f8f);
 }
 .folderLine:hover {
-    background-color: #ebebeb;
+    background-color: light-dark(#ebebeb, #2a2a2a);
     cursor: pointer;
 }
 .fileLine > .file-name > span.path-hint {
-    color: gray;
+    color: light-dark(gray, #8a8a8a);
 }
 
 .filesPanelHeader {
@@ -102,7 +102,7 @@ button.with-icon > span.hide-on-desktop {
     padding-top: 2px;
     padding-right: 6px;
     font-size: 0.8rem;
-    color: #555;
+    color: light-dark(#555, #aaaaaa);
 }
 .filesCount {
     font-weight: bold;
@@ -115,7 +115,7 @@ button.with-icon > span.hide-on-desktop {
     width: 1.5em;
     height: 1.5em;
     margin-left: 15px;
-    border: 0.25em solid #f3f3f3;
+    border: 0.25em solid light-dark(#f3f3f3, #333333);
     border-top: 0.25em solid #3498db;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -163,14 +163,14 @@ button.with-icon > span.hide-on-desktop {
     font-size: 0.85rem;
 }
 .input-query.search > input:invalid {
-    background-color: hsl(45 100% 94%);
+    background-color: light-dark(hsl(45 100% 94%), hsl(45 60% 14%));
 }
 .search-hint {
     grid-area: 1 / 1;
     justify-self: end;
     align-self: center;
     margin-right: 10px;
-    color: hsl(38 95% 27%);
+    color: light-dark(hsl(38 95% 27%), hsl(42 90% 65%));
     /* clicking on the hint should fall through to the underlying input field */
     pointer-events: none;
     visibility: hidden;

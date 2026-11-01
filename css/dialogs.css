@@ -12,10 +12,10 @@
     max-width: none;
     max-height: none;
     padding: 0;
-    border: 1px solid gray;
+    border: 1px solid light-dark(gray, #4a4a4a);
     border-radius: 0.5em;
-    color: #000;
-    background-color: #fff;
+    color: light-dark(#000, #dedede);
+    background-color: light-dark(#fff, #1c1c1c);
     box-shadow: 0 10px 30px -10px #000;
     /* the header and footer backgrounds would otherwise stick out of the rounded corners */
     overflow: hidden;
@@ -59,8 +59,8 @@
     align-items: center;
     gap: 8px;
     padding: 8px 10px 8px 15px;
-    background-color: #ebebeb;
-    border-bottom: 1px solid gray;
+    background-color: light-dark(#ebebeb, #2a2a2a);
+    border-bottom: 1px solid light-dark(gray, #4a4a4a);
 }
 .dialog-header > img {
     flex-shrink: 0;
@@ -81,9 +81,12 @@
     background-color: transparent;
     cursor: pointer;
 }
-/* same as the header tab buttons (in `tabs.css`) */
+/*
+    same as the header tab buttons (in `tabs.css`), and in dark mode the same as what their
+    filter makes of this colour, because this button itself is not filtered (its icon is)
+*/
 .dialog-close:hover {
-    background-color: #e0e0e0;
+    background-color: light-dark(#e0e0e0, #383838);
 }
 .dialog-close > img {
     width: 0.9rem;
@@ -113,23 +116,23 @@
     overflow-wrap: anywhere;
 }
 .dialog-error {
-    color: #b02a37;
+    color: light-dark(#b02a37, #f07a85);
     /* rclone's error messages carry long paths with no break opportunity */
     overflow-wrap: anywhere;
 }
 .dialog-success {
-    color: green; /* #008000 */
+    color: light-dark(green, #4cbb4c); /* #008000 */
 }
 .dialog-failure {
     /* plain red might be too light for a text on white (4.0:1, under the 4.5:1 of WCAG AA) */
-    color: red; /* #b02a37 */
+    color: light-dark(red, #ff6b6b); /* #b02a37 */
 }
 .dialog-list {
     max-height: 12em;
     padding: 6px 10px;
     overflow-y: auto;
     list-style: none;
-    border: 1px solid #ccc;
+    border: 1px solid light-dark(#ccc, #444444);
     border-radius: 0.25em;
 }
 .dialog-list > li {
@@ -151,8 +154,8 @@
     justify-content: flex-end;
     gap: 6px;
     padding: 10px 15px;
-    background-color: #f1f1f1;
-    border-top: 1px solid #d5d5d5;
+    background-color: light-dark(#f1f1f1, #242424);
+    border-top: 1px solid light-dark(#d5d5d5, #3a3a3a);
 }
 
 /*
@@ -165,18 +168,18 @@
     appearance: none;
     margin: 0;
     font: inherit;
-    border: 1px solid #b5b5b5;
+    border: 1px solid light-dark(#b5b5b5, #5a5a5a);
     border-radius: 0.25em;
 }
 .dialog-button {
     min-width: 6em;
     padding: 5px 14px;
-    color: #000;
-    background-color: #fafafa;
+    color: light-dark(#000, #dedede);
+    background-color: light-dark(#fafafa, #2e2e2e);
     cursor: pointer;
 }
 .dialog-button:enabled:hover {
-    background-color: #e8e8e8;
+    background-color: light-dark(#e8e8e8, #3a3a3a);
 }
 .dialog-button.primary {
     color: #fff;
@@ -203,15 +206,15 @@
 .dialog-input {
     width: 100%;
     padding: 6px 8px;
-    color: #000;
-    background-color: #fff;
+    color: light-dark(#000, #dedede);
+    background-color: light-dark(#fff, #141414);
 }
 .dialog-input[aria-invalid="true"] {
-    border-color: #b02a37;
+    border-color: light-dark(#b02a37, #f07a85);
 }
 .dialog-button:focus-visible,
 .dialog-input:focus-visible,
 .dialog-close:focus-visible {
-    outline: 2px solid #02699C;
+    outline: 2px solid light-dark(#02699C, #5fabd1);
     outline-offset: 1px;
 }

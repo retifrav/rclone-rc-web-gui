@@ -1,7 +1,36 @@
+/*
+    every color in this CSS is a `light-dark()` pair, which picks its value
+    by the `color-scheme` set here. By default that is whatever the browser/system
+    prefers, and `data-theme` (set by the inline script in `index.html` and by theme
+    dropdown in the settings tab) overrides it. The `auto` value matches neither
+    of the two attribute rules, so it is the same as no attribute at all
+*/
 html {
     box-sizing: border-box;
-    background-color: #e5e5e5;
+    color-scheme: light dark;
+    background-color: light-dark(#e5e5e5, #111111);
     /* font-size: 100%; */
+}
+html[data-theme="light"] {
+    color-scheme: light;
+}
+/*
+    the only thing in dark mode that is not a color is a `filter` for the icons, and `filter`
+    cannot take `light-dark()`, so it is a custom property that exists only in dark mode,
+    set here for both ways of getting there (the system preference and the override). The icons
+    are black (`currentColor` in an image document), and on greys `invert(0.87)` turns that
+    into the dark mode text color, while `hue-rotate()` does nothing to them. It is there for
+    the header buttons (in `tabs.css`), which get filtered together with their own background
+    and border, and `hue-rotate()` is what keeps the hue of those after the inversion
+*/
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --icon-filter: invert(0.87) hue-rotate(180deg);
+}
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+        --icon-filter: invert(0.87) hue-rotate(180deg);
+    }
 }
 *,
 *:before,
@@ -16,8 +45,8 @@ body {
     margin: 0 auto;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 0.9em;
-    color: #000;
-    background-color: #fff;
+    color: light-dark(#000, #dedede);
+    background-color: light-dark(#fff, #1c1c1c);
     box-shadow: 0 0 15px -5px #000;
 }
 
@@ -47,17 +76,17 @@ a:visited {
     margin-bottom: 0;
 }
 .header, .footer {
-    background-color: #ebebeb;
+    background-color: light-dark(#ebebeb, #2a2a2a);
     font-size: 1rem;
 }
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid gray;
+    border-bottom: 1px solid light-dark(gray, #4a4a4a);
 }
 .footer {
-    border-top: 1px solid gray;
+    border-top: 1px solid light-dark(gray, #4a4a4a);
 }
 .header > *:not(h1) {
     margin-right: 12px;
@@ -71,7 +100,7 @@ a:visited {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #333;
+    color: light-dark(#333, #cccccc);
 }
 h1, h2 {
     margin-bottom: 0;
@@ -85,10 +114,19 @@ h1, h2 {
     width: 2rem;
     height: 2rem;
 }
+/*
+    monochrome icons are inverted in dark mode, while the ones with their colors baked
+    into the SVG are not, and those are told apart by the file name, so a colored icon
+    is named after its color. The header buttons are not `img` and get their filter
+    in `tabs.css`
+*/
+img:not([src$="-red.svg"], [src$="-yellow.svg"], [src$="-blue.svg"]) {
+    filter: var(--icon-filter, none);
+}
 
 pre {
     padding: 8px 12px;
-    background-color: #ebebeb;
+    background-color: light-dark(#ebebeb, #2a2a2a);
     border-radius: 0.25em;
 }
 

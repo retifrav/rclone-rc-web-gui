@@ -8,6 +8,24 @@
 
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png">
 
+    <!--
+        applies the theme chosen in the settings tab before the page is painted
+        for the first time. It can not be one of the modules below, because those
+        run only after the whole document has been parsed, so the page would first
+        be shown in the system's theme. It is placed above the stylesheets, because
+        a script below them would wait for them to be loaded first. This is the only
+        place that reads the stored setting from `localStorage` (`settings-ui.ts`
+        only writes it)
+    -->
+    <script>
+        try
+        {
+            const theme = localStorage.getItem("rclone-rc-web-gui.theme");
+            if (theme === "light" || theme === "dark") { document.documentElement.dataset.theme = theme; }
+        }
+        catch (e) {} // the storage is disabled in this browser, so the theme is the system one
+    </script>
+
     <link rel="stylesheet" href="./css/gui.css">
     <link rel="stylesheet" href="./css/transfers.css">
     <link rel="stylesheet" href="./css/panels.css">
@@ -29,7 +47,7 @@
             title="The GUI is frozen in time and isn't updating">
         <span id="separator-indicators">|</span>
         <input id="btn-donation" type="image" class="icon" draggable="false"
-            src="./images/suit-heart-fill.svg" alt="Donation" title="Donation"
+            src="./images/suit-heart-fill-red.svg" alt="Donation" title="Donation"
             aria-controls="donation" aria-expanded="false">
         <input id="btn-settings" type="image" class="icon" draggable="false"
             src="./images/gear-wide-connected.svg" alt="Settings" title="Settings"
@@ -65,6 +83,16 @@
         -->
         <div class="settings-grid">
             <h5>[ UI ]</h5>
+            <div class="settings-item">
+                <label for="select-theme">Theme</label>
+                <div class="settings-control">
+                    <select id="select-theme">
+                        <option value="auto">System</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+            </div>
             <div class="settings-item">
                 <label for="chbx-polling">Auto-refresh the view</label>
                 <div class="settings-control">

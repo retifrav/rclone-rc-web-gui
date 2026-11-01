@@ -1,4 +1,13 @@
-/* the header buttons which open the tabs, the active one is marked with a chip */
+/*
+    the header buttons which open the tabs, the active one is marked with a chip
+
+    the colors of the chip and hover have no `light-dark()` pairs: in dark mode
+    the whole button is filtered (to invert the black glyph of the gear), and a filter
+    applies to the element's own background and border too, so it is the filter
+    who turns these light colors into the dark ones. The heart gets the same filter,
+    so that both chips look alike (and it comes out somewhat lighter red),
+    see `--icon-filter` in `gui.css`
+*/
 .header > input.icon {
     width: calc(2rem + 8px);
     height: calc(2rem + 8px);
@@ -6,6 +15,7 @@
     border: 1px solid transparent;
     border-radius: 0.25em;
     cursor: pointer;
+    filter: var(--icon-filter, none);
 }
 .header > input.icon[aria-expanded="false"]:hover {
     background-color: #e0e0e0;
@@ -17,13 +27,13 @@
 
 .header-tab {
     display: none;
-    background-color: #f1f1f1;
-    border-bottom: 1px solid gray;
+    background-color: light-dark(#f1f1f1, #242424);
+    border-bottom: 1px solid light-dark(gray, #4a4a4a);
     padding: 15px 20px;
 }
 
 .header-tab * {
-    color: #4c4c4c;
+    color: light-dark(#4c4c4c, #c4c4c4);
 }
 .header-tab *:not(h1, h2, h3, h4, h5, h6) {
     font-size: 0.85rem;
@@ -78,7 +88,7 @@
     justify-self: stretch;
     margin: 16px 0 0px 0;
     padding-bottom: 8px;
-    border-bottom: 1px solid #d5d5d5;
+    border-bottom: 1px solid light-dark(#d5d5d5, #3a3a3a);
 }
 .settings-grid > h5:first-child {
     margin-top: 0;
@@ -113,7 +123,8 @@
     the `.select-all` rule for the files panels header (in `panels.css`)
 */
 .settings-control > input,
-.settings-control > button {
+.settings-control > button,
+.settings-control > select {
     margin: 0;
 }
 .settings-control > input[type="range"] {
@@ -156,7 +167,7 @@ ul.cryptocurrency-wallets {
 
         code {
             padding: 6px;
-            background-color: #e2e2e2;
+            background-color: light-dark(#e2e2e2, #333333);
             border-radius: 0.5em;
             font-size: 0.9em;
             font-weight: bold;

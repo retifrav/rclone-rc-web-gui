@@ -30,6 +30,11 @@ const outputMaximumAllowedTransfersValue: HTMLOutputElement =
     document.getElementById("output-maximum-allowed-transfers-value") as HTMLOutputElement;
 const settingsChbxChecksums: HTMLInputElement =
     document.getElementById("chbx-checksums") as HTMLInputElement;
+const selectTheme: HTMLSelectElement =
+    document.getElementById("select-theme") as HTMLSelectElement;
+
+// the same key that the inline script in `index.html` reads
+const themeStorageKey: string = "rclone-rc-web-gui.theme";
 
 export function initSettingsUI()
 {
@@ -59,6 +64,12 @@ export function initSettingsUI()
     // `js/settings.js` is edited by a user (and a file deployed before this setting existed
     // does not have it at all), so anything but an actual `true` leaves the checksums off
     settingsChbxChecksums.checked = settings.userSettings.useChecksumsForChecks === true;
+
+    // the stored theme has already been applied by the inline script in `index.html`,
+    // which also dropped anything that is not a valid value, so the attribute is all
+    // there is to look at
+    const theme: string | undefined = document.documentElement.dataset.theme;
+    selectTheme.value = theme === undefined ? "auto" : theme;
 
     settingsChbxPolling.addEventListener(
         "change",
@@ -96,6 +107,18 @@ export function initSettingsUI()
     settingsChbxChecksums.addEventListener(
         "change",
         function() { settings.userSettings.useChecksumsForChecks = this.checked; }
+    );
+
+    selectTheme.addEventListener(
+        "change",
+        function()
+        {
+            document.documentElement.dataset.theme = this.value;
+            // after the attribute, because this throws when the storage is disabled
+            // in the browser, and then the theme should still be switched, just without
+            // being remembered
+            localStorage.setItem(themeStorageKey, this.value);
+        }
     );
 
     settings.userSettings.timerRefreshViewInterval = window.setInterval(

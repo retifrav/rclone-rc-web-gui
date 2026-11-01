@@ -396,7 +396,7 @@ function buildCompletedTransferRow(transfer: functions.rcTransferred) : HTMLTabl
     spanOutcome.appendChild(
         document.createTextNode(transfer["error"] === "" ? "OK" : "error")
     );
-    spanOutcome.style.color = transfer["error"] === "" ? "green" : "red";
+    spanOutcome.className = transfer["error"] === "" ? "outcome-ok" : "outcome-failed";
 
     const tr: HTMLTableRowElement = document.createElement("tr");
     // date and time, for which one would certainly like to user a proper ISO format,
@@ -457,7 +457,7 @@ function buildCompletedCheckRow(check: FinishedCheck) : HTMLTableRowElement
 
     const spanOutcome: HTMLSpanElement = document.createElement("span");
     spanOutcome.appendChild(document.createTextNode(outcome));
-    spanOutcome.style.color = outcome === "OK" ? "green" : "red";
+    spanOutcome.className = outcome === "OK" ? "outcome-ok" : "outcome-failed";
 
     // focusable and opened with Enter as well, as it is effectively a button
     const tr: HTMLTableRowElement = Object.assign(
