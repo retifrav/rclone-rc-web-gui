@@ -315,6 +315,19 @@ function getComparisonDescription(
     return p;
 }
 
+// the line that says how the check ended, green or red like the outcome in its table row
+function getOutcomeParagraph(text: string, success: boolean) : HTMLParagraphElement
+{
+    const p: HTMLParagraphElement = Object.assign(
+        document.createElement("p"),
+        {
+            className: success ? "dialog-success" : "dialog-failure"
+        }
+    );
+    p.appendChild(document.createTextNode(text));
+    return p;
+}
+
 // a heading and the list of the files, nothing at all for an empty list
 function addFilesList(body: (string | Node)[], heading: string, files: string[])
 {
@@ -368,7 +381,7 @@ export function showCheckResult(check: FinishedCheck)
     const result: functions.rcCheckResult | null = check.result;
     if (result === null)
     {
-        body.push("The check has failed: ".concat(check.error));
+        body.push(getOutcomeParagraph("The check has failed: ".concat(check.error), false));
         showDialog(
             {
                 icon: "exclamation-octagon-fill-red.svg",
@@ -388,9 +401,12 @@ export function showCheckResult(check: FinishedCheck)
         body.push(`${check.checkedFiles} ${check.checkedFiles === 1 ? "file was" : "files were"} checked.`);
     }
     body.push(
-        result["success"] === true
-            ? "All the files are present in the destination."
-            : "Result: ".concat(result["status"], ".")
+        getOutcomeParagraph(
+            result["success"] === true
+                ? "All the files are present in the destination."
+                : "Result: ".concat(result["status"], "."),
+            result["success"] === true
+        )
     );
 
     addFilesList(body, "Missing from the destination", result["missingOnDst"]);

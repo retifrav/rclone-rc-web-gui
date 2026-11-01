@@ -675,6 +675,13 @@ ul.cryptocurrency-wallets {
     /* rclone's error messages carry long paths with no break opportunity */
     overflow-wrap: anywhere;
 }
+.dialog-success {
+    color: green; /* #008000 */
+}
+.dialog-failure {
+    /* plain red might be too light for a text on white (4.0:1, under the 4.5:1 of WCAG AA) */
+    color: red; /* #b02a37 */
+}
 .dialog-list {
     max-height: 12em;
     padding: 6px 10px;
