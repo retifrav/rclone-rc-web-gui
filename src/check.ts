@@ -53,9 +53,6 @@ export const runningChecks: Array<RunningCheck> = [];
 // and then the new check simply replaces the old one, so there are never two rows with one key
 const finishedChecks: Map<string, FinishedCheck> = new Map();
 
-// the stats groups of every check job, running or finished
-const checkGroups: Set<string> = new Set();
-
 // the timer is not stored in `settings.userSettings` (nothing ever needs to restart it), and it runs
 // even when the UI auto-refresh is off, because rclone forgets a finished job after a minute,
 // and its result with it
@@ -93,7 +90,6 @@ export function registerCheckJob(rez: functions.rcJobSubmission, queueItem: Queu
         "statusFailures": 0
     };
     runningChecks.push(check);
-    checkGroups.add(getCheckGroup(check.jobid));
 }
 
 function pollChecks()
@@ -275,11 +271,6 @@ export function getCompletedCheckEntries() : functions.rcTransferred[]
 export function getFinishedCheck(key: string) : FinishedCheck | undefined
 {
     return finishedChecks.get(key);
-}
-
-export function isCheckGroup(group: string) : boolean
-{
-    return checkGroups.has(group);
 }
 
 function getComparisonDescription(

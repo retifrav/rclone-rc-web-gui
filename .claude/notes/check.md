@@ -54,7 +54,7 @@ The first version did show `checks + errors` against a `/operations/size` total,
 - and the percentage was approximate anyway: capped to hide the differing files' overshoot, and stuck at `0/6` for the big-file case above.
 
 So the running row has an indeterminate `<progress>` (no `value` at all, `position` −1) and `N files checked in m:ss`, both from what the poll already fetches plus the GUI's own `startedAt`.
-- In `/core/transferred` every file check is an entry with `checked: true`, `what: "checking"`. A 4000-file check left **102** entries in its group, which is past the 100 the trimmed-list hint tests for, so the hint has to skip check jobs' groups.
+- In `/core/transferred` every file check is an entry with `checked: true`, `what: "checking"`. A 4000-file check left **102** entries in its group, which is past the 100 the trimmed-list hint tests for, so the hint has to tell check jobs' groups apart. It does so through the group's `/core/stats` (`transfers` 0), since a check's entries are identical to a copy's checks and the GUI's own record of its checks is gone after a reload. The measurements are in `completed-transfers-table.md`.
 
 ## The count in the results dialog
 

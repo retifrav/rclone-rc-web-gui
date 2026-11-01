@@ -7,7 +7,6 @@ import {
     runningChecks,
     getCompletedCheckEntries,
     getFinishedCheck,
-    isCheckGroup,
     showCheckResult
 } from "./check.js";
 
@@ -46,6 +45,13 @@ type RenderedTransfer =
 // file paths, where deleting and iterating are both wanted and there is no `Object.prototype` name
 // to guard against
 const renderedCompletedTransfers: Map<string, RenderedTransfer> = new Map();
+
+// whether the trimmed hint is shown is decided by the newest `/core/transferred` response alone,
+// but deciding that can take another round of requests (see `mayHaveUnlistedTransfers()`), and their
+// answers are not ordered, so an older response's answer arriving last would put back a stale hint.
+// Only the newest decision gets to write anything, the same counter trick that `panelsListingGeneration`
+// does in `panel.ts`
+let completedTransfersTrimmedGeneration: number = 0;
 
 export function timerRefreshViewFunction()
 {
@@ -530,23 +536,65 @@ function buildCompletedCheckRow(check: FinishedCheck) : HTMLTableRowElement
 // filtered out. The job's own `Transfers` is not known here (for the queue it is the allocation,
 // for other rc clients it is anything), so this tests for just the `> 100`, which every trimmed job
 // is past, but so is a job of 101 files that lost nothing, hence it is only a "may"
-function mayHaveUnlistedTransfers(completedTransfers: functions.rcTransferred[]) : boolean
+//
+// a group past that which lists nothing but checks is either a job that has not transferred anything
+// at all (a check job, or a delete) or one whose every transfer has already been dropped (a copy
+// into a destination that already had most of the files), and the entries cannot tell those apart,
+// being the same in every field. The group's stats can, as rclone counts the transfers there
+// regardless of what it has dropped from the list, so every such group gets asked. That includes
+// the check jobs that `check.ts` knows about, because after a page reload it knows about none,
+// and after an rclone restart their job IDs belong to other jobs
+function mayHaveUnlistedTransfers(completedTransfers: functions.rcTransferred[]) : Promise<boolean>
 {
     const groupsCounts: Map<string, number> = new Map();
+    const transferringGroups: Set<string> = new Set();
     for (let t = 0; t < completedTransfers.length; t++)
     {
         const group: string = completedTransfers[t]["group"];
-        // a check job lists nothing but its individual file checks, which are never shown,
-        // so however many of them rclone has dropped, nothing is missing from the table
-        if (isCheckGroup(group)) { continue; }
-
         const counted: number | undefined = groupsCounts.get(group);
-        const count: number = (counted === undefined ? 0 : counted) + 1;
-        if (count > rcloneMaxCompletedTransfers) { return true; }
+        groupsCounts.set(group, (counted === undefined ? 0 : counted) + 1);
 
-        groupsCounts.set(group, count);
+        if (completedTransfers[t]["checked"] !== true) { transferringGroups.add(group); }
     }
-    return false;
+
+    const checksOnlyGroups: string[] = [];
+    const groups: string[] = Array.from(groupsCounts.keys());
+    for (let g = 0; g < groups.length; g++)
+    {
+        if (groupsCounts.get(groups[g])! <= rcloneMaxCompletedTransfers) { continue; }
+
+        // it does list a transfer, so it is a transferring job and there is nothing to ask
+        if (transferringGroups.has(groups[g])) { return Promise.resolve(true); }
+
+        checksOnlyGroups.push(groups[g]);
+    }
+    if (checksOnlyGroups.length === 0) { return Promise.resolve(false); }
+
+    // a group whose stats could not be fetched gets the "may", which is all that the hint claims
+    const groupsTrimmed: Promise<boolean>[] = [];
+    for (let g = 0; g < checksOnlyGroups.length; g++)
+    {
+        const params: functions.rcRequest = { "group": checksOnlyGroups[g] };
+        groupsTrimmed.push(
+            functions.requestRclone<functions.rcStats>("/core/stats", params).then(
+                function(rezStats: functions.rcStats | null)
+                {
+                    if (rezStats === null) { return true; }
+
+                    // none of its transfers is listed, so any that it has done is one that rclone dropped
+                    return rezStats["transfers"] > 0;
+                },
+                function()
+                {
+                    return true;
+                }
+            )
+        );
+    }
+    return Promise.all(groupsTrimmed).then(function(trimmed: boolean[])
+    {
+        return trimmed.includes(true);
+    });
 }
 
 // removes every row from `node` to the end of the table
@@ -648,12 +696,20 @@ function updateCompletedTransfers(completedTransfers: functions.rcTransferred[])
         renderedCompletedTransfers.clear();
         completedTransfersBlock.style.display = "none";
         completedTransfersCount.textContent = "0";
+        // and an answer that is still on its way for an older response must not bring it back
+        completedTransfersTrimmedGeneration++;
         completedTransfersTrimmed.style.display = "none";
         return;
     }
 
-    completedTransfersTrimmed.style.display =
-        mayHaveUnlistedTransfers(completedTransfers) ? "block" : "none";
+    const generation: number = ++completedTransfersTrimmedGeneration;
+    mayHaveUnlistedTransfers(completedTransfers).then(function(mayHave: boolean)
+    {
+        // a newer response has been looked at in the meantime, so this answer is stale
+        if (generation !== completedTransfersTrimmedGeneration) { return; }
+
+        completedTransfersTrimmed.style.display = mayHave ? "block" : "none";
+    });
 
     // checks are not actual transfers, and every move leaves a `deleting` one behind.
     // They have to go before the duplicates are collapsed, because a check carries
