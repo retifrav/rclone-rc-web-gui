@@ -25,9 +25,15 @@ Every *load-bearing* claim held: the 18 endpoints, the idle omission of `transfe
 
 `/operations/check` and `/job/status` (now 20 endpoints), measured for the Check operation — see `.claude/notes/check.md` for the result shapes, the progress counters (including why neither `totalChecks` nor `listed` is a total) and the job expiry.
 
+## Checked against v1.76.0 on 2026-11-09
+
+With a checksum-verified v1.76.0 binary in the scratchpad, the container itself still being on v1.75.2. All 20 endpoints from the `grep` are in its `rc/list`. Against v1.75.2 that registry lost the six `pluginsctl/*` endpoints (the old web GUI's plugin system, deleted along with `--rc-web-gui`) and gained `operations/getfile` and `operations/index`, none of which the GUI calls. `rcd --rc-web-gui` without a path exits 1 with `--rc-web-gui has been superseded by the 'rclone gui' command`. The whole GUI was then driven in Chromium through `rcd` with `login_token` and through `rclone gui` (see `.claude/notes/rclone-gui.md`), with every request answering 200.
+
+Read off the v1.76.0 source rather than measured: **directory operations are now counted as checks** (`f998f5bb99`). Making, removing and updating directories show under `checking` and add to `checks` while they run, but are created with `NewCheckingTransferNoHistory` (`7fe402585e`) and so **never appear in `/core/transferred`**, which leaves the completed table, its row count and the per-job budget behind the trimmed-list hint untouched. The GUI reads `checking` nowhere and `checks` only for check jobs, which make no directories.
+
 ## Fields rclone sends that no `rc*` type mentions
 
-Purely additive, so the structural reads are unaffected: `core/version` adds `osArch`/`osKernel`/`osVersion`, `core/stats` adds `listed` and four `serverSide*` counters (`serverSideCopies`, `serverSideCopyBytes`, `serverSideMoves`, `serverSideMoveBytes`), and async submissions return `executeId` next to `jobid`.
+Purely additive, so the structural reads are unaffected: `core/version` adds `osArch`/`osKernel`/`osVersion`, `core/stats` adds `listed`, four `serverSide*` counters (`serverSideCopies`, `serverSideCopyBytes`, `serverSideMoves`, `serverSideMoveBytes`) and, since v1.76.0, `updatedDirs`, and async submissions return `executeId` next to `jobid`.
 
 The transfer entries are the one place worth spelling out, because the extras are **not the same on both endpoints**:
 

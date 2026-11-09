@@ -4,6 +4,9 @@ type RcloneSettings = {
     pass: string | null,
     loginToken: string | null
 }
+// when the GUI is served by `rclone gui`, the URL it opens contains the rc API address
+// and credentials as `url`, `user` and `pass` query parameters, and those take over
+// the host/user/pass values below
 export const rcloneSettings: RcloneSettings = {
     host: "http://127.0.0.1:5572",
     // null if --rc-no-auth, otherwise what is set in --rc-user

@@ -11,6 +11,7 @@
 - [Building](#building)
 - [How to use it](#how-to-use-it)
     - [Launching](#launching)
+        - [With rclone gui](#with-rclone-gui)
         - [With --rc-web-gui](#with---rc-web-gui)
             - [Authentication](#authentication)
         - [From local path](#from-local-path)
@@ -129,9 +130,25 @@ Before launching the UI, you need to have your remotes configured in `~/.config/
 
 ### Launching
 
+#### With rclone gui
+
+Starting with version [1.74.0](https://rclone.org/changelog/#v1-74-0-2026-05-01), `rclone` has a [gui](https://rclone.org/gui/) command, which (*aside from its own [official GUI](#there-is-an-official-gui-too)*) can also serve a different web UI from a local folder. So you can get a pre-made package from [releases](https://github.com/retifrav/rclone-rc-web-gui/releases) and point `rclone gui` to the `build` folder from the package:
+
+``` sh
+$ rclone gui --transfers 1 /path/to/build
+```
+
+It will start the rc API and the web UI on two different random ports on `localhost`, will also generate a random password and will open the UI URL in your browser (*together with the credentials*). You can specify your own credentials with `--api-addr`, `--user` and `--pass` (*and `--addr` for the web UI's itself*).
+
+With `--no-auth` the rc API address isn't passed to the web UI, so then set it with `--api-addr` to the `rcloneSettings.host` value from your `settings.js`, for example:
+
+``` sh
+$ rclone gui --transfers 1 --no-auth --api-addr 127.0.0.1:5572 /path/to/build
+```
+
 #### With --rc-web-gui
 
-The easiest would be to let `rclone` handle [downloading and serving](https://rclone.org/gui/) the latest release:
+Before rclone version [1.76.0](https://rclone.org/changelog/#v1-76-0-2026-11-06) it was also possible to pass `--rc-web-gui SOME-URL-HERE`, and then rclone would download and unpack a remotely hosted package on its own:
 
 ``` sh
 $ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 \
@@ -139,7 +156,9 @@ $ rclone rcd --transfers 1 --rc-allow-origin http://localhost:5572 \
     --rc-web-fetch-url https://api.github.com/repos/retifrav/rclone-rc-web-gui/releases/latest
 ```
 
-If you have used this functionality before, then you might have a different web UI already downloaded in your system (*for example, on Mac OS it would be here: `~/Library/Caches/rclone/webgui`*), and to replace it you'll need to add `--rc-web-gui-force-update` flag.
+If you have used this functionality before, then you might have a different web UI already downloaded in your system (*for example, on Mac OS it would be here: `~/Library/Caches/rclone/webgui`*), and to replace it with the latest you'd need to add `--rc-web-gui-force-update` flag.
+
+But unfortunately this functionality is now deprecated (*by rclone*), so `--rc-web-gui` no longer works.
 
 ##### Authentication
 
@@ -202,7 +221,7 @@ or:
 
 check if you ran `rclone rcd` with `--rc-allow-origin http://127.0.0.1:5572` option.
 
-Also note that with `--rc-web-gui` (*instead of `--rc-web-gui-no-open-browser`*) provided for `rclone rcd` it will automatically open the web UI in browser at <http://localhost:5572> location, and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
+Also note that `rclone rcd` serving the web UI will automatically open it in browser at <http://localhost:5572> location (*unless `--rc-web-gui-no-open-browser` is set, but rclone version 1.76.0 and newer ignores that flag*), and that might cause a CORS mismatch. If that happens, then you'll need to either open exactly <http://127.0.0.1:5572> (*if that is what you've set in `--rc-allow-origin`*) or set `rcloneSettings.host` to `http://localhost:5572` in `settings.js`.
 
 ### Configuration
 
@@ -319,6 +338,7 @@ WantedBy=multi-user.target
 
 here:
 
+- `--rc-web-gui-no-open-browser` - stops `rclone` from trying to open the web UI in a browser, as there is none on a server anyway. But `rclone` version 1.76.0 and newer ignores this flag, so it just logs an error about failing to open a browser, which is harmless;
 - `http://IP-ADDRESS-OR-DOMAIN` - the requests will be coming from the same server, so you need to provide here either the IP address of that server or its domain, if you have one. In my case it's just a server in my local network, so I've set this to `http://192.168.1.11` (*static MAC-binded IP address of my server*);
 - `SOME-USER-WITH-REQUIRED-DISK-ACCESS` - a user from which `rclone` will be run, so perhaps it's a good idea to create a new user for this purpose and limit its access to just one folder such as `/media/`;
 - `WorkingDirectory=/media/` - if you'll have your local filesystem as one of the rclone's remote too, then `/media/` would be a starting folder (*for me that's where I mount external disks*);

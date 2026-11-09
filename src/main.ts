@@ -22,10 +22,29 @@ window.onload = () =>
     //
     // this has to happen before anything sends a request, because `sendRequestToRclone()`
     // builds the `Authorization` header out of it
-    settings.rcloneSettings.loginToken = new URLSearchParams(
-        window.location.search
-    ).get("login_token");
+    const queryParameters: URLSearchParams = new URLSearchParams(window.location.search);
+    settings.rcloneSettings.loginToken = queryParameters.get("login_token");
     //console.debug(settings.rcloneSettings.loginToken);
+
+    // `rclone gui <path>` serves the UI on a port of its own and passes the rc API address
+    // with credentials in the URL that it opens. The address is taken only together
+    // with the credentials, otherwise a malicious crafted link could make the UI send
+    // the credentials from `js/settings.js` to an evil host
+    const rcUrl: string | null = queryParameters.get("url");
+    const rcUser: string | null = queryParameters.get("user");
+    const rcPass: string | null = queryParameters.get("pass");
+    if (
+        rcUrl !== null && rcUser !== null && rcPass !== null
+        &&
+        (rcUrl.startsWith("http://") || rcUrl.startsWith("https://"))
+    )
+    {
+        // the address ends with a slash, but every rc query
+        // starts with a slash too
+        settings.rcloneSettings.host = rcUrl.replace(/\/+$/, "");
+        settings.rcloneSettings.user = rcUser;
+        settings.rcloneSettings.pass = rcPass;
+    }
 
     guiVersionSpan.textContent = guiVersion;
 

@@ -88,7 +88,12 @@ fi
 #
 # `exec` replaces this shell, which is PID 1, so that rclone becomes PID 1 itself
 # and receives the SIGTERM from `docker stop` instead of being SIGKILL'ed later on
-exec rclone rcd --rc-web-gui-no-open-browser --rc-addr ":$RCLONE_PORT" \
+#
+# since version 1.76.0, rclone tries to open a browser whenever it serves files,
+# and there is no flag to stop it anymore (`--rc-web-gui-no-open-browser` is ignored),
+# so with no `xdg-open` in the image it logs a "Failed to open Web GUI in browser" error
+# on every start, which is expected and harmless
+exec rclone rcd --rc-addr ":$RCLONE_PORT" \
     --rc-allow-origin "$RCLONE_ALLOW_ORIGIN_SCHEME://$RCLONE_ALLOW_ORIGIN_HOST:$RCLONE_ALLOW_ORIGIN_PORT" \
     --rc-user "$RCLONE_USER" \
     --rc-pass "$RCLONE_PASS" \
